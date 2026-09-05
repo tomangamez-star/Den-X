@@ -1,0 +1,666 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+:root{
+
+--background:#111111;
+--surface:#1B1B1B;
+--primary:#00C8FF;
+--text:#FFFFFF;
+--subtext:#A8A8A8;
+--radius:16px;
+
+}
+
+*{
+
+margin:0;
+padding:0;
+box-sizing:border-box;
+
+}
+
+body{
+  background:var(--background);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+  margin:0;
+  padding:0;
+}
+
+#app{
+  width:100vw;
+  height:100vh;
+  background:var(--background);
+}
+
+.home-card{
+  width:90%;
+  max-width:400px;
+  background:var(--surface);
+  padding:30px;
+  border-radius:var(--radius);
+  text-align:center;
+  margin:100px auto 0;
+
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow{
+
+  0%{
+    box-shadow:
+      0 0 15px rgba(0,200,255,.15),
+      0 0 30px rgba(0,200,255,.10);
+  }
+
+  50%{
+    box-shadow:
+      0 0 35px rgba(0,200,255,.65),
+      0 0 80px rgba(0,200,255,.35),
+      0 0 120px rgba(0,200,255,.15);
+  }
+
+  100%{
+    box-shadow:
+      0 0 15px rgba(0,200,255,.15),
+      0 0 30px rgba(0,200,255,.10);
+  }
+
+}
+
+header h1{
+
+font-size:34px;
+
+color:var(--primary);
+
+margin-bottom:10px;
+
+}
+
+header p{
+
+color:var(--subtext);
+
+margin-bottom:30px;
+
+}
+
+.menu{
+
+display:flex;
+
+flex-direction:column;
+
+gap:15px;
+
+}
+
+.menu button{
+
+padding:16px;
+
+font-size:18px;
+
+border:none;
+
+border-radius:12px;
+
+background:var(--primary);
+
+color:black;
+
+font-weight:bold;
+
+cursor:pointer;
+
+transition:.25s;
+
+}
+
+.menu button:hover{
+
+transform:scale(1.03);
+
+}
+
+footer{
+
+margin-top:30px;
+
+color:gray;
+
+font-size:14px;
+
+}
+
+#projectScreen{
+    background-image: url("../assets/backgrounds/denx-doodles.png");
+    background-repeat: repeat;
+    background-size: 350px;
+}
+
+input{
+
+width:100%;
+
+padding:14px;
+
+background:#202020;
+
+color:white;
+
+border:none;
+
+border-radius:10px;
+
+outline:none;
+
+font-size:16px;
+
+margin-top:15px;
+
+}
+
+#workspace{
+  display:flex;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100vw;
+  height:100dvh;
+  background:var(--background);
+  flex-direction:column;
+  z-index:1000;
+}
+
+.topbar{
+
+    height:30px;
+    min-height:30px;
+    flex-shrink:0;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:0 10px;
+
+    background:#111;
+
+    border-bottom:1px solid #1f1f1f;
+
+}
+
+.editor{
+    flex:1;
+    display:flex;
+    overflow:hidden;
+    min-height:0;
+    position:relative;
+}
+
+.toolbar{
+
+    width:95px;
+    min-width:95px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    gap:15px;
+    padding:10px 0;
+
+    background:#101010;
+    border-right:1px solid #1f1f1f;
+
+    overflow-y:auto;
+    overflow-x:hidden;
+
+    scrollbar-width:none;
+
+    transition:
+        width .25s ease,
+        min-width .25s ease,
+        padding .25s ease;
+
+}
+
+
+.toolbar-hidden{
+
+    width:0 !important;
+    min-width:0 !important;
+
+    padding:0 !important;
+
+    border-right:none !important;
+
+    overflow:hidden;
+
+}
+
+.toolbar button{
+    width:80px;
+    height:70px;
+
+    background:#181818;
+    border:none;
+    border-radius:12px;
+
+    color:white;
+    font-size:14px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.toolbar button:hover{
+
+    background:#242424;
+
+    transform:scale(1.05);
+
+}
+
+.toolbar button.active{
+
+    background:#00C8FF;
+
+    color:black;
+
+    box-shadow:0 0 15px #00C8FF;
+
+}
+
+#viewport{
+
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    background:#111;
+    min-width:0;
+    min-height:0;
+    touch-action:none;
+
+}
+
+.layers{
+  width:90px;
+  background:#101010;
+  border-left:1px solid #1f1f1f;
+}
+
+.timeline{
+
+    height:70px;
+    min-height:70px;
+    flex-shrink:0;
+
+    background:#111;
+
+    border-top:1px solid #1f1f1f;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:10px;
+
+    gap:10px;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+
+}
+
+#frameContainer{
+
+display:flex;
+
+gap:10px;
+min-width:max-content;
+
+}
+
+.frame{
+
+min-width:60px;
+
+height:45px;
+
+border:none;
+
+border-radius:10px;
+
+background:#202020;
+
+color:white;
+
+font-weight:bold;
+
+cursor:pointer;
+
+transition:.2s;
+
+}
+
+.frame.active{
+
+background:#00C8FF;
+
+color:black;
+
+box-shadow:0 0 10px #00C8FF;
+
+}
+
+#addFrame{
+
+width:45px;
+height:45px;
+
+border:none;
+border-radius:10px;
+
+background:#00C8FF;
+
+font-size:22px;
+font-weight:bold;
+
+cursor:pointer;
+
+position:sticky;
+left:10px;
+z-index:5;
+flex:0 0 auto;
+
+}
+
+
+.hidden{
+    display:none !important;
+}
+
+
+#camera{
+
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform-origin:center center;
+    will-change:transform;
+    z-index:1;
+
+}
+
+#stage{
+
+    width:2048px;
+    height:1152px;
+
+    position:relative;
+
+    background:#2b2b2b;
+
+    border:1px solid rgba(190,190,190,.28);
+    border-radius:20px;
+
+    overflow:hidden;
+    box-shadow:
+        0 0 0 1px rgba(0,0,0,.35) inset,
+        0 0 0 1px rgba(255,255,255,.04);
+
+}
+
+#drawingCanvas{
+
+    position:absolute;
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    display:block;
+
+    background:white;
+
+    touch-action:none;
+
+    z-index:1;
+
+}
+
+#stageGuide{
+    position:absolute;
+    width:272px;
+    height:162px;
+
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+
+    border:1px dashed rgba(220,220,220,.5);
+    border-radius:14px;
+
+    pointer-events:none;
+    touch-action:none;
+
+    z-index:2;
+
+    background:rgba(255,255,255,.03);
+    box-shadow:
+        0 0 0 1px rgba(0,0,0,.18) inset,
+        0 0 18px rgba(255,255,255,.03);
+    opacity:1;
+}
+
+
+@media (orientation:landscape){
+
+    .toolbar{
+        width:100px;
+    }
+
+    .timeline{
+        height:55px;
+    }
+
+}
+
+#cameraFrame{
+    position:absolute;
+    width:260px;
+    height:150px;
+
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+
+    border:2px solid #00C8FF;
+    border-radius:12px;
+
+    pointer-events:none;
+    touch-action:none;
+    cursor:move;
+
+    z-index:3;
+}
+
+#cameraFrame.camera-active{
+
+    border:3px solid #00C8FF;
+
+    box-shadow:
+        0 0 15px rgba(0,200,255,.7),
+        0 0 35px rgba(0,200,255,.4);
+
+    pointer-events:auto;
+
+}
+
+.camera-active{
+
+    border:3px solid #00C8FF;
+
+    box-shadow:
+        0 0 15px rgba(0,200,255,.7),
+        0 0 35px rgba(0,200,255,.4);
+
+}
+
+
+/* =========================================================
+   Camera HUD + Properties
+   ========================================================= */
+
+.camera-properties{
+    position:absolute;
+    top:12px;
+    right:12px;
+    z-index:30;
+
+    width:230px;
+    max-height:calc(100% - 24px);
+    overflow:auto;
+
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+
+    padding:12px;
+
+    border:1px solid #2c2c2c;
+    border-radius:16px;
+    background:rgba(17,17,17,.94);
+    box-shadow:
+        0 12px 35px rgba(0,0,0,.35),
+        0 0 0 1px rgba(255,255,255,.03) inset;
+
+    backdrop-filter: blur(10px);
+}
+
+.camera-properties__title{
+    font-size:15px;
+    font-weight:700;
+    color:var(--primary);
+    margin-bottom:2px;
+}
+
+.camera-properties label{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+
+    font-size:12px;
+    color:var(--subtext);
+}
+
+.camera-properties input[type="number"]{
+    width:100%;
+    padding:10px 12px;
+    margin-top:0;
+
+    border:1px solid #2b2b2b;
+    border-radius:10px;
+    background:#151515;
+    color:var(--text);
+    font-size:14px;
+}
+
+.camera-toggle{
+    flex-direction:row !important;
+    align-items:center;
+    justify-content:flex-start;
+    gap:8px;
+}
+
+.camera-toggle input[type="checkbox"]{
+    width:16px;
+    height:16px;
+    margin:0;
+}
+
+#cameraFrame{
+    position:absolute;
+    width:260px;
+    height:150px;
+
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+
+    border:2px solid #00C8FF;
+    border-radius:12px;
+
+    pointer-events:none;
+    touch-action:none;
+    cursor:move;
+
+    z-index:3;
+}
+
+#cameraFrame.camera-active{
+    border:3px solid #00C8FF;
+    box-shadow:
+        0 0 15px rgba(0,200,255,.7),
+        0 0 35px rgba(0,200,255,.4);
+    pointer-events:auto;
+}
+
+#cameraFrame.camera-quick-move-enabled .camera-handle-move{
+    opacity:1;
+    pointer-events:auto;
+}
+
+#cameraFrame .camera-handle{
+    position:absolute;
+    width:14px;
+    height:14px;
+
+    border-radius:3px;
+    border:2px solid rgba(255,255,255,.95);
+    background:var(--primary);
+    box-shadow:
+        0 0 0 1px rgba(0,0,0,.25) inset,
+        0 0 12px rgba(0,200,255,.55);
+
+    opacity:0;
+    transform:scale(.85);
+    pointer-events:none;
+
+    transition:opacity .18s ease, transform .18s ease, box-shadow .18s ease;
+    touch-action:none;
+}
+
+#cameraFrame.camera-active .camera-handle{
+    opacity:1;
+    transform:scale(1);
+    pointer-events:auto;
+}
+
+#cameraFrame .camera-handle-rotate{
+    left:-9px;
+    top:-9px;
+    cursor:grab;
+}
+
+#cameraFrame .camera-handle-resize{
+    right:-9px;
+    top:-9px;
+    cursor:nwse-resize;
+}
+
+#cameraFrame .camera-handle-move{
+    right:-9px;
+    bottom:-9px;
+    cursor:move;
+}
