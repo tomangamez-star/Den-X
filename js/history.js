@@ -38,6 +38,10 @@ if(undoBtn){
 
     undoBtn.onclick = ()=>{
 
+    if (window.denxUndoTimelineAction && window.denxUndoTimelineAction()) {
+        return;
+    }
+
     const history = getHistory();
 
     if(history.undo.length <= 1) return;
@@ -65,6 +69,10 @@ if(undoBtn){
 if(redoBtn){
 
     redoBtn.onclick = ()=>{
+
+    if (window.denxRedoTimelineAction && window.denxRedoTimelineAction()) {
+        return;
+    }
 
     const history = getHistory();
 

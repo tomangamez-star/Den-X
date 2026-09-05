@@ -62,6 +62,10 @@ if (canvas && ctx) {
         drawing = false;
         activePointerId = null;
 
+        if (window.denxInvalidateTimelineUndo) {
+            window.denxInvalidateTimelineUndo();
+        }
+
         const history = getHistory();
         history.undo.push(canvas.toDataURL());
 

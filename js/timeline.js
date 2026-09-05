@@ -15,6 +15,13 @@ let frames = [
 
 let copiedFrameSnapshot = null;
 
+// Frame-operation history.
+// This is intentionally separate from drawing history for now.
+// Undo/Redo will use it only when the most recent editor action was a frame operation.
+const timelineUndoStack = [];
+const timelineRedoStack = [];
+let timelineUndoEligible = false;
+
 function saveCurrentFrame() {
     frames[currentFrame - 1] = canvas.toDataURL();
 }
@@ -25,6 +32,128 @@ function cloneHistoryEntry(entry) {
         redo: Array.isArray(entry?.redo) ? [...entry.redo] : []
     };
 }
+
+function cloneHistoryMap(map) {
+    const clone = {};
+    Object.keys(map || {}).forEach(key => {
+        clone[key] = cloneHistoryEntry(map[key]);
+    });
+    return clone;
+}
+
+function cloneCameraStateMap(map) {
+    const clone = {};
+
+    Object.keys(map || {}).forEach(key => {
+        const state = map[key];
+
+        if (state && window.denxCloneCameraFrameState) {
+            clone[key] = window.denxCloneCameraFrameState(state);
+        } else if (state) {
+            clone[key] = { ...state };
+        }
+    });
+
+    return clone;
+}
+
+function captureTimelineSnapshot() {
+    saveCurrentFrame();
+
+    if (window.denxSaveCameraFrameState) {
+        window.denxSaveCameraFrameState(currentFrame);
+    }
+
+    return {
+        frames: [...frames],
+        frameHistory: cloneHistoryMap(frameHistory),
+        cameraStates: cloneCameraStateMap(window.denxCameraFrameStates || {}),
+        currentFrame,
+        frameCount
+    };
+}
+
+function rebuildFrameButtons() {
+    if (!frameContainer) return;
+
+    frameContainer.innerHTML = "";
+
+    frames.forEach((_, index) => {
+        frameContainer.appendChild(createFrameButton(index + 1));
+    });
+}
+
+function restoreTimelineSnapshot(snapshot) {
+    if (!snapshot) return;
+
+    frames = [...snapshot.frames];
+
+    Object.keys(frameHistory).forEach(key => delete frameHistory[key]);
+    const restoredHistory = cloneHistoryMap(snapshot.frameHistory);
+    Object.keys(restoredHistory).forEach(key => {
+        frameHistory[key] = restoredHistory[key];
+    });
+
+    if (window.denxCameraFrameStates) {
+        Object.keys(window.denxCameraFrameStates).forEach(key => {
+            delete window.denxCameraFrameStates[key];
+        });
+
+        const cameraClone = cloneCameraStateMap(snapshot.cameraStates);
+        Object.keys(cameraClone).forEach(key => {
+            window.denxCameraFrameStates[key] = cameraClone[key];
+        });
+    }
+
+    frameCount = frames.length;
+    currentFrame = Math.max(1, Math.min(snapshot.currentFrame, frames.length));
+
+    rebuildFrameButtons();
+    selectFrame(currentFrame, { skipSave: true });
+    updateTimelineButtons();
+}
+
+function recordTimelineOperation(before, after) {
+    timelineUndoStack.push({ before, after });
+
+    if (timelineUndoStack.length > 40) {
+        timelineUndoStack.shift();
+    }
+
+    timelineRedoStack.length = 0;
+    timelineUndoEligible = true;
+}
+
+window.denxInvalidateTimelineUndo = () => {
+    // Drawing becomes the most recent undoable action.
+    // Keep old timeline snapshots, but don't let them jump ahead of drawing undo.
+    timelineUndoEligible = false;
+    timelineRedoStack.length = 0;
+};
+
+window.denxUndoTimelineAction = () => {
+    if (!timelineUndoEligible || timelineUndoStack.length === 0) {
+        return false;
+    }
+
+    const action = timelineUndoStack.pop();
+    timelineRedoStack.push(action);
+    restoreTimelineSnapshot(action.before);
+    timelineUndoEligible = timelineUndoStack.length > 0 || timelineRedoStack.length > 0;
+    return true;
+};
+
+window.denxRedoTimelineAction = () => {
+    if (timelineRedoStack.length === 0) {
+        return false;
+    }
+
+    const action = timelineRedoStack.pop();
+    timelineUndoStack.push(action);
+    restoreTimelineSnapshot(action.after);
+    timelineUndoEligible = true;
+    return true;
+};
 
 function shiftStateMapUp(map, fromFrame) {
     const keys = Object.keys(map)
@@ -63,9 +192,11 @@ function createFrameButton(frameNumber) {
     frame.className = "frame";
     frame.dataset.frame = frameNumber;
     frame.textContent = frameNumber;
+
     frame.onclick = () => {
         selectFrame(Number(frame.dataset.frame));
     };
+
     return frame;
 }
 
@@ -127,7 +258,6 @@ function selectFrame(frameNumber, options = {}) {
         activeFrame.classList.add("active");
     }
 
-    // Load the drawing for this frame
     loadFrame(frameNumber);
 
     if (window.denxLoadCameraFrameState) {
@@ -155,6 +285,7 @@ function buildHistoryForInsertedFrame(imageData) {
 }
 
 function insertFrameAfterCurrent(frameData = null, historyData = null, cameraState = null) {
+    const before = captureTimelineSnapshot();
     const newFrame = currentFrame + 1;
 
     shiftStateMapUp(frameHistory, newFrame);
@@ -192,19 +323,18 @@ function insertFrameAfterCurrent(frameData = null, historyData = null, cameraSta
 
     renumberFrameButtons();
     selectFrame(newFrame);
+
+    const after = captureTimelineSnapshot();
+    recordTimelineOperation(before, after);
     updateTimelineButtons();
 }
 
 function removeCurrentFrame() {
     if (frames.length <= 1) return;
 
-    saveCurrentFrame();
-
-    if (window.denxSaveCameraFrameState) {
-        window.denxSaveCameraFrameState(currentFrame);
-    }
-
+    const before = captureTimelineSnapshot();
     const removedFrame = currentFrame;
+
     frames.splice(removedFrame - 1, 1);
 
     delete frameHistory[removedFrame];
@@ -216,6 +346,7 @@ function removeCurrentFrame() {
     }
 
     const activeButton = document.querySelector(`[data-frame="${removedFrame}"]`);
+
     if (activeButton) {
         activeButton.remove();
     }
@@ -225,6 +356,9 @@ function removeCurrentFrame() {
 
     const nextFrame = Math.min(removedFrame, frames.length);
     selectFrame(nextFrame, { skipSave: true });
+
+    const after = captureTimelineSnapshot();
+    recordTimelineOperation(before, after);
     updateTimelineButtons();
 }
 
@@ -239,8 +373,10 @@ function copyCurrentFrame() {
     const historyClone = cloneHistoryEntry(frameHistory[currentFrame]);
 
     let cameraClone = null;
+
     if (window.denxCameraFrameStates && window.denxCloneCameraFrameState) {
         const state = window.denxCameraFrameStates[currentFrame];
+
         if (state) {
             cameraClone = window.denxCloneCameraFrameState(state);
         }
@@ -273,6 +409,7 @@ function pasteCopiedFrame() {
 
 // Make Frame 1 clickable
 const firstFrame = document.querySelector('[data-frame="1"]');
+
 if (firstFrame) {
     firstFrame.onclick = () => {
         selectFrame(1);
