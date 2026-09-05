@@ -248,31 +248,33 @@ function renderFigures() {
         }
 
         // Editing controls.
+        const handleMetrics = getHandleMetrics();
+
         figure.nodes.forEach(node => {
             const point = pose.nodes[node.id];
             if (!point) return;
 
             if (node.id === figure.rootNodeId) {
-                const touchSize = 42;
+                const touchSize = handleMetrics.rootTouchSize;
                 const rootTouch = createSvg("rect", {
                     x: point.x - touchSize / 2,
                     y: point.y - touchSize / 2,
                     width: touchSize,
                     height: touchSize,
-                    rx: 8,
+                    rx: Math.max(1, handleMetrics.rootRadius * 2),
                     class: "figure-node-touch-target figure-root-touch-target",
                     "data-denx-node": "1",
                     "data-figure-id": figure.id,
                     "data-node-id": node.id
                 });
 
-                const rootSize = 14;
+                const rootSize = handleMetrics.rootSize;
                 const rootVisual = createSvg("rect", {
                     x: point.x - rootSize / 2,
                     y: point.y - rootSize / 2,
                     width: rootSize,
                     height: rootSize,
-                    rx: 2,
+                    rx: handleMetrics.rootRadius,
                     class: "figure-node-visual figure-root-node"
                 });
 
@@ -286,7 +288,7 @@ function renderFigures() {
                 const touch = createSvg("circle", {
                     cx: point.x,
                     cy: point.y,
-                    r: 20,
+                    r: handleMetrics.normalTouchRadius,
                     class: "figure-node-touch-target figure-normal-touch-target",
                     "data-denx-node": "1",
                     "data-figure-id": figure.id,
@@ -296,7 +298,7 @@ function renderFigures() {
                 const handle = createSvg("circle", {
                     cx: point.x,
                     cy: point.y,
-                    r: 5.5,
+                    r: handleMetrics.normalVisualRadius,
                     class: "figure-node-visual figure-normal-node"
                 });
 
@@ -525,6 +527,24 @@ function rotatePointAround(point, pivot, angleDelta) {
 
 function angleBetween(from, to) {
     return Math.atan2(to.y - from.y, to.x - from.x);
+}
+
+function getCameraZoom() {
+    const zoom = Number(window.denxCameraState?.zoom);
+    return Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+}
+
+function getHandleMetrics() {
+    const zoom = getCameraZoom();
+
+    // Keep node visuals tiny/clean on screen while preserving easy touch control.
+    return {
+        rootTouchSize: 28 / zoom,
+        rootSize: 10 / zoom,
+        rootRadius: 1.8 / zoom,
+        normalTouchRadius: 14 / zoom,
+        normalVisualRadius: 3.2 / zoom
+    };
 }
 
 function descendantNodeIds(figure, nodeId) {
@@ -962,8 +982,22 @@ window.addEventListener("denx:toolchange", () => {
     renderFigures();
 });
 
+let lastHandleZoom = null;
+
+window.addEventListener("denx:camera-updated", (e) => {
+    const zoom = Number(e.detail?.zoom);
+
+    if (Number.isFinite(zoom) && lastHandleZoom !== null && Math.abs(zoom - lastHandleZoom) < 0.0001) {
+        return;
+    }
+
+    lastHandleZoom = Number.isFinite(zoom) ? zoom : getCameraZoom();
+    renderFigures();
+});
+
 // Initial project contains one real editable starter figure.
 createStarterFigure();
 selectedFigureId = figures[0]?.id || null;
 selectedNodeId = figures[0]?.rootNodeId || null;
+lastHandleZoom = getCameraZoom();
 renderFigures();

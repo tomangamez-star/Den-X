@@ -151,6 +151,14 @@ function updateWorkspace() {
         `translate(-50%, -50%)
          translate(${camera.x}px, ${camera.y}px)
          scale(${camera.zoom})`;
+
+    window.dispatchEvent(new CustomEvent("denx:camera-updated", {
+        detail: {
+            x: camera.x,
+            y: camera.y,
+            zoom: camera.zoom
+        }
+    }));
 }
 
 function syncStageGuide() {
