@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v6-bones-rigid";
+const CACHE_NAME = "denx-animator-v7-bones-node-refine";
 const APP_SHELL = [
   "./",
   "./index.html",
