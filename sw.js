@@ -1,10 +1,11 @@
-const CACHE_NAME = "denx-animator-v1";
+const CACHE_NAME = "denx-animator-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./project.html",
   "./workspace.html",
   "./css/style.css",
+  "./css/workspace-ui.css",
   "./js/app.js",
   "./js/history.js",
   "./js/tools.js",
