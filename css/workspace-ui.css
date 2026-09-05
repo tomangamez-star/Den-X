@@ -118,17 +118,6 @@
   line-height: 1;
 }
 
-.cluster-btn--primary {
-  width: 36px;
-  font-size: 18px;
-  background: var(--primary);
-  color: #050505;
-  border-color: rgba(255,255,255,.18);
-}
-
-.cluster-btn--danger {
-  font-size: 18px;
-}
 
 .cluster-btn:disabled {
   opacity: .42;
@@ -301,10 +290,6 @@
     font-size: 13px;
   }
 
-  .cluster-btn--primary {
-    width: 34px;
-    font-size: 18px;
-  }
 
   .toolbar {
     width: 56px !important;
@@ -337,4 +322,22 @@
     width: 40px;
     height: 40px;
   }
+}
+
+/* v4: all 2x3 action-cluster buttons intentionally share one hitbox size. */
+#addFrame,
+#removeFrameBtn,
+#playBtn,
+#copyFrameBtn,
+#pasteFrameBtn,
+#workspaceSettingsBtn {
+  width: 34px;
+  height: 28px;
+  min-width: 34px;
+  min-height: 28px;
+}
+
+#addFrame,
+#removeFrameBtn {
+  font-size: 18px;
 }
