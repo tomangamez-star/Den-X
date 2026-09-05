@@ -16,27 +16,25 @@
 <body>
 <section id="workspace">
   <header class="topbar">
-    <div class="topbar-actions topbar-actions--left">
-      <button id="workspaceBack" class="topbar-btn" title="Back" aria-label="Back">←</button>
+    <div class="topbar-left">
       <button id="undoBtn" class="topbar-btn" title="Undo" aria-label="Undo">↶</button>
       <button id="redoBtn" class="topbar-btn" title="Redo" aria-label="Redo">↷</button>
     </div>
 
     <div class="top-timeline" aria-label="Animation frames">
-      <button id="addFrame" class="timeline-add" title="Add frame" aria-label="Add frame">＋</button>
       <div id="frameContainer">
         <button class="frame active" data-frame="1">1</button>
       </div>
     </div>
 
-    <div class="topbar-brand" aria-label="DenX Animator">DenX</div>
+    <div class="topbar-cluster" aria-label="Frame and app controls">
+      <button id="copyFrameBtn" class="cluster-btn" title="Copy current frame" aria-label="Copy current frame">⧉</button>
+      <button id="addFrame" class="cluster-btn cluster-btn--primary" title="Add frame" aria-label="Add frame">＋</button>
+      <button id="playBtn" class="cluster-btn" title="Play" aria-label="Play">▶</button>
 
-    <div class="topbar-actions topbar-actions--right">
-      <button id="zoomOut" class="topbar-btn" title="Zoom out" aria-label="Zoom out">−</button>
-      <button id="zoomIn" class="topbar-btn" title="Zoom in" aria-label="Zoom in">＋</button>
-      <button class="topbar-btn" title="Save" aria-label="Save">💾</button>
-      <button class="topbar-btn topbar-btn--play" title="Play" aria-label="Play">▶</button>
-      <button class="topbar-btn" title="Settings" aria-label="Settings">⚙</button>
+      <button id="pasteFrameBtn" class="cluster-btn" title="Paste copied frame" aria-label="Paste copied frame">📋</button>
+      <button id="removeFrameBtn" class="cluster-btn cluster-btn--danger" title="Remove current frame" aria-label="Remove current frame">−</button>
+      <button id="workspaceSettingsBtn" class="cluster-btn" title="Settings" aria-label="Settings">⚙</button>
     </div>
   </header>
 
@@ -62,11 +60,30 @@
     <aside id="cameraProperties" class="camera-properties hidden" aria-hidden="true">
       <div class="camera-properties__title">Camera</div>
 
-      <label><span>X</span><input type="number" id="cameraPropX" step="1"></label>
-      <label><span>Y</span><input type="number" id="cameraPropY" step="1"></label>
-      <label><span>Width</span><input type="number" id="cameraPropWidth" step="1" min="40"></label>
-      <label><span>Height</span><input type="number" id="cameraPropHeight" step="1" min="40"></label>
-      <label><span>Rotation</span><input type="number" id="cameraPropRotation" step="1"></label>
+      <label>
+        <span>X</span>
+        <input type="number" id="cameraPropX" step="1">
+      </label>
+
+      <label>
+        <span>Y</span>
+        <input type="number" id="cameraPropY" step="1">
+      </label>
+
+      <label>
+        <span>Width</span>
+        <input type="number" id="cameraPropWidth" step="1" min="40">
+      </label>
+
+      <label>
+        <span>Height</span>
+        <input type="number" id="cameraPropHeight" step="1" min="40">
+      </label>
+
+      <label>
+        <span>Rotation</span>
+        <input type="number" id="cameraPropRotation" step="1">
+      </label>
 
       <label class="camera-toggle">
         <input type="checkbox" id="cameraPropGuide">
@@ -91,6 +108,11 @@
           <div class="camera-handle camera-handle-move" data-handle="move" aria-hidden="true"></div>
         </div>
       </div>
+    </div>
+
+    <div class="zoom-controls" aria-label="Zoom controls">
+      <button id="zoomIn" class="zoom-btn" title="Zoom in" aria-label="Zoom in">＋</button>
+      <button id="zoomOut" class="zoom-btn" title="Zoom out" aria-label="Zoom out">−</button>
     </div>
   </div>
 </section>
