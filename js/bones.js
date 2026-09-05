@@ -179,6 +179,8 @@ function createStarterFigure() {
         }
     };
 
+    ensureFigureSegmentLengths(figure, pose);
+
     figures = [figure];
     boneFramePoses = {
         1: {
@@ -251,39 +253,58 @@ function renderFigures() {
             if (!point) return;
 
             if (node.id === figure.rootNodeId) {
-                const rootSize = 22;
-                const root = createSvg("rect", {
-                    x: point.x - rootSize / 2,
-                    y: point.y - rootSize / 2,
-                    width: rootSize,
-                    height: rootSize,
-                    rx: 3,
-                    class: "figure-node-handle figure-root-node",
+                const touchSize = 42;
+                const rootTouch = createSvg("rect", {
+                    x: point.x - touchSize / 2,
+                    y: point.y - touchSize / 2,
+                    width: touchSize,
+                    height: touchSize,
+                    rx: 8,
+                    class: "figure-node-touch-target figure-root-touch-target",
                     "data-denx-node": "1",
                     "data-figure-id": figure.id,
                     "data-node-id": node.id
                 });
 
+                const rootSize = 14;
+                const rootVisual = createSvg("rect", {
+                    x: point.x - rootSize / 2,
+                    y: point.y - rootSize / 2,
+                    width: rootSize,
+                    height: rootSize,
+                    rx: 2,
+                    class: "figure-node-visual figure-root-node"
+                });
+
                 if (selectedFigureId === figure.id && selectedNodeId === node.id) {
-                    root.classList.add("selected");
+                    rootVisual.classList.add("selected");
                 }
 
-                group.appendChild(root);
+                group.appendChild(rootTouch);
+                group.appendChild(rootVisual);
             } else {
-                const handle = createSvg("circle", {
+                const touch = createSvg("circle", {
                     cx: point.x,
                     cy: point.y,
-                    r: 10,
-                    class: "figure-node-handle figure-normal-node",
+                    r: 20,
+                    class: "figure-node-touch-target figure-normal-touch-target",
                     "data-denx-node": "1",
                     "data-figure-id": figure.id,
                     "data-node-id": node.id
+                });
+
+                const handle = createSvg("circle", {
+                    cx: point.x,
+                    cy: point.y,
+                    r: 5.5,
+                    class: "figure-node-visual figure-normal-node"
                 });
 
                 if (selectedFigureId === figure.id && selectedNodeId === node.id) {
                     handle.classList.add("selected");
                 }
 
+                group.appendChild(touch);
                 group.appendChild(handle);
             }
         });
@@ -454,6 +475,58 @@ function nodeDefinition(figure, nodeId) {
     return figure?.nodes.find(node => node.id === nodeId) || null;
 }
 
+function segmentToNode(figure, nodeId) {
+    return figure?.segments.find(segment => segment.to === nodeId) || null;
+}
+
+function segmentLengthForNode(figure, nodeId, pose) {
+    const node = nodeDefinition(figure, nodeId);
+    if (!node || !node.parentId) return 0;
+
+    const segment = segmentToNode(figure, nodeId);
+    const parentPoint = pose?.nodes?.[node.parentId];
+    const nodePoint = pose?.nodes?.[nodeId];
+
+    if (!segment || !parentPoint || !nodePoint) return 0;
+
+    if (!Number.isFinite(segment.length) || segment.length <= 0) {
+        segment.length = Math.max(
+            1,
+            Math.hypot(
+                nodePoint.x - parentPoint.x,
+                nodePoint.y - parentPoint.y
+            )
+        );
+    }
+
+    return segment.length;
+}
+
+function ensureFigureSegmentLengths(figure, pose) {
+    if (!figure || !pose) return;
+
+    figure.nodes.forEach(node => {
+        if (!node.parentId) return;
+        segmentLengthForNode(figure, node.id, pose);
+    });
+}
+
+function rotatePointAround(point, pivot, angleDelta) {
+    const cos = Math.cos(angleDelta);
+    const sin = Math.sin(angleDelta);
+    const dx = point.x - pivot.x;
+    const dy = point.y - pivot.y;
+
+    return {
+        x: pivot.x + (dx * cos - dy * sin),
+        y: pivot.y + (dx * sin + dy * cos)
+    };
+}
+
+function angleBetween(from, to) {
+    return Math.atan2(to.y - from.y, to.x - from.x);
+}
+
 function descendantNodeIds(figure, nodeId) {
     const result = [];
     const queue = [nodeId];
@@ -587,7 +660,7 @@ function movePoseInteraction(e) {
     }
 
     if (boneInteraction.mode === "move-root") {
-        // MAIN/root square moves every node in the figure.
+        // MAIN/root square translates the complete figure with no deformation.
         Object.keys(boneInteraction.startPose.nodes).forEach(nodeId => {
             const start = boneInteraction.startPose.nodes[nodeId];
 
@@ -597,19 +670,62 @@ function movePoseInteraction(e) {
             };
         });
     } else if (boneInteraction.mode === "pose-node") {
-        // Move this joint and its descendants together.
-        // This gives branch-like behavior without locking segment length yet.
+        // Rigid hierarchical rotation:
+        // the selected node rotates around its parent at a fixed radius,
+        // and every descendant rotates with it around the same pivot.
+        const node = nodeDefinition(figure, boneInteraction.nodeId);
+        const parentId = node?.parentId;
+
+        if (!node || !parentId) return;
+
+        const startParent = boneInteraction.startPose.nodes[parentId];
+        const startNode = boneInteraction.startPose.nodes[boneInteraction.nodeId];
+
+        if (!startParent || !startNode) return;
+
+        ensureFigureSegmentLengths(figure, boneInteraction.startPose);
+
+        const fixedLength = segmentLengthForNode(
+            figure,
+            boneInteraction.nodeId,
+            boneInteraction.startPose
+        );
+
+        if (fixedLength <= 0) return;
+
+        const originalAngle = angleBetween(startParent, startNode);
+
+        let targetDx = point.x - startParent.x;
+        let targetDy = point.y - startParent.y;
+        let targetDistance = Math.hypot(targetDx, targetDy);
+
+        if (targetDistance < 0.001) {
+            targetDx = Math.cos(originalAngle);
+            targetDy = Math.sin(originalAngle);
+            targetDistance = 1;
+        }
+
+        const targetAngle = Math.atan2(targetDy, targetDx);
+        const angleDelta = targetAngle - originalAngle;
+
         const affected = descendantNodeIds(figure, boneInteraction.nodeId);
 
         affected.forEach(nodeId => {
             const start = boneInteraction.startPose.nodes[nodeId];
             if (!start) return;
 
-            pose.nodes[nodeId] = {
-                x: start.x + dx,
-                y: start.y + dy
-            };
+            pose.nodes[nodeId] = rotatePointAround(
+                start,
+                startParent,
+                angleDelta
+            );
         });
+
+        // Explicitly pin the dragged joint to the parent's fixed-radius circle.
+        pose.nodes[boneInteraction.nodeId] = {
+            x: startParent.x + Math.cos(targetAngle) * fixedLength,
+            y: startParent.y + Math.sin(targetAngle) * fixedLength
+        };
     }
 
     e.preventDefault();
@@ -655,7 +771,8 @@ function addChildSegment(figureId, parentNodeId, endpoint) {
     figure.segments.push({
         id: newSegmentId,
         from: parentNodeId,
-        to: newNodeId
+        to: newNodeId,
+        length: Math.max(1, Math.hypot(dx, dy))
     });
 
     // Structure is global, so every existing frame receives the node.
@@ -695,7 +812,18 @@ function addNewFigure(startPoint, endPoint) {
             { id: childId, parentId: rootId, role: "custom" }
         ],
         segments: [
-            { id: segmentId, from: rootId, to: childId }
+            {
+                id: segmentId,
+                from: rootId,
+                to: childId,
+                length: Math.max(
+                    1,
+                    Math.hypot(
+                        endPoint.x - startPoint.x,
+                        endPoint.y - startPoint.y
+                    )
+                )
+            }
         ]
     };
 
