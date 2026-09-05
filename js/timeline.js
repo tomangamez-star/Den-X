@@ -68,6 +68,9 @@ function captureTimelineSnapshot() {
         frames: [...frames],
         frameHistory: cloneHistoryMap(frameHistory),
         cameraStates: cloneCameraStateMap(window.denxCameraFrameStates || {}),
+        bonesState: window.denxBonesCaptureProjectState
+            ? window.denxBonesCaptureProjectState()
+            : null,
         currentFrame,
         frameCount
     };
@@ -108,12 +111,20 @@ function restoreTimelineSnapshot(snapshot) {
     frameCount = frames.length;
     currentFrame = Math.max(1, Math.min(snapshot.currentFrame, frames.length));
 
+    if (snapshot.bonesState && window.denxBonesRestoreProjectState) {
+        window.denxBonesRestoreProjectState(snapshot.bonesState);
+    }
+
     rebuildFrameButtons();
     selectFrame(currentFrame, { skipSave: true });
     updateTimelineButtons();
 }
 
 function recordTimelineOperation(before, after) {
+    if (window.denxInvalidateBoneUndo) {
+        window.denxInvalidateBoneUndo();
+    }
+
     timelineUndoStack.push({ before, after });
 
     if (timelineUndoStack.length > 40) {
@@ -125,9 +136,10 @@ function recordTimelineOperation(before, after) {
 }
 
 window.denxInvalidateTimelineUndo = () => {
-    // Drawing becomes the most recent undoable action.
-    // Keep old timeline snapshots, but don't let them jump ahead of drawing undo.
+    // A different editor action became newest.
+    // Clear this lane so Undo never jumps across unrelated actions.
     timelineUndoEligible = false;
+    timelineUndoStack.length = 0;
     timelineRedoStack.length = 0;
 };
 
@@ -139,7 +151,7 @@ window.denxUndoTimelineAction = () => {
     const action = timelineUndoStack.pop();
     timelineRedoStack.push(action);
     restoreTimelineSnapshot(action.before);
-    timelineUndoEligible = timelineUndoStack.length > 0 || timelineRedoStack.length > 0;
+    timelineUndoEligible = timelineUndoStack.length > 0;
     return true;
 };
 
@@ -264,6 +276,10 @@ function selectFrame(frameNumber, options = {}) {
         window.denxLoadCameraFrameState(frameNumber);
     }
 
+    if (window.denxBonesLoadFrame) {
+        window.denxBonesLoadFrame(frameNumber);
+    }
+
     ensureCurrentFrameHistorySeed();
     updateTimelineButtons();
 
@@ -284,8 +300,14 @@ function buildHistoryForInsertedFrame(imageData) {
     };
 }
 
-function insertFrameAfterCurrent(frameData = null, historyData = null, cameraState = null) {
+function insertFrameAfterCurrent(
+    frameData = null,
+    historyData = null,
+    cameraState = null,
+    boneFrameState = null
+) {
     const before = captureTimelineSnapshot();
+    const sourceFrame = currentFrame;
     const newFrame = currentFrame + 1;
 
     shiftStateMapUp(frameHistory, newFrame);
@@ -308,6 +330,10 @@ function insertFrameAfterCurrent(frameData = null, historyData = null, cameraSta
             window.denxCameraFrameStates[newFrame] =
                 window.denxCloneCameraFrameState(sourceState);
         }
+    }
+
+    if (window.denxBonesInsertFrame) {
+        window.denxBonesInsertFrame(newFrame, sourceFrame, boneFrameState);
     }
 
     frameCount = frames.length;
@@ -343,6 +369,10 @@ function removeCurrentFrame() {
     if (window.denxCameraFrameStates) {
         delete window.denxCameraFrameStates[removedFrame];
         shiftStateMapDown(window.denxCameraFrameStates, removedFrame + 1);
+    }
+
+    if (window.denxBonesRemoveFrame) {
+        window.denxBonesRemoveFrame(removedFrame);
     }
 
     const activeButton = document.querySelector(`[data-frame="${removedFrame}"]`);
@@ -385,7 +415,10 @@ function copyCurrentFrame() {
     copiedFrameSnapshot = {
         imageData: frameImage,
         history: historyClone,
-        camera: cameraClone
+        camera: cameraClone,
+        bones: window.denxBonesCopyFrameState
+            ? window.denxBonesCopyFrameState(currentFrame)
+            : null
     };
 
     updateTimelineButtons();
@@ -403,7 +436,8 @@ function pasteCopiedFrame() {
     insertFrameAfterCurrent(
         copiedFrameSnapshot.imageData,
         historyClone,
-        cameraClone
+        cameraClone,
+        copiedFrameSnapshot.bones
     );
 }
 

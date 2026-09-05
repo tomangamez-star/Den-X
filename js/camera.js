@@ -24,6 +24,7 @@ const cameraElement = document.getElementById("camera");
 const cameraFrameEl = document.getElementById("cameraFrame");
 const stageGuideEl = document.getElementById("stageGuide");
 const drawingCanvasEl = document.getElementById("drawingCanvas");
+const figureLayerEl = document.getElementById("figureLayer");
 
 const zoomIn = document.getElementById("zoomIn");
 const zoomOut = document.getElementById("zoomOut");
@@ -303,6 +304,18 @@ function startPan(e) {
     if (cameraFrameEl && cameraFrameEl.contains(e.target)) return;
 
     addTouch(e);
+
+    // Bone editing owns pointer gestures that begin on figure nodes.
+    // Bone mode also owns empty figure-layer drags because those create figures.
+    const figureNodeTarget = e.target.closest?.('[data-denx-node="1"]');
+
+    if ((currentTool === "select" || currentTool === "bone") && figureNodeTarget) {
+        return;
+    }
+
+    if (currentTool === "bone" && figureLayerEl && e.target === figureLayerEl) {
+        return;
+    }
 
     if ((currentTool === "pencil" || currentTool === "eraser") && e.target === drawingCanvasEl) {
         return;

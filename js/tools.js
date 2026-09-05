@@ -4,6 +4,7 @@
 console.log("Reached Tool Manager");
 
 const selectTool = document.getElementById("selectTool");
+const boneTool = document.getElementById("boneTool");
 const pencilTool = document.getElementById("pencilTool");
 const eraserTool = document.getElementById("eraserTool");
 const cameraTool = document.getElementById("cameraTool");
@@ -17,6 +18,7 @@ function setTool(tool){
 
     // Remove active state from all buttons
     if(selectTool) selectTool.classList.remove("active");
+    if(boneTool) boneTool.classList.remove("active");
     if(pencilTool) pencilTool.classList.remove("active");
     if(eraserTool) eraserTool.classList.remove("active");
     if(cameraTool) cameraTool.classList.remove("active");
@@ -24,6 +26,10 @@ function setTool(tool){
     // Highlight selected tool
     if(tool === "select" && selectTool){
         selectTool.classList.add("active");
+    }
+
+    if(tool === "bone" && boneTool){
+        boneTool.classList.add("active");
     }
 
     if(tool === "pencil" && pencilTool){
@@ -60,6 +66,10 @@ function setTool(tool){
 // Button Events
 if(selectTool){
     selectTool.onclick = () => setTool("select");
+}
+
+if(boneTool){
+    boneTool.onclick = () => setTool("bone");
 }
 
 if(pencilTool){

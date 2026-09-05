@@ -42,6 +42,10 @@ if(undoBtn){
         return;
     }
 
+    if (window.denxUndoBoneAction && window.denxUndoBoneAction()) {
+        return;
+    }
+
     const history = getHistory();
 
     if(history.undo.length <= 1) return;
@@ -71,6 +75,10 @@ if(redoBtn){
     redoBtn.onclick = ()=>{
 
     if (window.denxRedoTimelineAction && window.denxRedoTimelineAction()) {
+        return;
+    }
+
+    if (window.denxRedoBoneAction && window.denxRedoBoneAction()) {
         return;
     }
 

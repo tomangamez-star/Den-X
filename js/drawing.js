@@ -66,6 +66,10 @@ if (canvas && ctx) {
             window.denxInvalidateTimelineUndo();
         }
 
+        if (window.denxInvalidateBoneUndo) {
+            window.denxInvalidateBoneUndo();
+        }
+
         const history = getHistory();
         history.undo.push(canvas.toDataURL());
 
