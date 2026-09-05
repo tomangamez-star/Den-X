@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="icons/icon-192.png">
+</head>
+<body>
+<section id="workspace">
+  <header class="topbar">
+    <button id="workspaceBack">←</button>
+    <button id="undoBtn">↶</button>
+    <button id="redoBtn">↷</button>
+    <button id="toggleToolbar">☰</button>
+    <h6>DenX</h6>
+    <div>
+      <button id="zoomOut">➖</button>
+      <button id="zoomIn">➕</button>
+      <button>💾</button>
+      <button>▶</button>
+      <button>⚙</button>
+    </div>
+  </header>
+
+  <div class="editor">
+    <aside class="toolbar">
+      <button id="selectTool">🖱 <br> Select </button>
+      <button id="boneTool">🦴 <br> Bone </button>
+      <button id="pencilTool">✏ <br> Pencil </button>
+      <button id="eraserTool">🧽 <br> Eraser </button>
+      <button id="cameraTool">📷<br>Camera</button>
+    </aside>
+
+    <aside id="cameraProperties" class="camera-properties hidden" aria-hidden="true">
+      <div class="camera-properties__title">Camera</div>
+
+      <label>
+        <span>X</span>
+        <input type="number" id="cameraPropX" step="1">
+      </label>
+
+      <label>
+        <span>Y</span>
+        <input type="number" id="cameraPropY" step="1">
+      </label>
+
+      <label>
+        <span>Width</span>
+        <input type="number" id="cameraPropWidth" step="1" min="40">
+      </label>
+
+      <label>
+        <span>Height</span>
+        <input type="number" id="cameraPropHeight" step="1" min="40">
+      </label>
+
+      <label>
+        <span>Rotation</span>
+        <input type="number" id="cameraPropRotation" step="1">
+      </label>
+
+      <label class="camera-toggle">
+        <input type="checkbox" id="cameraPropGuide">
+        <span>Stage guide</span>
+      </label>
+
+      <label class="camera-toggle">
+        <input type="checkbox" id="cameraPropQuickMove">
+        <span>Quick move handle</span>
+      </label>
+    </aside>
+
+    <div id="viewport">
+      <div id="camera">
+        <div id="stageGuide" aria-hidden="true"></div>
+        <div id="stage">
+          <canvas id="drawingCanvas"></canvas>
+        </div>
+        <div id="cameraFrame" aria-hidden="true">
+          <div class="camera-handle camera-handle-rotate" data-handle="rotate" aria-hidden="true"></div>
+          <div class="camera-handle camera-handle-resize" data-handle="resize" aria-hidden="true"></div>
+          <div class="camera-handle camera-handle-move" data-handle="move" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="timeline">
+    <button id="addFrame">➕</button>
+    <div id="frameContainer">
+      <button class="frame active" data-frame="1">1</button>
+    </div>
+  </div>
+</section>
+
+<script src="js/app.js"></script>
+<script src="js/history.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/drawing.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
