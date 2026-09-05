@@ -478,3 +478,24 @@
 .figure-node-handle {
   display: none !important;
 }
+
+
+/* ============================================================
+   DenX Bones V3 — smaller outline-only joints
+   ============================================================ */
+
+.figure-normal-node {
+  fill: transparent;
+  stroke: #ececec;
+  stroke-width: 2.4px;
+}
+
+.figure-root-node {
+  stroke-width: 2.6px;
+}
+
+.figure-node-visual.selected {
+  stroke: var(--primary);
+  stroke-width: 3.2px;
+  filter: drop-shadow(0 0 6px rgba(0,200,255,.82));
+}
