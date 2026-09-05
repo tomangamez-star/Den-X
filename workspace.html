@@ -101,6 +101,17 @@
         <div id="stageGuide" aria-hidden="true"></div>
         <div id="stage">
           <canvas id="drawingCanvas"></canvas>
+
+          <!--
+            Figures live on their own object layer.
+            Pencil/Eraser only affect drawingCanvas; bone figures remain editable objects.
+          -->
+          <svg
+            id="figureLayer"
+            viewBox="0 0 2048 1152"
+            preserveAspectRatio="none"
+            aria-label="DenX figure layer"
+          ></svg>
         </div>
         <div id="cameraFrame" aria-hidden="true">
           <div class="camera-handle camera-handle-rotate" data-handle="rotate" aria-hidden="true"></div>
@@ -122,6 +133,7 @@
 <script src="js/tools.js"></script>
 <script src="js/drawing.js"></script>
 <script src="js/camera.js"></script>
+<script src="js/bones.js"></script>
 <script src="js/timeline.js"></script>
 <script src="js/pwa.js"></script>
 </body>
