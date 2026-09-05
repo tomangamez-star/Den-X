@@ -3,6 +3,8 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 :root{
@@ -30,22 +32,32 @@ body{
   font-family:Arial,sans-serif;
   margin:0;
   padding:0;
+  overflow:hidden;
 }
 
 #app{
   width:100vw;
-  height:100vh;
+  height:100dvh;
+  min-height:100dvh;
   background:var(--background);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  padding:16px;
 }
 
 .home-card{
-  width:90%;
-  max-width:400px;
+  width:min(92vw, 430px);
+  max-width:430px;
   background:var(--surface);
-  padding:30px;
+  padding:28px;
   border-radius:var(--radius);
   text-align:center;
-  margin:100px auto 0;
+  margin:0 auto;
+  position:relative;
 
   animation: pulseGlow 2.5s ease-in-out infinite;
 }
@@ -129,27 +141,40 @@ transform:scale(1.03);
 
 }
 
-footer{
-
-margin-top:30px;
-
-color:gray;
-
-font-size:14px;
-
+#appFooter{
+  position:fixed;
+  left:12px;
+  bottom:10px;
+  color:gray;
+  font-size:14px;
+  z-index:10;
+  pointer-events:none;
 }
 
 #projectScreen{
     background-image: url("../assets/backgrounds/denx-doodles.png");
     background-repeat: repeat;
     background-size: 350px;
+    text-align:left;
+}
+
+#projectScreen h2{
+  font-size:34px;
+  line-height:1.05;
+  margin-bottom:6px;
+}
+
+#projectScreen p{
+  color:var(--subtext);
+  margin-bottom:18px;
+  font-size:16px;
 }
 
 input{
 
 width:100%;
 
-padding:14px;
+padding:16px;
 
 background:#202020;
 
@@ -157,14 +182,43 @@ color:white;
 
 border:none;
 
-border-radius:10px;
+border-radius:12px;
 
 outline:none;
 
 font-size:16px;
 
-margin-top:15px;
+margin-top:0;
 
+}
+
+.project-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin-top:20px;
+}
+
+.project-actions button{
+  min-width:110px;
+  padding:14px 18px;
+  font-size:18px;
+  border:none;
+  border-radius:12px;
+  background:var(--primary);
+  color:#050505;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.project-actions button.secondary-btn{
+  background:#2a2a2a;
+  color:var(--text);
+}
+
+.project-actions button:hover{
+  transform:scale(1.03);
 }
 
 #workspace{
