@@ -3,6 +3,9 @@
 // =========================
 
 const addFrame = document.getElementById("addFrame");
+const removeFrameBtn = document.getElementById("removeFrameBtn");
+const copyFrameBtn = document.getElementById("copyFrameBtn");
+const pasteFrameBtn = document.getElementById("pasteFrameBtn");
 const frameContainer = document.getElementById("frameContainer");
 
 // Every frame stores its own drawing
@@ -10,14 +13,20 @@ let frames = [
     canvas.toDataURL()
 ];
 
+let copiedFrameSnapshot = null;
+
 function saveCurrentFrame() {
-
     frames[currentFrame - 1] = canvas.toDataURL();
+}
 
+function cloneHistoryEntry(entry) {
+    return {
+        undo: Array.isArray(entry?.undo) ? [...entry.undo] : [],
+        redo: Array.isArray(entry?.redo) ? [...entry.redo] : []
+    };
 }
 
 function shiftStateMapUp(map, fromFrame) {
-
     const keys = Object.keys(map)
         .map(Number)
         .filter(key => key >= fromFrame)
@@ -27,35 +36,83 @@ function shiftStateMapUp(map, fromFrame) {
         map[key + 1] = map[key];
         delete map[key];
     });
-
 }
 
-function cloneCameraForNewFrame(sourceFrame) {
+function shiftStateMapDown(map, fromFrame) {
+    const keys = Object.keys(map)
+        .map(Number)
+        .filter(key => key >= fromFrame)
+        .sort((a, b) => a - b);
 
-    if (!window.denxCameraFrameStates || !window.denxCloneCameraFrameState) {
-        return;
+    keys.forEach(key => {
+        map[key - 1] = map[key];
+        delete map[key];
+    });
+}
+
+function renumberFrameButtons() {
+    document.querySelectorAll(".frame").forEach((btn, index) => {
+        const frameNumber = index + 1;
+        btn.dataset.frame = frameNumber;
+        btn.textContent = frameNumber;
+    });
+}
+
+function createFrameButton(frameNumber) {
+    const frame = document.createElement("button");
+    frame.className = "frame";
+    frame.dataset.frame = frameNumber;
+    frame.textContent = frameNumber;
+    frame.onclick = () => {
+        selectFrame(Number(frame.dataset.frame));
+    };
+    return frame;
+}
+
+function updateTimelineButtons() {
+    if (removeFrameBtn) {
+        removeFrameBtn.disabled = frames.length <= 1;
     }
 
-    const sourceState =
-        window.denxCameraFrameStates[sourceFrame] ||
-        window.denxCameraFrameStates[currentFrame] ||
-        window.denxCameraFrameStates[1];
-
-    if (sourceState) {
-        window.denxCameraFrameStates[currentFrame + 1] =
-            window.denxCloneCameraFrameState(sourceState);
+    if (pasteFrameBtn) {
+        pasteFrameBtn.disabled = !copiedFrameSnapshot;
     }
+}
 
+function ensureCurrentFrameHistorySeed() {
+    const history = getHistory();
+
+    if (history.undo.length === 0) {
+        history.undo.push(canvas.toDataURL());
+    }
+}
+
+function loadFrame(frameNumber) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const data = frames[frameNumber - 1];
+
+    if (!data) return;
+
+    const img = new Image();
+
+    img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+    };
+
+    img.src = data;
 }
 
 // Select a frame
-function selectFrame(frameNumber) {
+function selectFrame(frameNumber, options = {}) {
+    const { skipSave = false } = options;
 
-    // Save the frame we're leaving
-    saveCurrentFrame();
+    if (!skipSave) {
+        saveCurrentFrame();
 
-    if (window.denxSaveCameraFrameState) {
-        window.denxSaveCameraFrameState(currentFrame);
+        if (window.denxSaveCameraFrameState) {
+            window.denxSaveCameraFrameState(currentFrame);
+        }
     }
 
     currentFrame = frameNumber;
@@ -64,9 +121,7 @@ function selectFrame(frameNumber) {
         frame.classList.remove("active");
     });
 
-    const activeFrame = document.querySelector(
-        `[data-frame="${frameNumber}"]`
-    );
+    const activeFrame = document.querySelector(`[data-frame="${frameNumber}"]`);
 
     if (activeFrame) {
         activeFrame.classList.add("active");
@@ -79,133 +134,175 @@ function selectFrame(frameNumber) {
         window.denxLoadCameraFrameState(frameNumber);
     }
 
-    // Make sure this frame starts with a blank history state
-    const history = getHistory();
-
-    if (history.undo.length === 0) {
-        history.undo.push(canvas.toDataURL());
-    }
+    ensureCurrentFrameHistorySeed();
+    updateTimelineButtons();
 
     console.log("Current Frame:", currentFrame);
-
 }
 
-function loadFrame(frameNumber) {
+function buildHistoryForInsertedFrame(imageData) {
+    if (!imageData) {
+        return {
+            undo: [],
+            redo: []
+        };
+    }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return {
+        undo: [imageData],
+        redo: []
+    };
+}
 
-    const data = frames[frameNumber - 1];
+function insertFrameAfterCurrent(frameData = null, historyData = null, cameraState = null) {
+    const newFrame = currentFrame + 1;
 
-    if (!data) return;
+    shiftStateMapUp(frameHistory, newFrame);
 
-    const img = new Image();
+    if (window.denxCameraFrameStates) {
+        shiftStateMapUp(window.denxCameraFrameStates, newFrame);
+    }
 
-    img.onload = () => {
+    frames.splice(currentFrame, 0, frameData);
 
-        ctx.drawImage(img, 0, 0);
+    frameHistory[newFrame] = historyData || buildHistoryForInsertedFrame(frameData);
 
+    if (window.denxCameraFrameStates && window.denxCloneCameraFrameState) {
+        const sourceState = cameraState ||
+            window.denxCameraFrameStates[currentFrame] ||
+            window.denxCameraFrameStates[newFrame - 1] ||
+            window.denxCameraFrameStates[1];
+
+        if (sourceState) {
+            window.denxCameraFrameStates[newFrame] =
+                window.denxCloneCameraFrameState(sourceState);
+        }
+    }
+
+    frameCount = frames.length;
+
+    const frame = createFrameButton(newFrame);
+    const currentBtn = document.querySelector(`[data-frame="${currentFrame}"]`);
+
+    if (currentBtn) {
+        currentBtn.after(frame);
+    } else if (frameContainer) {
+        frameContainer.appendChild(frame);
+    }
+
+    renumberFrameButtons();
+    selectFrame(newFrame);
+    updateTimelineButtons();
+}
+
+function removeCurrentFrame() {
+    if (frames.length <= 1) return;
+
+    saveCurrentFrame();
+
+    if (window.denxSaveCameraFrameState) {
+        window.denxSaveCameraFrameState(currentFrame);
+    }
+
+    const removedFrame = currentFrame;
+    frames.splice(removedFrame - 1, 1);
+
+    delete frameHistory[removedFrame];
+    shiftStateMapDown(frameHistory, removedFrame + 1);
+
+    if (window.denxCameraFrameStates) {
+        delete window.denxCameraFrameStates[removedFrame];
+        shiftStateMapDown(window.denxCameraFrameStates, removedFrame + 1);
+    }
+
+    const activeButton = document.querySelector(`[data-frame="${removedFrame}"]`);
+    if (activeButton) {
+        activeButton.remove();
+    }
+
+    frameCount = frames.length;
+    renumberFrameButtons();
+
+    const nextFrame = Math.min(removedFrame, frames.length);
+    selectFrame(nextFrame, { skipSave: true });
+    updateTimelineButtons();
+}
+
+function copyCurrentFrame() {
+    saveCurrentFrame();
+
+    if (window.denxSaveCameraFrameState) {
+        window.denxSaveCameraFrameState(currentFrame);
+    }
+
+    const frameImage = frames[currentFrame - 1] || canvas.toDataURL();
+    const historyClone = cloneHistoryEntry(frameHistory[currentFrame]);
+
+    let cameraClone = null;
+    if (window.denxCameraFrameStates && window.denxCloneCameraFrameState) {
+        const state = window.denxCameraFrameStates[currentFrame];
+        if (state) {
+            cameraClone = window.denxCloneCameraFrameState(state);
+        }
+    }
+
+    copiedFrameSnapshot = {
+        imageData: frameImage,
+        history: historyClone,
+        camera: cameraClone
     };
 
-    img.src = data;
+    updateTimelineButtons();
+}
 
+function pasteCopiedFrame() {
+    if (!copiedFrameSnapshot) return;
+
+    const historyClone = cloneHistoryEntry(copiedFrameSnapshot.history);
+    const cameraClone =
+        copiedFrameSnapshot.camera && window.denxCloneCameraFrameState
+            ? window.denxCloneCameraFrameState(copiedFrameSnapshot.camera)
+            : null;
+
+    insertFrameAfterCurrent(
+        copiedFrameSnapshot.imageData,
+        historyClone,
+        cameraClone
+    );
 }
 
 // Make Frame 1 clickable
 const firstFrame = document.querySelector('[data-frame="1"]');
-
 if (firstFrame) {
     firstFrame.onclick = () => {
         selectFrame(1);
     };
 }
 
-// =========================
-// ADD FRAME
-// =========================
-
 if (addFrame) {
-
     addFrame.onclick = () => {
-
-        // Insert AFTER the current frame
-        const newFrame = currentFrame + 1;
-
-        shiftStateMapUp(frameHistory, newFrame);
-
-        if (window.denxCameraFrameStates) {
-            shiftStateMapUp(window.denxCameraFrameStates, newFrame);
-        }
-
-        // Shift all existing buttons up by one
-        document.querySelectorAll(".frame").forEach(frame => {
-
-            let num = Number(frame.dataset.frame);
-
-            if (num >= newFrame) {
-
-                num++;
-
-                frame.dataset.frame = num;
-                frame.textContent = num;
-
-            }
-
-        });
-
-        // Create empty frame
-        frames.splice(currentFrame, 0, null);
-
-        // Create history for the new frame
-        frameHistory[newFrame] = {
-            undo: [],
-            redo: []
-        };
-
-        if (window.denxCameraFrameStates && window.denxCloneCameraFrameState) {
-            const sourceState =
-                window.denxCameraFrameStates[currentFrame] ||
-                window.denxCameraFrameStates[newFrame - 1] ||
-                window.denxCameraFrameStates[1];
-
-            if (sourceState) {
-                window.denxCameraFrameStates[newFrame] =
-                    window.denxCloneCameraFrameState(sourceState);
-            }
-        }
-
-        frameCount++;
-
-        const frame = document.createElement("button");
-
-        frame.className = "frame";
-        frame.dataset.frame = newFrame;
-        frame.textContent = newFrame;
-
-        frame.onclick = () => {
-            selectFrame(Number(frame.dataset.frame));
-        };
-
-        // Insert after current frame
-        const currentBtn = document.querySelector(
-            `[data-frame="${currentFrame}"]`
-        );
-
-        currentBtn.after(frame);
-
-        // Select the new frame
-        selectFrame(newFrame);
-
-        // Renumber buttons in order
-        document.querySelectorAll(".frame").forEach((btn, index) => {
-
-            btn.dataset.frame = index + 1;
-            btn.textContent = index + 1;
-
-        });
-
+        insertFrameAfterCurrent();
     };
+}
 
+if (removeFrameBtn) {
+    removeFrameBtn.onclick = () => {
+        removeCurrentFrame();
+    };
+}
+
+if (copyFrameBtn) {
+    copyFrameBtn.onclick = () => {
+        copyCurrentFrame();
+    };
+}
+
+if (pasteFrameBtn) {
+    pasteFrameBtn.onclick = () => {
+        pasteCopiedFrame();
+    };
 }
 
 // Select Frame 1 on startup
-selectFrame(1);
+selectFrame(1, { skipSave: true });
+updateTimelineButtons();
