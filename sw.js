@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v14-import-dialog-camera-thumbs";
+const CACHE_NAME = "denx-animator-v15-velocity-0-2";
 const APP_SHELL = [
   "./",
   "./index.html",
