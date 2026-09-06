@@ -499,3 +499,28 @@
   stroke-width: 3.2px;
   filter: drop-shadow(0 0 6px rgba(0,200,255,.82));
 }
+
+
+/* ============================================================
+   DenX Bones V4 — contrast-safe thin handles + root size clamp
+   ============================================================ */
+
+.figure-normal-node {
+  fill: transparent;
+  stroke: var(--denx-node-contrast, #f4f4f4);
+  stroke-width: var(--denx-node-stroke, 1px);
+}
+
+.figure-root-node {
+  /* MAIN stays unmistakably DenX, while the outline auto-contrasts. */
+  fill: var(--primary);
+  stroke: var(--denx-node-contrast, #111111);
+  stroke-width: var(--denx-node-stroke, 1.2px);
+  filter: drop-shadow(0 0 2px rgba(0,200,255,.38));
+}
+
+.figure-node-visual.selected {
+  stroke: var(--primary);
+  stroke-width: var(--denx-node-selected-stroke, 1.55px);
+  filter: drop-shadow(0 0 4px rgba(0,200,255,.82));
+}
