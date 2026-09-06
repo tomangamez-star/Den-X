@@ -1484,3 +1484,90 @@ body.denx-playing #figureLayer {
 #frameContainer {
   touch-action: pan-x;
 }
+
+/* ============================================================
+   DENX v0.2 VELOCITY — performance + gesture polish
+   ============================================================ */
+
+/* Quick Find sleeps visibly on top of the canvas but is pointer-transparent.
+   workspace-ui.js detects a clean tap by coordinates and wakes it. */
+.tool-quickfind {
+  opacity: .27;
+  pointer-events: none;
+  filter: saturate(.7);
+  transition: opacity .16s ease, filter .16s ease, background .16s ease;
+}
+
+.tool-quickfind .quickfind-link {
+  pointer-events: none;
+}
+
+.tool-quickfind.quickfind-awake {
+  opacity: .96;
+  pointer-events: auto;
+  filter: none;
+  background: rgba(10,10,10,.88);
+}
+
+.tool-quickfind.quickfind-awake .quickfind-link {
+  pointer-events: auto;
+}
+
+body.denx-navigating .tool-quickfind:not(.quickfind-awake) {
+  opacity: .13;
+}
+
+/* Off-viewport figures keep their geometry/state but stop painting until they
+   move back into the usable editor viewport. */
+.denx-figure.denx-figure-offscreen {
+  visibility: hidden;
+  pointer-events: none !important;
+}
+
+/* Pan/zoom quality mode: expensive editor-only effects disappear while the
+   viewport is moving, then restore automatically after the gesture settles. */
+body.denx-navigating #figureLayer .figure-node-visual,
+body.denx-navigating #figureLayer .figure-root-node,
+body.denx-navigating #figureLayer .bone-build-preview,
+body.denx-navigating #figureLayer .denx-figure * {
+  filter: none !important;
+  transition: none !important;
+}
+
+body.denx-navigating #figureLayer .figure-node-visual,
+body.denx-navigating #figureLayer .figure-node-touch-target {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Playback is clean camera output: pose nodes/root/hit targets are editor UI,
+   never part of the preview. */
+body.denx-playing #figureLayer .figure-node-visual,
+body.denx-playing #figureLayer .figure-node-touch-target,
+body.denx-camera-preview-playing #figureLayer .figure-node-visual,
+body.denx-camera-preview-playing #figureLayer .figure-node-touch-target {
+  display: none !important;
+}
+
+/* Timeline cards now read like tiny 16:9 shots instead of squeezed squares. */
+.frame.frame-with-thumb {
+  width: 84px;
+  min-width: 84px;
+  height: 58px;
+  min-height: 58px;
+  padding: 4px;
+}
+
+.frame-thumb {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.frame-thumb-camera,
+.frame-thumb-drawing,
+.frame-thumb-figure {
+  width: 100%;
+  height: 100%;
+}
+
