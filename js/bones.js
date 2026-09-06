@@ -200,33 +200,93 @@ function createSvg(tag, attrs = {}) {
 }
 
 
+function segmentPolygonPoints(type, from, to, width) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.max(1, Math.hypot(dx, dy));
+    const ux = dx / length;
+    const uy = dy / length;
+    const px = -uy;
+    const py = ux;
+    const half = Math.max(2, width / 2);
+
+    const point = (along, across) => ({
+        x: from.x + ux * along + px * across,
+        y: from.y + uy * along + py * across
+    });
+
+    if (type === "triangle") {
+        return [point(0,-half), point(0,half), point(length,0)];
+    }
+
+    if (type === "diamond") {
+        return [
+            point(0,0),
+            point(length/2,-half),
+            point(length,0),
+            point(length/2,half)
+        ];
+    }
+
+    if (type === "hexagon") {
+        const inset = Math.min(length * 0.22, half * 1.2);
+        return [
+            point(0,0),
+            point(inset,-half),
+            point(length-inset,-half),
+            point(length,0),
+            point(length-inset,half),
+            point(inset,half)
+        ];
+    }
+
+    return [
+        point(0,-half),
+        point(length,-half),
+        point(length,half),
+        point(0,half)
+    ];
+}
+
 function appendFigureSegment(group, figure, segment, from, to) {
     const type = segment.type || "rounded";
     const width = Number(segment.style?.width) || figure.style?.thickness || 12;
     const color = segment.style?.color || figure.style?.color || "#111111";
 
     if (type === "circle") {
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
-        const length = Math.max(1, Math.hypot(dx, dy));
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        const cx = (from.x + to.x) / 2;
-        const cy = (from.y + to.y) / 2;
+        const radius = Math.max(3, Math.hypot(to.x - from.x, to.y - from.y));
 
-        group.appendChild(createSvg("ellipse", {
-            cx,
-            cy,
-            rx: length / 2,
-            ry: Math.max(2, width / 2),
+        group.appendChild(createSvg("circle", {
+            cx: from.x,
+            cy: from.y,
+            r: radius,
             fill: color,
-            class: "figure-segment figure-segment-shape",
-            transform: `rotate(${angle} ${cx} ${cy})`
+            class: "figure-segment figure-segment-shape"
         }));
 
         return;
     }
 
-    const line = createSvg("line", {
+    if (
+        type === "rectangle" ||
+        type === "triangle" ||
+        type === "diamond" ||
+        type === "hexagon"
+    ) {
+        const points = segmentPolygonPoints(type, from, to, width)
+            .map(point => `${point.x},${point.y}`)
+            .join(" ");
+
+        group.appendChild(createSvg("polygon", {
+            points,
+            fill: color,
+            class: "figure-segment figure-segment-shape"
+        }));
+
+        return;
+    }
+
+    group.appendChild(createSvg("line", {
         x1: from.x,
         y1: from.y,
         x2: to.x,
@@ -234,10 +294,8 @@ function appendFigureSegment(group, figure, segment, from, to) {
         class: "figure-segment",
         stroke: color,
         "stroke-width": width,
-        "stroke-linecap": type === "rounded" ? "round" : "butt"
-    });
-
-    group.appendChild(line);
+        "stroke-linecap": "round"
+    }));
 }
 
 function renderFigures() {
@@ -601,9 +659,9 @@ function getHandleMetrics() {
     );
 
     const rootScreenSize = clampHandleValue(
-        10.5 / Math.pow(zoom, 0.10),
-        8.5,
-        10.5
+        8.2 / Math.pow(zoom, 0.10),
+        6.7,
+        8.2
     );
 
     const normalStrokeScreen = 1.05;

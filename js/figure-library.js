@@ -32,7 +32,16 @@
     }
 
     function writeArray(key, value) {
-        localStorage.setItem(key, JSON.stringify(value));
+        const serialized = JSON.stringify(value);
+        localStorage.setItem(key, serialized);
+
+        // Do not claim a figure was saved/imported unless the browser can
+        // immediately read the exact payload back.
+        const verified = localStorage.getItem(key);
+
+        if (verified !== serialized) {
+            throw new Error("DenX could not persist figure data on this device.");
+        }
     }
 
     function sanitizeDefinition(input) {
@@ -150,6 +159,8 @@
         getProjectFigures,
         getProjectFigure,
         importToProject,
-        parseFigureFile
+        parseFigureFile,
+        getLibraryCount: () => getLibrary().length,
+        getProjectFigureCount: () => getProjectFigures().length
     };
 })();

@@ -1,26 +1,34 @@
 // =========================
-// DENX TOOL MANAGER
+// DENX TOOL MANAGER V2
+// Active tool tapped again -> Pan.
 // =========================
 
+const panTool = document.getElementById("panTool");
 const selectTool = document.getElementById("selectTool");
 const pencilTool = document.getElementById("pencilTool");
 const eraserTool = document.getElementById("eraserTool");
 const cameraTool = document.getElementById("cameraTool");
 const cameraFrame = document.getElementById("cameraFrame");
 
-let currentTool = "select";
+let currentTool = "pan";
+
+function toolButtonFor(tool) {
+    if (tool === "pan") return panTool;
+    if (tool === "select") return selectTool;
+    if (tool === "pencil") return pencilTool;
+    if (tool === "eraser") return eraserTool;
+    if (tool === "camera") return cameraTool;
+    return null;
+}
 
 function setTool(tool) {
     currentTool = tool;
 
-    [selectTool, pencilTool, eraserTool, cameraTool].forEach(button => {
+    [panTool, selectTool, pencilTool, eraserTool, cameraTool].forEach(button => {
         button?.classList.remove("active");
     });
 
-    if (tool === "select") selectTool?.classList.add("active");
-    if (tool === "pencil") pencilTool?.classList.add("active");
-    if (tool === "eraser") eraserTool?.classList.add("active");
-    if (tool === "camera") cameraTool?.classList.add("active");
+    toolButtonFor(tool)?.classList.add("active");
 
     if (cameraFrame) {
         cameraFrame.classList.toggle("camera-active", tool === "camera");
@@ -31,11 +39,19 @@ function setTool(tool) {
     }));
 }
 
+function activateOrPan(tool) {
+    // Fast mobile escape hatch:
+    // tapping the already-active tool returns to Pan.
+    setTool(currentTool === tool ? "pan" : tool);
+}
+
 window.denxSetTool = setTool;
+window.denxCurrentTool = () => currentTool;
 
-selectTool?.addEventListener("click", () => setTool("select"));
-pencilTool?.addEventListener("click", () => setTool("pencil"));
-eraserTool?.addEventListener("click", () => setTool("eraser"));
-cameraTool?.addEventListener("click", () => setTool("camera"));
+panTool?.addEventListener("click", () => setTool("pan"));
+selectTool?.addEventListener("click", () => activateOrPan("select"));
+pencilTool?.addEventListener("click", () => activateOrPan("pencil"));
+eraserTool?.addEventListener("click", () => activateOrPan("eraser"));
+cameraTool?.addEventListener("click", () => activateOrPan("camera"));
 
-setTool("select");
+setTool("pan");

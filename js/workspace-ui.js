@@ -19,7 +19,8 @@
 
     const backgroundColorControl = document.getElementById("backgroundColorControl");
     const drawColorControl = document.getElementById("drawColorControl");
-    const viewport = document.getElementById("viewport");
+    const stage = document.getElementById("stage");
+    const drawingCanvas = document.getElementById("drawingCanvas");
     const toast = document.getElementById("denxToast");
 
     let toastTimer = null;
@@ -81,13 +82,21 @@
     });
 
     function applyWorkspaceBackground(color) {
-        if (!color || !viewport) return;
-        viewport.style.background = color;
-        localStorage.setItem("denx.workspaceBackground", color);
+        if (!color) return;
+
+        // Background means the animation stage itself, NOT the environment
+        // surrounding the stage/camera.
+        if (stage) stage.style.background = color;
+        if (drawingCanvas) drawingCanvas.style.background = color;
+
+        window.denxStageBackgroundColor = color;
+        localStorage.setItem("denx.stageBackground", color);
     }
 
     const savedBackground =
-        localStorage.getItem("denx.workspaceBackground") || "#111111";
+        localStorage.getItem("denx.stageBackground") ||
+        localStorage.getItem("denx.workspaceBackground") ||
+        "#ffffff";
 
     if (backgroundColorControl) {
         backgroundColorControl.value = savedBackground;
@@ -142,8 +151,10 @@
     window.denxRefreshProjectFigurePicker = renderProjectFigures;
 
     function closeImportModal() {
-        modal?.classList.add("hidden");
-        modal?.setAttribute("aria-hidden", "true");
+        if (!modal) return;
+        modal.classList.add("hidden");
+        modal.style.display = "";
+        modal.setAttribute("aria-hidden", "true");
     }
 
     function importDefinitionToProject(definition) {
@@ -188,9 +199,15 @@
     }
 
     function openImportModal() {
+        if (!modal) {
+            showToast("Import window is unavailable.");
+            return;
+        }
+
         renderSavedFigures();
-        modal?.classList.remove("hidden");
-        modal?.setAttribute("aria-hidden", "false");
+        modal.classList.remove("hidden");
+        modal.style.display = "grid";
+        modal.setAttribute("aria-hidden", "false");
     }
 
     importFigureBtn?.addEventListener("click", openImportModal);

@@ -117,6 +117,59 @@
         segmentWidthInput.value = Number(segment.style?.width) || defaultWidth;
     }
 
+    function polygonPointsForSegment(type, from, to, width) {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length = Math.max(1, Math.hypot(dx, dy));
+        const ux = dx / length;
+        const uy = dy / length;
+        const px = -uy;
+        const py = ux;
+        const half = Math.max(2, width / 2);
+
+        const point = (along, across) => ({
+            x: from.x + ux * along + px * across,
+            y: from.y + uy * along + py * across
+        });
+
+        if (type === "triangle") {
+            return [
+                point(0, -half),
+                point(0, half),
+                point(length, 0)
+            ];
+        }
+
+        if (type === "diamond") {
+            return [
+                point(0, 0),
+                point(length / 2, -half),
+                point(length, 0),
+                point(length / 2, half)
+            ];
+        }
+
+        if (type === "hexagon") {
+            const inset = Math.min(length * 0.22, half * 1.2);
+            return [
+                point(0, 0),
+                point(inset, -half),
+                point(length - inset, -half),
+                point(length, 0),
+                point(length - inset, half),
+                point(inset, half)
+            ];
+        }
+
+        // Rectangle.
+        return [
+            point(0, -half),
+            point(length, -half),
+            point(length, half),
+            point(0, half)
+        ];
+    }
+
     function drawSegment(group, segment) {
         const from = pose[segment.from];
         const to = pose[segment.to];
@@ -129,19 +182,33 @@
         let shape;
 
         if (segment.type === "circle") {
-            const dx = to.x - from.x;
-            const dy = to.y - from.y;
-            const length = Math.max(1, Math.hypot(dx, dy));
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-            const cx = (from.x + to.x) / 2;
-            const cy = (from.y + to.y) / 2;
+            // Circle is now intuitive: parent node = centre, child node = radius point.
+            // This makes it useful for heads/wheels instead of a stretched ellipse.
+            const radius = Math.max(3, Math.hypot(to.x - from.x, to.y - from.y));
 
-            shape = svg("ellipse", {
-                cx, cy,
-                rx: length / 2,
-                ry: Math.max(2, width / 2),
+            shape = svg("circle", {
+                cx: from.x,
+                cy: from.y,
+                r: radius,
                 fill: color,
-                transform: `rotate(${angle} ${cx} ${cy})`,
+                class: "creator-segment-shape creator-circle-shape"
+            });
+        } else if (
+            segment.type === "rectangle" ||
+            segment.type === "triangle" ||
+            segment.type === "diamond" ||
+            segment.type === "hexagon"
+        ) {
+            const points = polygonPointsForSegment(
+                segment.type,
+                from,
+                to,
+                width
+            ).map(point => `${point.x},${point.y}`).join(" ");
+
+            shape = svg("polygon", {
+                points,
+                fill: color,
                 class: "creator-segment-shape"
             });
         } else {
@@ -152,7 +219,7 @@
                 y2: to.y,
                 stroke: color,
                 "stroke-width": width,
-                "stroke-linecap": segment.type === "rounded" ? "round" : "butt",
+                "stroke-linecap": "round",
                 class: "creator-segment-shape"
             });
         }
@@ -204,11 +271,11 @@
 
             const visual = node.parentId == null
                 ? svg("rect", {
-                    x: point.x - 8,
-                    y: point.y - 8,
-                    width: 16,
-                    height: 16,
-                    rx: 2,
+                    x: point.x - 5.5,
+                    y: point.y - 5.5,
+                    width: 11,
+                    height: 11,
+                    rx: 1.5,
                     class: "creator-node creator-main-node"
                 })
                 : svg("circle", {
@@ -471,6 +538,13 @@
 
         try {
             const saved = DenXFigureLibrary.saveToLibrary(buildDefinition());
+            const persisted = DenXFigureLibrary.getLibrary()
+                .some(figure => figure.id === saved.id);
+
+            if (!persisted) {
+                throw new Error("Figure did not persist. Save cancelled.");
+            }
+
             sessionStorage.setItem("denx.figureCreatedNotice", saved.name);
             window.location.href = "workspace.html";
         } catch (error) {
