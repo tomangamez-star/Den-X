@@ -400,6 +400,82 @@ window.denxBonesRenderOnion = ({
     }
 };
 
+
+function frameFigureThumbnailDataUrl(frameNumber = currentFrame) {
+    const framePose = boneFramePoses[frameNumber];
+
+    const root = createSvg("svg", {
+        xmlns: SVG_NS,
+        viewBox: `0 0 ${STAGE_WIDTH} ${STAGE_HEIGHT}`,
+        preserveAspectRatio: "none"
+    });
+
+    if (!framePose) {
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(root.outerHTML)}`;
+    }
+
+    figures.forEach(figure => {
+        const pose = framePose[figure.id];
+
+        if (!pose || pose.visible === false) return;
+
+        const group = createSvg("g");
+
+        if (Array.isArray(figure.polyfills)) {
+            figure.polyfills.forEach(polyfill => {
+                const points = polyfill.nodeIds
+                    .map(nodeId => pose.nodes[nodeId])
+                    .filter(Boolean);
+
+                if (points.length < 3) return;
+
+                group.appendChild(createSvg("polygon", {
+                    points: points
+                        .map(point => `${point.x},${point.y}`)
+                        .join(" "),
+                    fill: polyfill.color || "#00c8ff"
+                }));
+            });
+        }
+
+        figure.segments.forEach(segment => {
+            const from = pose.nodes[segment.from];
+            const to = pose.nodes[segment.to];
+
+            if (!from || !to) return;
+
+            appendFigureSegment(
+                group,
+                figure,
+                segment,
+                from,
+                to
+            );
+        });
+
+        if (
+            figure.headNodeId &&
+            pose.nodes[figure.headNodeId]
+        ) {
+            const head = pose.nodes[figure.headNodeId];
+
+            group.appendChild(createSvg("circle", {
+                cx: head.x,
+                cy: head.y,
+                r: figure.style?.headRadius || 18,
+                fill: figure.style?.color || "#111111"
+            }));
+        }
+
+        root.appendChild(group);
+    });
+
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(root.outerHTML)}`;
+}
+
+window.denxBonesFrameThumbnailDataUrl =
+    frameFigureThumbnailDataUrl;
+
 function renderFigures() {
     if (!figureLayer) return;
 
@@ -1242,6 +1318,12 @@ function finishBoneInteraction(e) {
     }
 
     renderFigures();
+
+    if (changed) {
+        requestAnimationFrame(() => {
+            window.denxRefreshFrameThumbnail?.(currentFrame);
+        });
+    }
 }
 
 function cancelBoneInteraction(e) {
@@ -1393,6 +1475,7 @@ function addFigureDefinitionToWorkspace(definition) {
 
     requestAnimationFrame(() => {
         window.denxRefreshOnionSkin?.();
+        window.denxRefreshFrameThumbnail?.(currentFrame);
     });
 
     return figureId;

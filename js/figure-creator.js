@@ -5,6 +5,12 @@
 
 (() => {
     const SVG_NS = "http://www.w3.org/2000/svg";
+
+    const WORLD_WIDTH = 4096;
+    const WORLD_HEIGHT = 4096;
+    const WORLD_CENTER_X = WORLD_WIDTH / 2;
+    const WORLD_CENTER_Y = WORLD_HEIGHT / 2;
+
     const stage = document.getElementById("creatorStage");
     const stageWrap = document.getElementById("creatorStageWrap");
     const cameraEl = document.getElementById("creatorCamera");
@@ -18,6 +24,7 @@
     const segmentTypeButtons = [...document.querySelectorAll(".segment-type-btn")];
     const segmentColorInput = document.getElementById("segmentColorInput");
     const segmentWidthInput = document.getElementById("segmentWidthInput");
+    const segmentWidthValue = document.getElementById("segmentWidthValue");
     const elasticToggle = document.getElementById("elasticToggle");
     const deleteSegmentBtn = document.getElementById("deleteSegmentBtn");
     const paletteButtons = [...document.querySelectorAll("[data-color]")];
@@ -38,6 +45,7 @@
     const referenceImportBtn = document.getElementById("referenceImportBtn");
     const referenceFileInput = document.getElementById("referenceFileInput");
     const referenceOpacityInput = document.getElementById("referenceOpacityInput");
+    const referenceOpacityValue = document.getElementById("referenceOpacityValue");
     const referenceHideBtn = document.getElementById("referenceHideBtn");
     const referenceRemoveBtn = document.getElementById("referenceRemoveBtn");
 
@@ -69,8 +77,8 @@
     ];
 
     const pose = {
-        "node-1": { x: 460, y: 350 },
-        "node-2": { x: 550, y: 350 }
+        "node-1": { x: WORLD_CENTER_X - 45, y: WORLD_CENTER_Y },
+        "node-2": { x: WORLD_CENTER_X + 45, y: WORLD_CENTER_Y }
     };
 
     const polyfills = [];
@@ -86,9 +94,13 @@
     };
 
     const camera = {
-        x: 0,
-        y: 0,
-        zoom: 1
+        centerX: WORLD_CENTER_X,
+        centerY: WORLD_CENTER_Y,
+        zoom: 1,
+        viewLeft: 0,
+        viewTop: 0,
+        viewWidth: 1,
+        viewHeight: 1
     };
 
     const pointerMap = new Map();
@@ -98,18 +110,18 @@
         pointerId: null,
         startX: 0,
         startY: 0,
-        cameraX: 0,
-        cameraY: 0
+        cameraCenterX: WORLD_CENTER_X,
+        cameraCenterY: WORLD_CENTER_Y
     };
 
     const pinchState = {
         active: false,
         startDistance: 0,
         startZoom: 1,
-        startCameraX: 0,
-        startCameraY: 0,
-        localAnchorX: 0,
-        localAnchorY: 0
+        startCenterX: WORLD_CENTER_X,
+        startCenterY: WORLD_CENTER_Y,
+        anchorWorldX: WORLD_CENTER_X,
+        anchorWorldY: WORLD_CENTER_Y
     };
 
     const reference = {
@@ -222,68 +234,249 @@
         return el;
     }
 
-    function updateCamera() {
-        cameraEl.style.transform =
-            `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
+    function minZoomForViewport() {
+        const rect = stageWrap.getBoundingClientRect();
 
-        // Infinite-editor feel: the grid belongs to the same world as the
-        // figure. It expands/contracts and slides with zoom/pan.
-        const grid = 28 * camera.zoom;
+        return Math.max(
+            rect.width / WORLD_WIDTH,
+            rect.height / WORLD_HEIGHT,
+            0.08
+        );
+    }
+
+    function clampCameraCenter() {
+        const rect = stageWrap.getBoundingClientRect();
+
+        const viewWidth =
+            Math.min(
+                WORLD_WIDTH,
+                rect.width / camera.zoom
+            );
+
+        const viewHeight =
+            Math.min(
+                WORLD_HEIGHT,
+                rect.height / camera.zoom
+            );
+
+        const halfW = viewWidth / 2;
+        const halfH = viewHeight / 2;
+
+        camera.centerX =
+            Math.max(
+                halfW,
+                Math.min(
+                    WORLD_WIDTH - halfW,
+                    camera.centerX
+                )
+            );
+
+        camera.centerY =
+            Math.max(
+                halfH,
+                Math.min(
+                    WORLD_HEIGHT - halfH,
+                    camera.centerY
+                )
+            );
+
+        camera.viewWidth = viewWidth;
+        camera.viewHeight = viewHeight;
+        camera.viewLeft =
+            camera.centerX - halfW;
+        camera.viewTop =
+            camera.centerY - halfH;
+    }
+
+    function chooseGridSpacing() {
+        // Keep minor grid lines roughly 28-56 screen pixels apart.
+        let spacing = 32;
+
+        while (spacing * camera.zoom < 28) {
+            spacing *= 2;
+        }
+
+        while (
+            spacing > 8 &&
+            spacing * camera.zoom > 56
+        ) {
+            spacing /= 2;
+        }
+
+        return spacing;
+    }
+
+    function updateGrid() {
+        const spacing = chooseGridSpacing();
+        const major = spacing * 4;
+
+        const minorPx = spacing * camera.zoom;
+        const majorPx = major * camera.zoom;
 
         stageWrap.style.backgroundSize =
-            `${grid}px ${grid}px`;
+            `${minorPx}px ${minorPx}px, ` +
+            `${minorPx}px ${minorPx}px, ` +
+            `${majorPx}px ${majorPx}px, ` +
+            `${majorPx}px ${majorPx}px`;
+
+        const minorX =
+            -(camera.viewLeft % spacing) *
+            camera.zoom;
+
+        const minorY =
+            -(camera.viewTop % spacing) *
+            camera.zoom;
+
+        const majorX =
+            -(camera.viewLeft % major) *
+            camera.zoom;
+
+        const majorY =
+            -(camera.viewTop % major) *
+            camera.zoom;
 
         stageWrap.style.backgroundPosition =
-            `${camera.x}px ${camera.y}px`;
+            `${minorX}px ${minorY}px, ` +
+            `${minorX}px ${minorY}px, ` +
+            `${majorX}px ${majorY}px, ` +
+            `${majorX}px ${majorY}px`;
+    }
+
+    function updateCamera() {
+        const minimum =
+            minZoomForViewport();
+
+        camera.zoom =
+            Math.max(
+                minimum,
+                Math.min(12, camera.zoom)
+            );
+
+        clampCameraCenter();
+
+        stage.setAttribute(
+            "viewBox",
+            `${camera.viewLeft} ${camera.viewTop} ${camera.viewWidth} ${camera.viewHeight}`
+        );
+
+        // The SVG always occupies the viewport. We move through the finite
+        // 4K world using its viewBox instead of scaling a finite board image.
+        cameraEl.style.transform = "none";
+
+        updateGrid();
     }
 
     function screenToStage(clientX, clientY) {
-        const rect = stageWrap.getBoundingClientRect();
+        const rect =
+            stageWrap.getBoundingClientRect();
 
-        const screenX = clientX - rect.left;
-        const screenY = clientY - rect.top;
+        const screenX =
+            Math.max(
+                0,
+                Math.min(
+                    rect.width,
+                    clientX - rect.left
+                )
+            );
 
-        const cameraX = (screenX - camera.x) / camera.zoom;
-        const cameraY = (screenY - camera.y) / camera.zoom;
+        const screenY =
+            Math.max(
+                0,
+                Math.min(
+                    rect.height,
+                    clientY - rect.top
+                )
+            );
 
         return {
-            x: Math.max(0, Math.min(
-                1000,
-                (cameraX / Math.max(1, rect.width)) * 1000
-            )),
-            y: Math.max(0, Math.min(
-                700,
-                (cameraY / Math.max(1, rect.height)) * 700
-            ))
+            x: Math.max(
+                0,
+                Math.min(
+                    WORLD_WIDTH,
+                    camera.viewLeft +
+                    (screenX / Math.max(1, rect.width)) *
+                    camera.viewWidth
+                )
+            ),
+            y: Math.max(
+                0,
+                Math.min(
+                    WORLD_HEIGHT,
+                    camera.viewTop +
+                    (screenY / Math.max(1, rect.height)) *
+                    camera.viewHeight
+                )
+            )
         };
     }
 
     function pointFromEvent(e) {
-        return screenToStage(e.clientX, e.clientY);
+        return screenToStage(
+            e.clientX,
+            e.clientY
+        );
     }
 
-    function setZoom(nextZoom, screenAnchor = null) {
-        const rect = stageWrap.getBoundingClientRect();
-        const next = Math.max(0.35, Math.min(12, nextZoom));
+    function setZoom(
+        nextZoom,
+        screenAnchor = null
+    ) {
+        const rect =
+            stageWrap.getBoundingClientRect();
 
-        const anchor = screenAnchor || {
-            x: rect.width / 2,
-            y: rect.height / 2
+        const minimum =
+            minZoomForViewport();
+
+        const next =
+            Math.max(
+                minimum,
+                Math.min(12, nextZoom)
+            );
+
+        const anchor =
+            screenAnchor || {
+                x: rect.width / 2,
+                y: rect.height / 2
+            };
+
+        const anchorClient = {
+            x: rect.left + anchor.x,
+            y: rect.top + anchor.y
         };
 
-        const localX =
-            (anchor.x - camera.x) / camera.zoom;
-
-        const localY =
-            (anchor.y - camera.y) / camera.zoom;
+        const worldBefore =
+            screenToStage(
+                anchorClient.x,
+                anchorClient.y
+            );
 
         camera.zoom = next;
 
-        camera.x =
-            anchor.x - localX * next;
+        const nextViewWidth =
+            Math.min(
+                WORLD_WIDTH,
+                rect.width / next
+            );
 
-        camera.y =
-            anchor.y - localY * next;
+        const nextViewHeight =
+            Math.min(
+                WORLD_HEIGHT,
+                rect.height / next
+            );
+
+        camera.centerX =
+            worldBefore.x -
+            (
+                anchor.x / Math.max(1, rect.width) -
+                0.5
+            ) * nextViewWidth;
+
+        camera.centerY =
+            worldBefore.y -
+            (
+                anchor.y / Math.max(1, rect.height) -
+                0.5
+            ) * nextViewHeight;
 
         updateCamera();
     }
@@ -336,6 +529,15 @@
 
         segmentColorInput.value = segment.style?.color || defaultColor;
         segmentWidthInput.value = Number(segment.style?.width) || defaultWidth;
+
+        if (segmentWidthValue) {
+            segmentWidthValue.textContent =
+                String(
+                    Number(segmentWidthInput.value) ||
+                    defaultWidth
+                );
+        }
+
         elasticToggle.checked = !!segment.elastic;
     }
 
@@ -512,8 +714,8 @@
         if (reference.dataUrl && reference.visible) {
             stage.appendChild(svg("image", {
                 href: reference.dataUrl,
-                x: 500 - reference.width / 2,
-                y: 350 - reference.height / 2,
+                x: WORLD_CENTER_X - reference.width / 2,
+                y: WORLD_CENTER_Y - reference.height / 2,
                 width: reference.width,
                 height: reference.height,
                 opacity: reference.opacity,
@@ -885,6 +1087,13 @@
         applySegmentColor(e.target.value);
     });
 
+    segmentWidthInput.addEventListener("input", e => {
+        if (segmentWidthValue) {
+            segmentWidthValue.textContent =
+                String(Number(e.target.value) || 18);
+        }
+    });
+
     segmentWidthInput.addEventListener("change", e => {
         const segment = selectedSegment();
         if (!segment) return;
@@ -894,6 +1103,11 @@
 
         segment.style = segment.style || {};
         segment.style.width = defaultWidth;
+
+        if (segmentWidthValue) {
+            segmentWidthValue.textContent =
+                String(defaultWidth);
+        }
 
         commit(before);
         render();
@@ -1080,10 +1294,11 @@
     });
 
     // -------------------------------------------------------------
-    // Infinite-room navigation:
+    // FINITE 4K construction-world navigation
     // - drag empty space = pan
     // - pinch anywhere = zoom
-    // - no Pan tool exists
+    // - 4096 × 4096 hard boundary
+    // - grid zooms with the world
     // -------------------------------------------------------------
 
     zoomInBtn.addEventListener("click", () => {
@@ -1105,32 +1320,58 @@
     function beginPinch() {
         if (pointerMap.size !== 2) return;
 
-        const rect = stageWrap.getBoundingClientRect();
-        const points = [...pointerMap.values()];
+        const rect =
+            stageWrap.getBoundingClientRect();
+
+        const points =
+            [...pointerMap.values()].slice(0, 2);
 
         const midpoint = {
-            x: (points[0].x + points[1].x) / 2 - rect.left,
-            y: (points[0].y + points[1].y) / 2 - rect.top
+            x:
+                (
+                    points[0].x +
+                    points[1].x
+                ) / 2,
+            y:
+                (
+                    points[0].y +
+                    points[1].y
+                ) / 2
         };
 
+        const anchorWorld =
+            screenToStage(
+                midpoint.x,
+                midpoint.y
+            );
+
         pinchState.active = true;
-        pinchState.startDistance = Math.max(
-            1,
-            Math.hypot(
-                points[1].x - points[0].x,
-                points[1].y - points[0].y
-            )
-        );
 
-        pinchState.startZoom = camera.zoom;
-        pinchState.startCameraX = camera.x;
-        pinchState.startCameraY = camera.y;
+        pinchState.startDistance =
+            Math.max(
+                1,
+                Math.hypot(
+                    points[1].x -
+                    points[0].x,
+                    points[1].y -
+                    points[0].y
+                )
+            );
 
-        pinchState.localAnchorX =
-            (midpoint.x - camera.x) / camera.zoom;
+        pinchState.startZoom =
+            camera.zoom;
 
-        pinchState.localAnchorY =
-            (midpoint.y - camera.y) / camera.zoom;
+        pinchState.startCenterX =
+            camera.centerX;
+
+        pinchState.startCenterY =
+            camera.centerY;
+
+        pinchState.anchorWorldX =
+            anchorWorld.x;
+
+        pinchState.anchorWorldY =
+            anchorWorld.y;
 
         panState.active = false;
         panState.pointerId = null;
@@ -1138,109 +1379,193 @@
         cancelInteraction();
     }
 
-    stageWrap.addEventListener("pointerdown", e => {
-        pointerMap.set(e.pointerId, {
-            x: e.clientX,
-            y: e.clientY
-        });
-
-        if (pointerMap.size === 2) {
-            beginPinch();
-            return;
-        }
-
-        if (
-            pointerMap.size === 1 &&
-            !pointerIsInteractiveTarget(e.target)
-        ) {
-            panState.active = true;
-            panState.pointerId = e.pointerId;
-            panState.startX = e.clientX;
-            panState.startY = e.clientY;
-            panState.cameraX = camera.x;
-            panState.cameraY = camera.y;
-
-            try {
-                stageWrap.setPointerCapture(e.pointerId);
-            } catch (_) {}
-        }
-    }, true);
-
-    stageWrap.addEventListener("pointermove", e => {
-        if (!pointerMap.has(e.pointerId)) return;
-
-        pointerMap.set(e.pointerId, {
-            x: e.clientX,
-            y: e.clientY
-        });
-
-        if (
-            pinchState.active &&
-            pointerMap.size >= 2
-        ) {
-            const rect = stageWrap.getBoundingClientRect();
-            const points = [...pointerMap.values()].slice(0, 2);
-
-            const distance = Math.max(
-                1,
-                Math.hypot(
-                    points[1].x - points[0].x,
-                    points[1].y - points[0].y
-                )
+    stageWrap.addEventListener(
+        "pointerdown",
+        e => {
+            pointerMap.set(
+                e.pointerId,
+                {
+                    x: e.clientX,
+                    y: e.clientY
+                }
             );
 
-            const midpoint = {
-                x: (points[0].x + points[1].x) / 2 - rect.left,
-                y: (points[0].y + points[1].y) / 2 - rect.top
-            };
+            if (pointerMap.size === 2) {
+                beginPinch();
+                return;
+            }
 
-            const nextZoom = Math.max(
-                0.35,
-                Math.min(
-                    12,
-                    pinchState.startZoom *
-                    (distance / pinchState.startDistance)
-                )
+            if (
+                pointerMap.size === 1 &&
+                !pointerIsInteractiveTarget(e.target)
+            ) {
+                panState.active = true;
+                panState.pointerId =
+                    e.pointerId;
+
+                panState.startX =
+                    e.clientX;
+
+                panState.startY =
+                    e.clientY;
+
+                panState.cameraCenterX =
+                    camera.centerX;
+
+                panState.cameraCenterY =
+                    camera.centerY;
+
+                try {
+                    stageWrap.setPointerCapture(
+                        e.pointerId
+                    );
+                } catch (_) {}
+            }
+        },
+        true
+    );
+
+    stageWrap.addEventListener(
+        "pointermove",
+        e => {
+            if (!pointerMap.has(e.pointerId)) {
+                return;
+            }
+
+            pointerMap.set(
+                e.pointerId,
+                {
+                    x: e.clientX,
+                    y: e.clientY
+                }
             );
 
-            camera.zoom = nextZoom;
+            if (
+                pinchState.active &&
+                pointerMap.size >= 2
+            ) {
+                const rect =
+                    stageWrap.getBoundingClientRect();
 
-            camera.x =
-                midpoint.x -
-                pinchState.localAnchorX * nextZoom;
+                const points =
+                    [...pointerMap.values()]
+                        .slice(0, 2);
 
-            camera.y =
-                midpoint.y -
-                pinchState.localAnchorY * nextZoom;
+                const distance =
+                    Math.max(
+                        1,
+                        Math.hypot(
+                            points[1].x -
+                            points[0].x,
+                            points[1].y -
+                            points[0].y
+                        )
+                    );
 
-            updateCamera();
-            render();
+                const midpoint = {
+                    x:
+                        (
+                            points[0].x +
+                            points[1].x
+                        ) / 2 -
+                        rect.left,
+                    y:
+                        (
+                            points[0].y +
+                            points[1].y
+                        ) / 2 -
+                        rect.top
+                };
 
-            e.preventDefault();
-            return;
-        }
+                const minimum =
+                    minZoomForViewport();
 
-        if (
-            panState.active &&
-            e.pointerId === panState.pointerId
-        ) {
-            camera.x =
-                panState.cameraX +
-                (e.clientX - panState.startX);
+                const nextZoom =
+                    Math.max(
+                        minimum,
+                        Math.min(
+                            12,
+                            pinchState.startZoom *
+                            (
+                                distance /
+                                pinchState.startDistance
+                            )
+                        )
+                    );
 
-            camera.y =
-                panState.cameraY +
-                (e.clientY - panState.startY);
+                const nextViewWidth =
+                    Math.min(
+                        WORLD_WIDTH,
+                        rect.width / nextZoom
+                    );
 
-            updateCamera();
-            e.preventDefault();
-        }
-    }, true);
+                const nextViewHeight =
+                    Math.min(
+                        WORLD_HEIGHT,
+                        rect.height / nextZoom
+                    );
+
+                camera.zoom =
+                    nextZoom;
+
+                camera.centerX =
+                    pinchState.anchorWorldX -
+                    (
+                        midpoint.x /
+                        Math.max(1, rect.width) -
+                        0.5
+                    ) * nextViewWidth;
+
+                camera.centerY =
+                    pinchState.anchorWorldY -
+                    (
+                        midpoint.y /
+                        Math.max(1, rect.height) -
+                        0.5
+                    ) * nextViewHeight;
+
+                updateCamera();
+                render();
+
+                e.preventDefault();
+                return;
+            }
+
+            if (
+                panState.active &&
+                e.pointerId ===
+                    panState.pointerId
+            ) {
+                const dx =
+                    e.clientX -
+                    panState.startX;
+
+                const dy =
+                    e.clientY -
+                    panState.startY;
+
+                camera.centerX =
+                    panState.cameraCenterX -
+                    dx / camera.zoom;
+
+                camera.centerY =
+                    panState.cameraCenterY -
+                    dy / camera.zoom;
+
+                updateCamera();
+                e.preventDefault();
+            }
+        },
+        true
+    );
 
     function finishNavigationPointer(e) {
         pointerMap.delete(e.pointerId);
 
-        if (e.pointerId === panState.pointerId) {
+        if (
+            e.pointerId ===
+            panState.pointerId
+        ) {
             panState.active = false;
             panState.pointerId = null;
         }
@@ -1262,9 +1587,20 @@
         true
     );
 
-    stage.addEventListener("pointermove", moveInteraction);
-    stage.addEventListener("pointerup", finishInteraction);
-    stage.addEventListener("pointercancel", cancelInteraction);
+    stage.addEventListener(
+        "pointermove",
+        moveInteraction
+    );
+
+    stage.addEventListener(
+        "pointerup",
+        finishInteraction
+    );
+
+    stage.addEventListener(
+        "pointercancel",
+        cancelInteraction
+    );
 
     // -------------------------------------------------------------
     // Reference image — temporary construction aid, not saved in .dxf
@@ -1287,6 +1623,13 @@
             referenceOpacityInput.disabled = !hasReference;
             referenceOpacityInput.value =
                 String(reference.opacity);
+        }
+
+        if (referenceOpacityValue) {
+            referenceOpacityValue.textContent =
+                `${Math.round(
+                    reference.opacity * 100
+                )}%`;
         }
     }
 
@@ -1339,6 +1682,13 @@
             Math.min(1, Number(event.target.value) || 0.45)
         );
 
+        if (referenceOpacityValue) {
+            referenceOpacityValue.textContent =
+                `${Math.round(
+                    reference.opacity * 100
+                )}%`;
+        }
+
         render();
     });
 
@@ -1359,6 +1709,13 @@
     });
 
     syncReferenceControls();
+
+    window.addEventListener("resize", () => {
+        requestAnimationFrame(() => {
+            updateCamera();
+            render();
+        });
+    });
 
     function buildDefinition() {
         const name = nameInput.value.trim() || "Untitled Figure";
@@ -1443,6 +1800,9 @@
     updateHistoryButtons();
     syncPolyfillButtons();
     syncQuickFromScroll();
-    updateCamera();
-    render();
+
+    requestAnimationFrame(() => {
+        updateCamera();
+        render();
+    });
 })();

@@ -25,6 +25,11 @@ const cameraFrameEl = document.getElementById("cameraFrame");
 const stageGuideEl = document.getElementById("stageGuide");
 const drawingCanvasEl = document.getElementById("drawingCanvas");
 const figureLayerEl = document.getElementById("figureLayer");
+const stageEl = document.getElementById("stage");
+
+const playbackMonitorEl = document.getElementById("playbackMonitor");
+const playbackScreenEl = document.getElementById("playbackScreen");
+const playbackFrameLabelEl = document.getElementById("playbackFrameLabel");
 
 const zoomIn = document.getElementById("zoomIn");
 const zoomOut = document.getElementById("zoomOut");
@@ -103,12 +108,21 @@ function loadCameraFrameState(frameNumber = currentFrame) {
     syncCameraFrame();
     syncCameraPropertiesPanel();
     updateCameraInteractionUI();
+
+    if (window.denxPlaybackMonitorActive?.()) {
+        requestAnimationFrame(() => {
+            window.denxUpdatePlaybackMonitor?.(frameNumber);
+        });
+    }
+
     return cameraFrameState;
 }
 
 window.denxSaveCameraFrameState = saveCameraFrameState;
 window.denxLoadCameraFrameState = loadCameraFrameState;
 window.denxCloneCameraFrameState = cloneCameraFrameState;
+window.denxGetCameraFrameState = frameNumber =>
+    cloneCameraFrameState(getCameraFrameState(frameNumber));
 
 const handleState = {
     active: false,
@@ -199,6 +213,16 @@ function syncCameraPropertiesPanel() {
     if (cameraPropRotation) cameraPropRotation.value = Math.round(cameraFrameState.rotation);
     if (cameraPropGuide) cameraPropGuide.checked = !!cameraFrameState.showStageGuide;
     if (cameraPropQuickMove) cameraPropQuickMove.checked = !!cameraFrameState.quickMoveEnabled;
+
+    [
+        "cameraPropX",
+        "cameraPropY",
+        "cameraPropWidth",
+        "cameraPropHeight",
+        "cameraPropRotation"
+    ].forEach(id => {
+        window.denxSyncNumberControl?.(id);
+    });
 }
 
 function readNumberInput(input, fallback) {
@@ -673,6 +697,221 @@ if (toggleToolbar) {
 
 window.addEventListener("denx:toolchange", (e) => {
     setCameraFrameInteraction(e.detail?.tool);
+});
+
+
+// ============================================================
+// CAMERA-ONLY PLAYBACK MONITOR
+// The real stage is temporarily moved into a clipped "TV" screen.
+// No duplicate renderer, no fullscreen, and camera animation remains live.
+// ============================================================
+
+const playbackStageHome = {
+    parent: stageEl?.parentNode || null,
+    before: cameraFrameEl || null
+};
+
+const playbackStageInline = stageEl
+    ? {
+        position: stageEl.style.position,
+        left: stageEl.style.left,
+        top: stageEl.style.top,
+        transform: stageEl.style.transform,
+        transformOrigin: stageEl.style.transformOrigin,
+        margin: stageEl.style.margin
+    }
+    : null;
+
+let playbackMonitorActive = false;
+let playbackMonitorFrame = 1;
+
+function fitPlaybackScreen(state) {
+    if (!viewport || !playbackScreenEl || !state) {
+        return null;
+    }
+
+    const viewportRect = viewport.getBoundingClientRect();
+
+    const availableWidth =
+        Math.max(120, viewportRect.width - 34);
+
+    const availableHeight =
+        Math.max(90, viewportRect.height - 76);
+
+    const cropWidth = Math.max(40, state.width);
+    const cropHeight = Math.max(40, state.height);
+
+    const scale = Math.min(
+        availableWidth / cropWidth,
+        availableHeight / cropHeight
+    );
+
+    const width = Math.max(80, cropWidth * scale);
+    const height = Math.max(60, cropHeight * scale);
+
+    playbackScreenEl.style.width = `${width}px`;
+    playbackScreenEl.style.height = `${height}px`;
+
+    return {
+        width,
+        height,
+        scale
+    };
+}
+
+function syncPlaybackMonitor(frameNumber = currentFrame) {
+    if (
+        !playbackMonitorActive ||
+        !stageEl ||
+        !playbackScreenEl
+    ) {
+        return;
+    }
+
+    playbackMonitorFrame = frameNumber;
+
+    const state =
+        getCameraFrameState(frameNumber);
+
+    const fitted =
+        fitPlaybackScreen(state);
+
+    if (!fitted) return;
+
+    const cropCenterX =
+        1024 + state.x;
+
+    const cropCenterY =
+        576 + state.y;
+
+    const radians =
+        (-state.rotation * Math.PI) / 180;
+
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const s = fitted.scale;
+
+    // q = screenCenter + s * R(-rotation) * (p - cameraCenter)
+    const a = s * cos;
+    const b = s * sin;
+    const c = -s * sin;
+    const d = s * cos;
+
+    const e =
+        fitted.width / 2 -
+        a * cropCenterX -
+        c * cropCenterY;
+
+    const f =
+        fitted.height / 2 -
+        b * cropCenterX -
+        d * cropCenterY;
+
+    stageEl.style.position = "absolute";
+    stageEl.style.left = "0";
+    stageEl.style.top = "0";
+    stageEl.style.margin = "0";
+    stageEl.style.transformOrigin = "0 0";
+    stageEl.style.transform =
+        `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
+
+    if (playbackFrameLabelEl) {
+        const total =
+            window.denxFrameCount?.() || "?";
+
+        playbackFrameLabelEl.textContent =
+            `${frameNumber} / ${total}`;
+    }
+}
+
+function enterPlaybackMonitor(frameNumber = currentFrame) {
+    if (
+        playbackMonitorActive ||
+        !playbackMonitorEl ||
+        !playbackScreenEl ||
+        !stageEl
+    ) {
+        return;
+    }
+
+    playbackMonitorActive = true;
+
+    playbackScreenEl.appendChild(stageEl);
+
+    playbackMonitorEl.classList.remove("hidden");
+    playbackMonitorEl.setAttribute("aria-hidden", "false");
+    document.body.classList.add("denx-camera-preview-playing");
+
+    requestAnimationFrame(() => {
+        syncPlaybackMonitor(frameNumber);
+    });
+}
+
+function exitPlaybackMonitor() {
+    if (!playbackMonitorActive) return;
+
+    playbackMonitorActive = false;
+
+    if (stageEl && playbackStageHome.parent) {
+        if (
+            playbackStageHome.before &&
+            playbackStageHome.before.parentNode === playbackStageHome.parent
+        ) {
+            playbackStageHome.parent.insertBefore(
+                stageEl,
+                playbackStageHome.before
+            );
+        } else {
+            playbackStageHome.parent.appendChild(stageEl);
+        }
+    }
+
+    if (stageEl && playbackStageInline) {
+        stageEl.style.position =
+            playbackStageInline.position;
+
+        stageEl.style.left =
+            playbackStageInline.left;
+
+        stageEl.style.top =
+            playbackStageInline.top;
+
+        stageEl.style.transform =
+            playbackStageInline.transform;
+
+        stageEl.style.transformOrigin =
+            playbackStageInline.transformOrigin;
+
+        stageEl.style.margin =
+            playbackStageInline.margin;
+    }
+
+    playbackMonitorEl?.classList.add("hidden");
+    playbackMonitorEl?.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("denx-camera-preview-playing");
+
+    updateWorkspace();
+    syncCameraFrame();
+}
+
+window.denxEnterPlaybackMonitor =
+    enterPlaybackMonitor;
+
+window.denxUpdatePlaybackMonitor =
+    syncPlaybackMonitor;
+
+window.denxExitPlaybackMonitor =
+    exitPlaybackMonitor;
+
+window.denxPlaybackMonitorActive =
+    () => playbackMonitorActive;
+
+window.addEventListener("resize", () => {
+    if (playbackMonitorActive) {
+        requestAnimationFrame(() => {
+            syncPlaybackMonitor(playbackMonitorFrame);
+        });
+    }
 });
 
 function resetCamera() {

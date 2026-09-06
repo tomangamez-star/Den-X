@@ -17,6 +17,7 @@ const onionBtn = document.getElementById("onionSkinBtn");
 const onionPrevToggle = document.getElementById("onionPrevToggle");
 const onionNextToggle = document.getElementById("onionNextToggle");
 const onionOpacityInput = document.getElementById("onionOpacityInput");
+const onionOpacityValue = document.getElementById("onionOpacityValue");
 const onionCanvas = document.getElementById("onionCanvas");
 const onionCtx = onionCanvas?.getContext("2d") || null;
 
@@ -81,6 +82,9 @@ function stopPlayback() {
 
     playbackLastStep = 0;
     document.body.classList.remove("denx-playing");
+
+    window.denxExitPlaybackMonitor?.();
+
     updatePlayButton();
     refreshOnionSkin();
 }
@@ -159,6 +163,9 @@ function startPlayback() {
     document.body.classList.add("denx-playing");
 
     clearOnionSkin();
+
+    window.denxEnterPlaybackMonitor?.(currentFrame);
+
     updatePlayButton();
 
     playbackRaf =
@@ -380,6 +387,10 @@ function toggleOnionSkin() {
 function saveCurrentFrame() {
     frames[currentFrame - 1] =
         canvas.toDataURL();
+
+    requestAnimationFrame(() => {
+        refreshFrameThumbnail(currentFrame);
+    });
 }
 
 function cloneHistoryEntry(entry) {
@@ -628,7 +639,13 @@ function renumberFrameButtons() {
         .forEach((btn, index) => {
             const frameNumber = index + 1;
             btn.dataset.frame = frameNumber;
-            btn.textContent = frameNumber;
+
+            const number =
+                btn.querySelector(".frame-number");
+
+            if (number) {
+                number.textContent = frameNumber;
+            }
         });
 }
 
@@ -636,9 +653,26 @@ function createFrameButton(frameNumber) {
     const frame =
         document.createElement("button");
 
-    frame.className = "frame";
+    frame.className = "frame frame-with-thumb";
     frame.dataset.frame = frameNumber;
-    frame.textContent = frameNumber;
+
+    const thumb = document.createElement("span");
+    thumb.className = "frame-thumb";
+
+    const drawing = document.createElement("img");
+    drawing.className = "frame-thumb-drawing";
+    drawing.alt = "";
+
+    const figure = document.createElement("img");
+    figure.className = "frame-thumb-figure";
+    figure.alt = "";
+
+    const number = document.createElement("span");
+    number.className = "frame-number";
+    number.textContent = frameNumber;
+
+    thumb.append(drawing, figure);
+    frame.append(thumb, number);
 
     frame.onclick = () => {
         if (playbackActive) {
@@ -650,8 +684,74 @@ function createFrameButton(frameNumber) {
         );
     };
 
+    requestAnimationFrame(() => {
+        refreshFrameThumbnail(frameNumber);
+    });
+
     return frame;
 }
+
+
+function refreshFrameThumbnail(frameNumber) {
+    const button =
+        document.querySelector(
+            `.frame[data-frame="${frameNumber}"]`
+        );
+
+    if (!button) return;
+
+    const drawing =
+        button.querySelector(".frame-thumb-drawing");
+
+    const figure =
+        button.querySelector(".frame-thumb-figure");
+
+    const thumb =
+        button.querySelector(".frame-thumb");
+
+    if (thumb) {
+        thumb.style.background =
+            window.denxStageBackgroundColor ||
+            localStorage.getItem("denx.stageBackground") ||
+            "#ffffff";
+    }
+
+    if (drawing) {
+        const source =
+            frames[frameNumber - 1];
+
+        if (source) {
+            drawing.src = source;
+        } else {
+            drawing.removeAttribute("src");
+        }
+    }
+
+    if (figure) {
+        const figureSource =
+            window.denxBonesFrameThumbnailDataUrl?.(
+                frameNumber
+            );
+
+        if (figureSource) {
+            figure.src = figureSource;
+        } else {
+            figure.removeAttribute("src");
+        }
+    }
+}
+
+function refreshAllFrameThumbnails() {
+    frames.forEach((_, index) => {
+        refreshFrameThumbnail(index + 1);
+    });
+}
+
+window.denxRefreshFrameThumbnail =
+    refreshFrameThumbnail;
+
+window.denxRefreshAllFrameThumbnails =
+    refreshAllFrameThumbnails;
 
 function updateTimelineButtons() {
     if (removeFrameBtn) {
@@ -818,6 +918,12 @@ function selectFrame(frameNumber, options = {}) {
         window.denxBonesLoadFrame(
             frameNumber
         );
+    }
+
+    if (playbackActive) {
+        requestAnimationFrame(() => {
+            window.denxUpdatePlaybackMonitor?.(frameNumber);
+        });
     }
 
     ensureCurrentFrameHistorySeed();
@@ -1165,6 +1271,10 @@ if (fpsInput) {
             "denx.animation.fps"
         ) || "12";
 
+    window.denxSyncNumberControl?.(
+        "animationFpsInput"
+    );
+
     fpsInput.addEventListener(
         "change",
         () => {
@@ -1204,6 +1314,20 @@ if (onionOpacityInput) {
             "denx.onion.opacity"
         ) || "0.28";
 
+    const syncOnionOpacityValue = () => {
+        if (onionOpacityValue) {
+            onionOpacityValue.textContent =
+                `${Math.round(
+                    Number(onionOpacityInput.value) * 100
+                )}%`;
+        }
+    };
+
+    onionOpacityInput.addEventListener(
+        "input",
+        syncOnionOpacityValue
+    );
+
     onionOpacityInput.addEventListener(
         "change",
         () => {
@@ -1211,8 +1335,12 @@ if (onionOpacityInput) {
                 "denx.onion.opacity",
                 onionOpacityInput.value
             );
+
+            syncOnionOpacityValue();
         }
     );
+
+    syncOnionOpacityValue();
 }
 
 if (onionPrevToggle) {
@@ -1263,8 +1391,14 @@ window.addEventListener(
 );
 
 // Startup.
+rebuildFrameButtons();
+
 selectFrame(1, {
     skipSave: true
+});
+
+requestAnimationFrame(() => {
+    refreshAllFrameThumbnails();
 });
 
 syncOnionControls();
