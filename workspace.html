@@ -123,7 +123,7 @@
         </button>
 
         <button id="importFigureBtn" type="button" class="tool-row tool-action" title="Open Figure Browser" aria-label="Import figure"
-          onclick="var d=document.getElementById('figureImportModal');if(d){try{if(d.showModal&&!d.open){d.showModal();}else{d.setAttribute('open','');}}catch(e){d.setAttribute('open','');}window.denxHydrateFigureBrowser&&window.denxHydrateFigureBrowser();}">
+          onclick="if(window.denxOpenFigureBrowser){window.denxOpenFigureBrowser();}else{var m=document.getElementById('figureImportModal');if(m){m.classList.remove('hidden');m.style.display='grid';m.setAttribute('aria-hidden','false');}}">
           <span class="tool-icon">⇩</span><span class="tool-label">Import</span>
         </button>
 
@@ -157,10 +157,7 @@
     </nav>
 
     <aside id="cameraProperties" class="camera-properties hidden" aria-hidden="true">
-      <div class="camera-properties__head">
-        <div class="camera-properties__title">Camera</div>
-        <button id="cameraPropertiesCloseBtn" class="camera-properties__close" type="button" aria-label="Close camera properties">×</button>
-      </div>
+      <div class="camera-properties__title">Camera</div>
 
       <div class="camera-step-row">
         <span>X</span>
@@ -221,8 +218,6 @@
         <input type="checkbox" id="cameraPropQuickMove">
         <span>Quick move handle</span>
       </label>
-
-      <button id="cameraPropertiesDoneBtn" class="camera-properties__done" type="button">Close</button>
     </aside>
 
     <div id="viewport">
@@ -271,20 +266,20 @@
   </div>
 </section>
 
-<dialog id="figureImportModal" class="figure-dialog" aria-labelledby="figureImportTitle">
-  <div class="figure-modal-card figure-browser-card">
+<div id="figureImportModal" class="figure-modal hidden" aria-hidden="true">
+  <div class="figure-modal-card figure-browser-card" role="dialog" aria-modal="true" aria-labelledby="figureImportTitle">
     <div class="figure-modal-head">
       <div>
         <strong id="figureImportTitle">Figure Browser</strong>
-        <small>Import makes a figure available to this project. Press Add afterward to place an instance on the canvas.</small>
+        <small>Import makes a figure available to this project. It will not appear on the canvas until you press Add.</small>
       </div>
-      <button id="closeFigureImportBtn" class="modal-close" type="button" aria-label="Close">×</button>
+      <button id="closeFigureImportBtn" class="modal-close" aria-label="Close">×</button>
     </div>
 
     <div class="figure-browser-section">
       <div class="figure-modal-section-title">Built-in Figures</div>
       <div id="builtinFigureList" class="saved-figure-list">
-        <div class="figure-list-empty">Loading built-in figures…</div>
+        <div class="figure-list-empty">Opening built-in figures…</div>
       </div>
     </div>
 
@@ -294,7 +289,7 @@
         <span id="myFiguresCount" class="figure-count-badge">0</span>
       </div>
       <div id="savedFigureList" class="saved-figure-list">
-        <div class="figure-list-empty">Loading My Figures…</div>
+        <div class="figure-list-empty">Opening My Figures…</div>
       </div>
     </div>
 
@@ -306,11 +301,9 @@
       </span>
     </button>
 
-    <button id="cancelFigureImportBtn" class="figure-dialog-cancel" type="button">Cancel</button>
-
     <input id="figureFileInput" class="hidden-file-input" type="file" accept=".dxf,.json,application/json">
   </div>
-</dialog>
+</div>
 
 <div id="denxToast" class="denx-toast" aria-live="polite"></div>
 
