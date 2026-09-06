@@ -216,6 +216,11 @@ function renderFigures() {
             "class": "denx-figure"
         });
 
+        group.style.setProperty(
+            "--denx-node-contrast",
+            getAutomaticNodeContrast(figure)
+        );
+
         // Body segments
         figure.segments.forEach(segment => {
             const from = pose.nodes[segment.from];
@@ -275,7 +280,10 @@ function renderFigures() {
                     width: rootSize,
                     height: rootSize,
                     rx: handleMetrics.rootRadius,
-                    class: "figure-node-visual figure-root-node"
+                    class: "figure-node-visual figure-root-node",
+                    style:
+                        `--denx-node-stroke:${handleMetrics.rootStrokeWidth}px;` +
+                        `--denx-node-selected-stroke:${handleMetrics.selectedStrokeWidth}px;`
                 });
 
                 if (selectedFigureId === figure.id && selectedNodeId === node.id) {
@@ -299,7 +307,10 @@ function renderFigures() {
                     cx: point.x,
                     cy: point.y,
                     r: handleMetrics.normalVisualRadius,
-                    class: "figure-node-visual figure-normal-node"
+                    class: "figure-node-visual figure-normal-node",
+                    style:
+                        `--denx-node-stroke:${handleMetrics.normalStrokeWidth}px;` +
+                        `--denx-node-selected-stroke:${handleMetrics.selectedStrokeWidth}px;`
                 });
 
                 if (selectedFigureId === figure.id && selectedNodeId === node.id) {
@@ -534,17 +545,109 @@ function getCameraZoom() {
     return Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
 }
 
+function clampHandleValue(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
 function getHandleMetrics() {
     const zoom = getCameraZoom();
 
-    // Keep node visuals tiny/clean on screen while preserving easy touch control.
+    /*
+      Visual controls are sized in SCREEN pixels first, then converted
+      back to stage/world units.
+
+      This gives us two useful effects:
+      1. joints gently shrink as the user zooms in;
+      2. the MAIN/root square has a hard screen-size floor, so it can
+         never collapse into a microscopic/disappearing shape.
+    */
+    const normalScreenRadius = clampHandleValue(
+        3.0 / Math.pow(zoom, 0.12),
+        2.35,
+        3.0
+    );
+
+    const rootScreenSize = clampHandleValue(
+        10.5 / Math.pow(zoom, 0.10),
+        8.5,
+        10.5
+    );
+
+    const normalStrokeScreen = 1.05;
+    const rootStrokeScreen = 1.2;
+    const selectedStrokeScreen = 1.55;
+
     return {
         rootTouchSize: 28 / zoom,
-        rootSize: 10 / zoom,
-        rootRadius: 1.8 / zoom,
+        rootSize: rootScreenSize / zoom,
+        rootRadius: Math.max(0.8 / zoom, (rootScreenSize * 0.14) / zoom),
+
         normalTouchRadius: 14 / zoom,
-        normalVisualRadius: 3.2 / zoom
+        normalVisualRadius: normalScreenRadius / zoom,
+
+        normalStrokeWidth: normalStrokeScreen / zoom,
+        rootStrokeWidth: rootStrokeScreen / zoom,
+        selectedStrokeWidth: selectedStrokeScreen / zoom
     };
+}
+
+function parseCssColor(color) {
+    if (typeof color !== "string") return null;
+
+    const value = color.trim();
+
+    if (/^#[0-9a-f]{3}$/i.test(value)) {
+        return {
+            r: parseInt(value[1] + value[1], 16),
+            g: parseInt(value[2] + value[2], 16),
+            b: parseInt(value[3] + value[3], 16)
+        };
+    }
+
+    if (/^#[0-9a-f]{6}$/i.test(value)) {
+        return {
+            r: parseInt(value.slice(1, 3), 16),
+            g: parseInt(value.slice(3, 5), 16),
+            b: parseInt(value.slice(5, 7), 16)
+        };
+    }
+
+    const rgbMatch = value.match(
+        /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i
+    );
+
+    if (rgbMatch) {
+        return {
+            r: clampHandleValue(Number(rgbMatch[1]), 0, 255),
+            g: clampHandleValue(Number(rgbMatch[2]), 0, 255),
+            b: clampHandleValue(Number(rgbMatch[3]), 0, 255)
+        };
+    }
+
+    return null;
+}
+
+function relativeChannel(value) {
+    const channel = value / 255;
+    return channel <= 0.04045
+        ? channel / 12.92
+        : Math.pow((channel + 0.055) / 1.055, 2.4);
+}
+
+function getAutomaticNodeContrast(figure) {
+    const rgb = parseCssColor(figure?.style?.color);
+
+    // Unknown/custom CSS colors default to a bright outline.
+    if (!rgb) return "#f4f4f4";
+
+    const luminance =
+        0.2126 * relativeChannel(rgb.r) +
+        0.7152 * relativeChannel(rgb.g) +
+        0.0722 * relativeChannel(rgb.b);
+
+    // High-contrast black/white is more reliable than a literal RGB
+    // inversion for colors with similar luminance.
+    return luminance > 0.46 ? "#111111" : "#f4f4f4";
 }
 
 function descendantNodeIds(figure, nodeId) {
