@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DenX Figure Creator</title>
+<link rel="stylesheet" href="css/figure-creator.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="icons/icon-192.png">
+</head>
+<body>
+<section class="creator-shell">
+  <header class="creator-topbar">
+    <button id="creatorCancelBtn" class="creator-top-btn">←</button>
+    <input id="figureNameInput" class="figure-name-input" value="New Figure" maxlength="40" aria-label="Figure name">
+    <button id="creatorSaveBtn" class="creator-save-btn">Save</button>
+  </header>
+
+  <main class="creator-main">
+    <aside class="creator-toolbar">
+      <section class="creator-tool-section">
+        <div class="creator-section-title">Segments</div>
+        <button class="segment-type-btn" data-segment-type="none">None</button>
+        <button class="segment-type-btn active" data-segment-type="rounded">Rounded</button>
+        <button class="segment-type-btn" data-segment-type="rectangle">Rectangle</button>
+        <button class="segment-type-btn" data-segment-type="circle">Circle</button>
+      </section>
+
+      <section class="creator-tool-section">
+        <div class="creator-section-title">Segment</div>
+
+        <label class="creator-control">
+          <span>Color</span>
+          <input id="segmentColorInput" type="color" value="#111111">
+        </label>
+
+        <label class="creator-control creator-range-control">
+          <span>Size</span>
+          <input id="segmentWidthInput" type="range" min="2" max="80" value="18">
+        </label>
+
+        <button id="deleteSegmentBtn" class="creator-action-btn">Delete</button>
+      </section>
+
+      <section class="creator-tool-section">
+        <div class="creator-section-title">Figure</div>
+        <div class="creator-hint">
+          Drag from a node to create.<br>
+          Choose <b>None</b> to move nodes.
+        </div>
+      </section>
+    </aside>
+
+    <section class="creator-stage-wrap">
+      <svg id="creatorStage" viewBox="0 0 1000 700" aria-label="Figure creator stage"></svg>
+      <div class="creator-stage-note">MAIN ■</div>
+    </section>
+  </main>
+</section>
+
+<div id="creatorToast" class="creator-toast" aria-live="polite"></div>
+
+<script src="js/figure-library.js"></script>
+<script src="js/figure-creator.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

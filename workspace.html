@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workspace</title>
+<title>DenX Workspace</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/workspace-ui.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -39,51 +39,87 @@
   </header>
 
   <div class="editor">
-    <aside class="toolbar" aria-label="Tools">
-      <button id="selectTool" title="Select" aria-label="Select">
-        <span class="tool-icon">↖</span><span class="tool-label">Select</span>
-      </button>
-      <button id="boneTool" title="Bone" aria-label="Bone">
-        <span class="tool-icon">🦴</span><span class="tool-label">Bone</span>
-      </button>
-      <button id="pencilTool" title="Pencil" aria-label="Pencil">
-        <span class="tool-icon">✎</span><span class="tool-label">Pencil</span>
-      </button>
-      <button id="eraserTool" title="Eraser" aria-label="Eraser">
-        <span class="tool-icon">◇</span><span class="tool-label">Eraser</span>
-      </button>
-      <button id="cameraTool" title="Camera" aria-label="Camera">
-        <span class="tool-icon">📷</span><span class="tool-label">Camera</span>
-      </button>
+    <aside id="toolbox" class="toolbar expanded-toolbar" aria-label="DenX toolbox">
+
+      <section class="tool-section" id="tool-general" data-tool-section="general">
+        <div class="tool-section-title">General</div>
+
+        <button id="selectTool" class="tool-row" title="Select" aria-label="Select">
+          <span class="tool-icon">↖</span><span class="tool-label">Select</span>
+        </button>
+
+        <label class="tool-control" title="Workspace background">
+          <span class="tool-control-icon">▣</span>
+          <span class="tool-control-name">Background</span>
+          <input id="backgroundColorControl" type="color" value="#111111" aria-label="Workspace background color">
+        </label>
+      </section>
+
+      <section class="tool-section" id="tool-draw" data-tool-section="draw">
+        <div class="tool-section-title">Draw</div>
+
+        <button id="pencilTool" class="tool-row" title="Pencil" aria-label="Pencil">
+          <span class="tool-icon">✎</span><span class="tool-label">Pencil</span>
+        </button>
+
+        <label class="tool-control" title="Drawing color">
+          <span class="tool-control-icon">●</span>
+          <span class="tool-control-name">Color</span>
+          <input id="drawColorControl" type="color" value="#000000" aria-label="Drawing color">
+        </label>
+
+        <button id="eraserTool" class="tool-row" title="Eraser" aria-label="Eraser">
+          <span class="tool-icon">◇</span><span class="tool-label">Eraser</span>
+        </button>
+      </section>
+
+      <section class="tool-section" id="tool-figure" data-tool-section="figure">
+        <div class="tool-section-title">Figure</div>
+
+        <button id="createFigureBtn" class="tool-row tool-action" title="Open Figure Creator" aria-label="Create figure">
+          <span class="tool-icon">＋</span><span class="tool-label">Create</span>
+        </button>
+
+        <button id="importFigureBtn" class="tool-row tool-action" title="Import a saved figure into this project" aria-label="Import figure">
+          <span class="tool-icon">⇩</span><span class="tool-label">Import</span>
+        </button>
+
+        <label class="project-figure-picker">
+          <span>In Project</span>
+          <select id="workspaceFigureSelect" aria-label="Figures imported into this project">
+            <option value="">No figures</option>
+          </select>
+        </label>
+
+        <button id="addFigureBtn" class="tool-row tool-action" title="Add selected project figure to the canvas" aria-label="Add figure" disabled>
+          <span class="tool-icon">⊕</span><span class="tool-label">Add</span>
+        </button>
+      </section>
+
+      <section class="tool-section" id="tool-camera" data-tool-section="camera">
+        <div class="tool-section-title">Camera</div>
+
+        <button id="cameraTool" class="tool-row" title="Camera" aria-label="Camera">
+          <span class="tool-icon">▣</span><span class="tool-label">Camera</span>
+        </button>
+      </section>
     </aside>
+
+    <nav class="tool-quickfind" aria-label="Toolbox quick find">
+      <button class="quickfind-link active" data-tool-target="general">General</button>
+      <button class="quickfind-link" data-tool-target="draw">Draw</button>
+      <button class="quickfind-link" data-tool-target="figure">Figure</button>
+      <button class="quickfind-link" data-tool-target="camera">Camera</button>
+    </nav>
 
     <aside id="cameraProperties" class="camera-properties hidden" aria-hidden="true">
       <div class="camera-properties__title">Camera</div>
 
-      <label>
-        <span>X</span>
-        <input type="number" id="cameraPropX" step="1">
-      </label>
-
-      <label>
-        <span>Y</span>
-        <input type="number" id="cameraPropY" step="1">
-      </label>
-
-      <label>
-        <span>Width</span>
-        <input type="number" id="cameraPropWidth" step="1" min="40">
-      </label>
-
-      <label>
-        <span>Height</span>
-        <input type="number" id="cameraPropHeight" step="1" min="40">
-      </label>
-
-      <label>
-        <span>Rotation</span>
-        <input type="number" id="cameraPropRotation" step="1">
-      </label>
+      <label><span>X</span><input type="number" id="cameraPropX" step="1"></label>
+      <label><span>Y</span><input type="number" id="cameraPropY" step="1"></label>
+      <label><span>Width</span><input type="number" id="cameraPropWidth" step="1" min="40"></label>
+      <label><span>Height</span><input type="number" id="cameraPropHeight" step="1" min="40"></label>
+      <label><span>Rotation</span><input type="number" id="cameraPropRotation" step="1"></label>
 
       <label class="camera-toggle">
         <input type="checkbox" id="cameraPropGuide">
@@ -102,10 +138,6 @@
         <div id="stage">
           <canvas id="drawingCanvas"></canvas>
 
-          <!--
-            Figures live on their own object layer.
-            Pencil/Eraser only affect drawingCanvas; bone figures remain editable objects.
-          -->
           <svg
             id="figureLayer"
             viewBox="0 0 2048 1152"
@@ -113,6 +145,7 @@
             aria-label="DenX figure layer"
           ></svg>
         </div>
+
         <div id="cameraFrame" aria-hidden="true">
           <div class="camera-handle camera-handle-rotate" data-handle="rotate" aria-hidden="true"></div>
           <div class="camera-handle camera-handle-resize" data-handle="resize" aria-hidden="true"></div>
@@ -128,13 +161,38 @@
   </div>
 </section>
 
+<div id="figureImportModal" class="figure-modal hidden" aria-hidden="true">
+  <div class="figure-modal-card" role="dialog" aria-modal="true" aria-labelledby="figureImportTitle">
+    <div class="figure-modal-head">
+      <div>
+        <strong id="figureImportTitle">Import Figure</strong>
+        <small>Import to this project first. Nothing is added to the canvas yet.</small>
+      </div>
+      <button id="closeFigureImportBtn" class="modal-close" aria-label="Close">×</button>
+    </div>
+
+    <div class="figure-modal-section-title">My Figures</div>
+    <div id="savedFigureList" class="saved-figure-list"></div>
+
+    <label class="file-import-row">
+      <span>Import .dxf file</span>
+      <input id="figureFileInput" type="file" accept=".dxf,.json,application/json">
+    </label>
+  </div>
+</div>
+
+<div id="denxToast" class="denx-toast" aria-live="polite"></div>
+
 <script src="js/app.js"></script>
 <script src="js/history.js"></script>
+<script src="js/figure-library.js"></script>
 <script src="js/tools.js"></script>
+<script src="js/workspace-ui.js"></script>
 <script src="js/drawing.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/bones.js"></script>
 <script src="js/timeline.js"></script>
+<script src="js/workspace-persistence.js"></script>
 <script src="js/pwa.js"></script>
 </body>
 </html>
