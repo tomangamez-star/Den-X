@@ -35,6 +35,12 @@
     const zoomOutBtn = document.getElementById("creatorZoomOut");
     const toast = document.getElementById("creatorToast");
 
+    const referenceImportBtn = document.getElementById("referenceImportBtn");
+    const referenceFileInput = document.getElementById("referenceFileInput");
+    const referenceOpacityInput = document.getElementById("referenceOpacityInput");
+    const referenceHideBtn = document.getElementById("referenceHideBtn");
+    const referenceRemoveBtn = document.getElementById("referenceRemoveBtn");
+
     let selectedType = "rounded";
     let selectedSegmentId = "seg-1";
     let defaultColor = "#111111";
@@ -86,10 +92,33 @@
     };
 
     const pointerMap = new Map();
-    let pinchStartDistance = null;
-    let pinchStartZoom = 1;
-    let panPointerId = null;
-    let panLast = null;
+
+    const panState = {
+        active: false,
+        pointerId: null,
+        startX: 0,
+        startY: 0,
+        cameraX: 0,
+        cameraY: 0
+    };
+
+    const pinchState = {
+        active: false,
+        startDistance: 0,
+        startZoom: 1,
+        startCameraX: 0,
+        startCameraY: 0,
+        localAnchorX: 0,
+        localAnchorY: 0
+    };
+
+    const reference = {
+        dataUrl: null,
+        opacity: 0.45,
+        visible: true,
+        width: 560,
+        height: 420
+    };
 
     const interaction = {
         active: false,
@@ -196,6 +225,16 @@
     function updateCamera() {
         cameraEl.style.transform =
             `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
+
+        // Infinite-editor feel: the grid belongs to the same world as the
+        // figure. It expands/contracts and slides with zoom/pan.
+        const grid = 28 * camera.zoom;
+
+        stageWrap.style.backgroundSize =
+            `${grid}px ${grid}px`;
+
+        stageWrap.style.backgroundPosition =
+            `${camera.x}px ${camera.y}px`;
     }
 
     function screenToStage(clientX, clientY) {
@@ -223,8 +262,29 @@
         return screenToStage(e.clientX, e.clientY);
     }
 
-    function setZoom(nextZoom) {
-        camera.zoom = Math.max(0.5, Math.min(8, nextZoom));
+    function setZoom(nextZoom, screenAnchor = null) {
+        const rect = stageWrap.getBoundingClientRect();
+        const next = Math.max(0.35, Math.min(12, nextZoom));
+
+        const anchor = screenAnchor || {
+            x: rect.width / 2,
+            y: rect.height / 2
+        };
+
+        const localX =
+            (anchor.x - camera.x) / camera.zoom;
+
+        const localY =
+            (anchor.y - camera.y) / camera.zoom;
+
+        camera.zoom = next;
+
+        camera.x =
+            anchor.x - localX * next;
+
+        camera.y =
+            anchor.y - localY * next;
+
         updateCamera();
     }
 
@@ -448,6 +508,19 @@
 
     function render() {
         stage.innerHTML = "";
+
+        if (reference.dataUrl && reference.visible) {
+            stage.appendChild(svg("image", {
+                href: reference.dataUrl,
+                x: 500 - reference.width / 2,
+                y: 350 - reference.height / 2,
+                width: reference.width,
+                height: reference.height,
+                opacity: reference.opacity,
+                preserveAspectRatio: "xMidYMid meet",
+                class: "creator-reference-image"
+            }));
+        }
 
         // Filled geometry sits behind segment geometry.
         drawPolyfills();
@@ -1007,34 +1080,89 @@
     });
 
     // -------------------------------------------------------------
-    // Zoom + two-finger pan/pinch
+    // Infinite-room navigation:
+    // - drag empty space = pan
+    // - pinch anywhere = zoom
+    // - no Pan tool exists
     // -------------------------------------------------------------
+
     zoomInBtn.addEventListener("click", () => {
-        setZoom(camera.zoom * 1.2);
+        setZoom(camera.zoom * 1.22);
         render();
     });
 
     zoomOutBtn.addEventListener("click", () => {
-        setZoom(camera.zoom / 1.2);
+        setZoom(camera.zoom / 1.22);
         render();
     });
 
-    stageWrap.addEventListener("pointerdown", e => {
-        if (e.pointerType !== "touch") return;
+    function pointerIsInteractiveTarget(target) {
+        return !!target?.closest?.(
+            ".creator-node-touch, .creator-segment-shape"
+        );
+    }
 
+    function beginPinch() {
+        if (pointerMap.size !== 2) return;
+
+        const rect = stageWrap.getBoundingClientRect();
+        const points = [...pointerMap.values()];
+
+        const midpoint = {
+            x: (points[0].x + points[1].x) / 2 - rect.left,
+            y: (points[0].y + points[1].y) / 2 - rect.top
+        };
+
+        pinchState.active = true;
+        pinchState.startDistance = Math.max(
+            1,
+            Math.hypot(
+                points[1].x - points[0].x,
+                points[1].y - points[0].y
+            )
+        );
+
+        pinchState.startZoom = camera.zoom;
+        pinchState.startCameraX = camera.x;
+        pinchState.startCameraY = camera.y;
+
+        pinchState.localAnchorX =
+            (midpoint.x - camera.x) / camera.zoom;
+
+        pinchState.localAnchorY =
+            (midpoint.y - camera.y) / camera.zoom;
+
+        panState.active = false;
+        panState.pointerId = null;
+
+        cancelInteraction();
+    }
+
+    stageWrap.addEventListener("pointerdown", e => {
         pointerMap.set(e.pointerId, {
             x: e.clientX,
             y: e.clientY
         });
 
         if (pointerMap.size === 2) {
-            const pts = [...pointerMap.values()];
-            pinchStartDistance = Math.hypot(
-                pts[1].x - pts[0].x,
-                pts[1].y - pts[0].y
-            );
-            pinchStartZoom = camera.zoom;
-            cancelInteraction();
+            beginPinch();
+            return;
+        }
+
+        if (
+            pointerMap.size === 1 &&
+            !pointerIsInteractiveTarget(e.target)
+        ) {
+            panState.active = true;
+            panState.pointerId = e.pointerId;
+            panState.startX = e.clientX;
+            panState.startY = e.clientY;
+            panState.cameraX = camera.x;
+            panState.cameraY = camera.y;
+
+            try {
+                stageWrap.setPointerCapture(e.pointerId);
+            } catch (_) {}
         }
     }, true);
 
@@ -1046,36 +1174,191 @@
             y: e.clientY
         });
 
-        if (pointerMap.size === 2) {
-            const pts = [...pointerMap.values()];
-            const distance = Math.hypot(
-                pts[1].x - pts[0].x,
-                pts[1].y - pts[0].y
+        if (
+            pinchState.active &&
+            pointerMap.size >= 2
+        ) {
+            const rect = stageWrap.getBoundingClientRect();
+            const points = [...pointerMap.values()].slice(0, 2);
+
+            const distance = Math.max(
+                1,
+                Math.hypot(
+                    points[1].x - points[0].x,
+                    points[1].y - points[0].y
+                )
             );
 
-            if (pinchStartDistance > 0) {
-                setZoom(pinchStartZoom * (distance / pinchStartDistance));
-                render();
-            }
+            const midpoint = {
+                x: (points[0].x + points[1].x) / 2 - rect.left,
+                y: (points[0].y + points[1].y) / 2 - rect.top
+            };
 
+            const nextZoom = Math.max(
+                0.35,
+                Math.min(
+                    12,
+                    pinchState.startZoom *
+                    (distance / pinchState.startDistance)
+                )
+            );
+
+            camera.zoom = nextZoom;
+
+            camera.x =
+                midpoint.x -
+                pinchState.localAnchorX * nextZoom;
+
+            camera.y =
+                midpoint.y -
+                pinchState.localAnchorY * nextZoom;
+
+            updateCamera();
+            render();
+
+            e.preventDefault();
+            return;
+        }
+
+        if (
+            panState.active &&
+            e.pointerId === panState.pointerId
+        ) {
+            camera.x =
+                panState.cameraX +
+                (e.clientX - panState.startX);
+
+            camera.y =
+                panState.cameraY +
+                (e.clientY - panState.startY);
+
+            updateCamera();
             e.preventDefault();
         }
     }, true);
 
-    function removePointer(e) {
+    function finishNavigationPointer(e) {
         pointerMap.delete(e.pointerId);
 
+        if (e.pointerId === panState.pointerId) {
+            panState.active = false;
+            panState.pointerId = null;
+        }
+
         if (pointerMap.size < 2) {
-            pinchStartDistance = null;
+            pinchState.active = false;
         }
     }
 
-    stageWrap.addEventListener("pointerup", removePointer, true);
-    stageWrap.addEventListener("pointercancel", removePointer, true);
+    stageWrap.addEventListener(
+        "pointerup",
+        finishNavigationPointer,
+        true
+    );
+
+    stageWrap.addEventListener(
+        "pointercancel",
+        finishNavigationPointer,
+        true
+    );
 
     stage.addEventListener("pointermove", moveInteraction);
     stage.addEventListener("pointerup", finishInteraction);
     stage.addEventListener("pointercancel", cancelInteraction);
+
+    // -------------------------------------------------------------
+    // Reference image — temporary construction aid, not saved in .dxf
+    // -------------------------------------------------------------
+
+    function syncReferenceControls() {
+        const hasReference = !!reference.dataUrl;
+
+        if (referenceHideBtn) {
+            referenceHideBtn.disabled = !hasReference;
+            referenceHideBtn.textContent =
+                reference.visible ? "Hide" : "Show";
+        }
+
+        if (referenceRemoveBtn) {
+            referenceRemoveBtn.disabled = !hasReference;
+        }
+
+        if (referenceOpacityInput) {
+            referenceOpacityInput.disabled = !hasReference;
+            referenceOpacityInput.value =
+                String(reference.opacity);
+        }
+    }
+
+    referenceImportBtn?.addEventListener("click", () => {
+        referenceFileInput?.click();
+    });
+
+    referenceFileInput?.addEventListener("change", event => {
+        const file = event.target.files?.[0];
+
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            const url = String(reader.result || "");
+            const image = new Image();
+
+            image.onload = () => {
+                const maxWidth = 650;
+                const maxHeight = 520;
+                const scale = Math.min(
+                    maxWidth / Math.max(1, image.naturalWidth),
+                    maxHeight / Math.max(1, image.naturalHeight),
+                    1
+                );
+
+                reference.dataUrl = url;
+                reference.width =
+                    Math.max(80, image.naturalWidth * scale);
+                reference.height =
+                    Math.max(80, image.naturalHeight * scale);
+                reference.visible = true;
+
+                syncReferenceControls();
+                render();
+                showToast("Reference image loaded ✓");
+            };
+
+            image.src = url;
+        };
+
+        reader.readAsDataURL(file);
+        event.target.value = "";
+    });
+
+    referenceOpacityInput?.addEventListener("input", event => {
+        reference.opacity = Math.max(
+            0.08,
+            Math.min(1, Number(event.target.value) || 0.45)
+        );
+
+        render();
+    });
+
+    referenceHideBtn?.addEventListener("click", () => {
+        if (!reference.dataUrl) return;
+
+        reference.visible = !reference.visible;
+        syncReferenceControls();
+        render();
+    });
+
+    referenceRemoveBtn?.addEventListener("click", () => {
+        reference.dataUrl = null;
+        reference.visible = true;
+
+        syncReferenceControls();
+        render();
+    });
+
+    syncReferenceControls();
 
     function buildDefinition() {
         const name = nameInput.value.trim() || "Untitled Figure";
@@ -1127,7 +1410,19 @@
         }
     });
 
-    cancelBtn.addEventListener("click", () => {
+    cancelBtn?.addEventListener("click", () => {
+        const hasWork =
+            history.undo.length > 0 ||
+            polyfills.length > 0 ||
+            segments.length > 1;
+
+        if (
+            hasWork &&
+            !window.confirm("Leave Figure Creator without saving?")
+        ) {
+            return;
+        }
+
         window.location.href = "workspace.html";
     });
 

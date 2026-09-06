@@ -36,6 +36,10 @@ if (canvas && ctx) {
 
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+            requestAnimationFrame(() => {
+                window.denxRefreshOnionSkin?.();
+            });
+
         };
 
         img.src = snapshot;
@@ -79,6 +83,8 @@ if (canvas && ctx) {
 
         history.redo = [];
         saveCurrentFrame();
+
+        window.denxRefreshOnionSkin?.();
 
         ctx.globalCompositeOperation = "source-over";
 

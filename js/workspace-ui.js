@@ -1,5 +1,6 @@
 // ============================================================
-// DENX EXPANDED TOOLBOX + FIGURE WORKFLOW
+// DENX EXPANDED TOOLBOX / WORKSPACE UI V4
+// Figure Browser is handled independently in figure-import.js.
 // ============================================================
 
 (() => {
@@ -8,14 +9,8 @@
     const sections = [...document.querySelectorAll("[data-tool-section]")];
 
     const createFigureBtn = document.getElementById("createFigureBtn");
-    const importFigureBtn = document.getElementById("importFigureBtn");
     const workspaceFigureSelect = document.getElementById("workspaceFigureSelect");
     const addFigureBtn = document.getElementById("addFigureBtn");
-
-    const modal = document.getElementById("figureImportModal");
-    const closeModalBtn = document.getElementById("closeFigureImportBtn");
-    const savedFigureList = document.getElementById("savedFigureList");
-    const figureFileInput = document.getElementById("figureFileInput");
 
     const backgroundColorControl = document.getElementById("backgroundColorControl");
     const drawColorControl = document.getElementById("drawColorControl");
@@ -41,7 +36,10 @@
 
     function setActiveQuickLink(name) {
         quickLinks.forEach(link => {
-            link.classList.toggle("active", link.dataset.toolTarget === name);
+            link.classList.toggle(
+                "active",
+                link.dataset.toolTarget === name
+            );
         });
     }
 
@@ -84,10 +82,8 @@
     function applyWorkspaceBackground(color) {
         if (!color) return;
 
-        // Background means the animation stage itself, NOT the environment
-        // surrounding the stage/camera.
         if (stage) stage.style.background = color;
-        if (drawingCanvas) drawingCanvas.style.background = color;
+        if (drawingCanvas) drawingCanvas.style.background = "transparent";
 
         window.denxStageBackgroundColor = color;
         localStorage.setItem("denx.stageBackground", color);
@@ -101,16 +97,21 @@
     if (backgroundColorControl) {
         backgroundColorControl.value = savedBackground;
         applyWorkspaceBackground(savedBackground);
+
         backgroundColorControl.addEventListener("input", e => {
             applyWorkspaceBackground(e.target.value);
         });
     }
 
-    const savedDrawColor = localStorage.getItem("denx.drawColor") || "#000000";
+    const savedDrawColor =
+        localStorage.getItem("denx.drawColor") ||
+        "#000000";
+
     window.denxDrawColor = savedDrawColor;
 
     if (drawColorControl) {
         drawColorControl.value = savedDrawColor;
+
         drawColorControl.addEventListener("input", e => {
             window.denxDrawColor = e.target.value;
             localStorage.setItem("denx.drawColor", e.target.value);
@@ -118,7 +119,10 @@
     }
 
     function renderProjectFigures(selectedId = null) {
-        if (!workspaceFigureSelect || !window.DenXFigureLibrary) return;
+        if (
+            !workspaceFigureSelect ||
+            !window.DenXFigureLibrary
+        ) return;
 
         const figures = DenXFigureLibrary.getProjectFigures();
         const previous = selectedId || workspaceFigureSelect.value;
@@ -150,100 +154,6 @@
 
     window.denxRefreshProjectFigurePicker = renderProjectFigures;
 
-    function closeImportModal() {
-        if (!modal) return;
-        modal.classList.add("hidden");
-        modal.style.display = "";
-        modal.setAttribute("aria-hidden", "true");
-    }
-
-    function importDefinitionToProject(definition) {
-        try {
-            const imported = DenXFigureLibrary.importToProject(definition);
-            renderProjectFigures(imported.id);
-            showToast(`${imported.name} imported to project ✓`);
-            closeImportModal();
-        } catch (error) {
-            showToast(error?.message || "Could not import figure.");
-        }
-    }
-
-    function renderSavedFigures() {
-        if (!savedFigureList) return;
-
-        const library = DenXFigureLibrary.getLibrary();
-        savedFigureList.innerHTML = "";
-
-        if (library.length === 0) {
-            const empty = document.createElement("div");
-            empty.className = "figure-list-empty";
-            empty.textContent = "No saved figures yet. Create one first.";
-            savedFigureList.appendChild(empty);
-            return;
-        }
-
-        library.forEach(figure => {
-            const row = document.createElement("button");
-            row.className = "saved-figure-row";
-            row.type = "button";
-            row.innerHTML = `
-                <span class="saved-figure-mark">◇</span>
-                <span class="saved-figure-name"></span>
-                <span class="saved-figure-action">Import</span>
-            `;
-
-            row.querySelector(".saved-figure-name").textContent = figure.name;
-            row.addEventListener("click", () => importDefinitionToProject(figure));
-            savedFigureList.appendChild(row);
-        });
-    }
-
-    function openImportModal() {
-        if (!modal) {
-            showToast("Import window is unavailable.");
-            return;
-        }
-
-        // Always pull fresh data from the shared V3 store at the exact
-        // moment Import is pressed.
-        renderSavedFigures();
-
-        modal.classList.remove("hidden");
-        modal.style.display = "grid";
-        modal.setAttribute("aria-hidden", "false");
-
-        requestAnimationFrame(() => {
-            const count = DenXFigureLibrary.getLibraryCount?.() ?? 0;
-
-            if (count === 0) {
-                showToast("My Figures is empty.");
-            }
-        });
-    }
-
-    importFigureBtn?.addEventListener("click", openImportModal);
-    closeModalBtn?.addEventListener("click", closeImportModal);
-
-    modal?.addEventListener("pointerdown", e => {
-        if (e.target === modal) closeImportModal();
-    });
-
-    figureFileInput?.addEventListener("change", async e => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            const text = await file.text();
-            const definition = DenXFigureLibrary.parseFigureFile(text);
-            DenXFigureLibrary.saveToLibrary(definition);
-            importDefinitionToProject(definition);
-        } catch (error) {
-            showToast(error?.message || "That is not a valid DenX figure.");
-        } finally {
-            e.target.value = "";
-        }
-    });
-
     workspaceFigureSelect?.addEventListener("change", () => {
         addFigureBtn.disabled = !workspaceFigureSelect.value;
     });
@@ -262,7 +172,8 @@
             return;
         }
 
-        const instanceId = window.denxAddFigureDefinition(definition);
+        const instanceId =
+            window.denxAddFigureDefinition(definition);
 
         if (instanceId) {
             window.denxSetTool?.("select");
@@ -272,21 +183,28 @@
 
     createFigureBtn?.addEventListener("click", () => {
         try {
+            window.denxStopPlayback?.();
             window.denxSaveWorkspaceHandoff?.();
         } catch (_) {}
 
         window.location.href = "figure-creator.html";
     });
 
-    const createdNotice = sessionStorage.getItem("denx.figureCreatedNotice");
+    const createdNotice =
+        sessionStorage.getItem("denx.figureCreatedNotice");
+
     if (createdNotice) {
         sessionStorage.removeItem("denx.figureCreatedNotice");
-        renderSavedFigures();
+
         renderProjectFigures();
 
         setTimeout(() => {
-            const count = DenXFigureLibrary.getLibraryCount?.() ?? 0;
-            showToast(`${createdNotice} saved ✓  My Figures: ${count}`);
+            const count =
+                DenXFigureLibrary.getLibraryCount?.() ?? 0;
+
+            showToast(
+                `${createdNotice} saved ✓  My Figures: ${count}`
+            );
         }, 220);
     }
 

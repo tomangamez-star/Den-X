@@ -13,6 +13,7 @@
 // ============================================================
 
 const figureLayer = document.getElementById("figureLayer");
+const onionFigureLayer = document.getElementById("onionFigureLayer");
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 const STAGE_WIDTH = 2048;
@@ -298,6 +299,106 @@ function appendFigureSegment(group, figure, segment, from, to) {
         "stroke-linecap": "round"
     }));
 }
+
+
+function appendOnionFigure(frameNumber, className, opacity) {
+    if (!onionFigureLayer || !frameNumber) return;
+
+    const framePose = boneFramePoses[frameNumber];
+    if (!framePose) return;
+
+    figures.forEach(figure => {
+        const pose = framePose[figure.id];
+
+        if (!pose || pose.visible === false) return;
+
+        const group = createSvg("g", {
+            class: `onion-figure ${className}`,
+            opacity
+        });
+
+        if (Array.isArray(figure.polyfills)) {
+            figure.polyfills.forEach(polyfill => {
+                const points = polyfill.nodeIds
+                    .map(nodeId => pose.nodes[nodeId])
+                    .filter(Boolean);
+
+                if (points.length < 3) return;
+
+                group.appendChild(createSvg("polygon", {
+                    points: points
+                        .map(point => `${point.x},${point.y}`)
+                        .join(" "),
+                    class: "onion-polyfill"
+                }));
+            });
+        }
+
+        figure.segments.forEach(segment => {
+            const from = pose.nodes[segment.from];
+            const to = pose.nodes[segment.to];
+
+            if (!from || !to) return;
+
+            appendFigureSegment(
+                group,
+                figure,
+                segment,
+                from,
+                to
+            );
+        });
+
+        if (
+            figure.headNodeId &&
+            pose.nodes[figure.headNodeId]
+        ) {
+            const head =
+                pose.nodes[figure.headNodeId];
+
+            group.appendChild(createSvg("circle", {
+                cx: head.x,
+                cy: head.y,
+                r: figure.style?.headRadius || 18,
+                class: "figure-head"
+            }));
+        }
+
+        onionFigureLayer.appendChild(group);
+    });
+}
+
+window.denxBonesClearOnion = () => {
+    if (onionFigureLayer) {
+        onionFigureLayer.innerHTML = "";
+    }
+};
+
+window.denxBonesRenderOnion = ({
+    previousFrame = null,
+    nextFrame = null,
+    opacity = 0.28
+} = {}) => {
+    if (!onionFigureLayer) return;
+
+    onionFigureLayer.innerHTML = "";
+
+    if (previousFrame) {
+        appendOnionFigure(
+            previousFrame,
+            "onion-prev",
+            opacity
+        );
+    }
+
+    if (nextFrame) {
+        appendOnionFigure(
+            nextFrame,
+            "onion-next",
+            opacity
+        );
+    }
+};
 
 function renderFigures() {
     if (!figureLayer) return;
@@ -593,6 +694,12 @@ window.denxBonesRemoveFrame = removedFrame => {
 window.denxBonesLoadFrame = frameNumber => {
     getFramePose(frameNumber);
     renderFigures();
+
+    if (!window.denxIsPlaying?.()) {
+        requestAnimationFrame(() => {
+            window.denxRefreshOnionSkin?.();
+        });
+    }
 };
 
 function nodeDefinition(figure, nodeId) {
@@ -1283,6 +1390,10 @@ function addFigureDefinitionToWorkspace(definition) {
 
     recordBoneOperation(beforeState);
     renderFigures();
+
+    requestAnimationFrame(() => {
+        window.denxRefreshOnionSkin?.();
+    });
 
     return figureId;
 }
