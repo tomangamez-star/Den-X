@@ -84,10 +84,15 @@
           <span class="tool-icon">◉</span><span class="tool-label">Onion</span>
         </button>
 
-        <label class="animation-number-control">
-          <span>FPS</span>
-          <input id="animationFpsInput" type="number" min="1" max="60" step="1" value="12" inputmode="numeric">
-        </label>
+        <div class="animation-stepper-control">
+          <span class="animation-stepper-label">FPS</span>
+          <div class="denx-number-stepper" data-denx-stepper data-target="animationFpsInput" data-min="1" data-max="60" data-step="1">
+            <button type="button" data-step-dir="-1" aria-label="Decrease FPS">−</button>
+            <span class="denx-number-display" data-denx-display-for="animationFpsInput">12</span>
+            <button type="button" data-step-dir="1" aria-label="Increase FPS">＋</button>
+            <input id="animationFpsInput" type="hidden" value="12">
+          </div>
+        </div>
 
         <label class="animation-toggle-control">
           <span>Previous</span>
@@ -100,7 +105,7 @@
         </label>
 
         <label class="animation-range-control">
-          <span>Ghost</span>
+          <span class="range-label-row"><span>Ghost</span><output id="onionOpacityValue">28%</output></span>
           <input id="onionOpacityInput" type="range" min="0.08" max="0.65" step="0.01" value="0.28">
         </label>
 
@@ -117,7 +122,8 @@
           <span class="tool-icon">＋</span><span class="tool-label">Create</span>
         </button>
 
-        <button id="importFigureBtn" class="tool-row tool-action" title="Import a saved figure into this project" aria-label="Import figure">
+        <button id="importFigureBtn" type="button" class="tool-row tool-action" title="Open Figure Browser" aria-label="Import figure"
+          onclick="if(window.denxOpenFigureBrowser){window.denxOpenFigureBrowser();}else{var m=document.getElementById('figureImportModal');if(m){m.classList.remove('hidden');m.style.display='grid';m.setAttribute('aria-hidden','false');}}">
           <span class="tool-icon">⇩</span><span class="tool-label">Import</span>
         </button>
 
@@ -153,11 +159,55 @@
     <aside id="cameraProperties" class="camera-properties hidden" aria-hidden="true">
       <div class="camera-properties__title">Camera</div>
 
-      <label><span>X</span><input type="number" id="cameraPropX" step="1"></label>
-      <label><span>Y</span><input type="number" id="cameraPropY" step="1"></label>
-      <label><span>Width</span><input type="number" id="cameraPropWidth" step="1" min="40"></label>
-      <label><span>Height</span><input type="number" id="cameraPropHeight" step="1" min="40"></label>
-      <label><span>Rotation</span><input type="number" id="cameraPropRotation" step="1"></label>
+      <div class="camera-step-row">
+        <span>X</span>
+        <div class="denx-number-stepper camera-number-stepper" data-denx-stepper data-target="cameraPropX" data-min="-4096" data-max="4096" data-step="1">
+          <button type="button" data-step-dir="-1">−</button>
+          <span class="denx-number-display" data-denx-display-for="cameraPropX">0</span>
+          <button type="button" data-step-dir="1">＋</button>
+          <input type="hidden" id="cameraPropX" value="0">
+        </div>
+      </div>
+
+      <div class="camera-step-row">
+        <span>Y</span>
+        <div class="denx-number-stepper camera-number-stepper" data-denx-stepper data-target="cameraPropY" data-min="-4096" data-max="4096" data-step="1">
+          <button type="button" data-step-dir="-1">−</button>
+          <span class="denx-number-display" data-denx-display-for="cameraPropY">0</span>
+          <button type="button" data-step-dir="1">＋</button>
+          <input type="hidden" id="cameraPropY" value="0">
+        </div>
+      </div>
+
+      <div class="camera-step-row">
+        <span>Width</span>
+        <div class="denx-number-stepper camera-number-stepper" data-denx-stepper data-target="cameraPropWidth" data-min="40" data-max="4096" data-step="10">
+          <button type="button" data-step-dir="-1">−</button>
+          <span class="denx-number-display" data-denx-display-for="cameraPropWidth">260</span>
+          <button type="button" data-step-dir="1">＋</button>
+          <input type="hidden" id="cameraPropWidth" value="260">
+        </div>
+      </div>
+
+      <div class="camera-step-row">
+        <span>Height</span>
+        <div class="denx-number-stepper camera-number-stepper" data-denx-stepper data-target="cameraPropHeight" data-min="40" data-max="4096" data-step="10">
+          <button type="button" data-step-dir="-1">−</button>
+          <span class="denx-number-display" data-denx-display-for="cameraPropHeight">150</span>
+          <button type="button" data-step-dir="1">＋</button>
+          <input type="hidden" id="cameraPropHeight" value="150">
+        </div>
+      </div>
+
+      <div class="camera-step-row">
+        <span>Rotation</span>
+        <div class="denx-number-stepper camera-number-stepper" data-denx-stepper data-target="cameraPropRotation" data-min="-360" data-max="360" data-step="1">
+          <button type="button" data-step-dir="-1">−</button>
+          <span class="denx-number-display" data-denx-display-for="cameraPropRotation">0°</span>
+          <button type="button" data-step-dir="1">＋</button>
+          <input type="hidden" id="cameraPropRotation" value="0">
+        </div>
+      </div>
 
       <label class="camera-toggle">
         <input type="checkbox" id="cameraPropGuide">
@@ -198,6 +248,15 @@
           <div class="camera-handle camera-handle-move" data-handle="move" aria-hidden="true"></div>
         </div>
       </div>
+
+      <div id="playbackMonitor" class="playback-monitor hidden" aria-hidden="true">
+        <div class="playback-monitor-head">
+          <span class="playback-live-dot"></span>
+          <strong>CAMERA PREVIEW</strong>
+          <span id="playbackFrameLabel">1 / 1</span>
+        </div>
+        <div id="playbackScreen" class="playback-screen"></div>
+      </div>
     </div>
 
     <div class="zoom-controls" aria-label="Zoom controls">
@@ -219,7 +278,9 @@
 
     <div class="figure-browser-section">
       <div class="figure-modal-section-title">Built-in Figures</div>
-      <div id="builtinFigureList" class="saved-figure-list"></div>
+      <div id="builtinFigureList" class="saved-figure-list">
+        <div class="figure-list-empty">Opening built-in figures…</div>
+      </div>
     </div>
 
     <div class="figure-browser-section">
@@ -227,7 +288,9 @@
         <span>My Figures</span>
         <span id="myFiguresCount" class="figure-count-badge">0</span>
       </div>
-      <div id="savedFigureList" class="saved-figure-list"></div>
+      <div id="savedFigureList" class="saved-figure-list">
+        <div class="figure-list-empty">Opening My Figures…</div>
+      </div>
     </div>
 
     <button id="importFromPhoneBtn" class="phone-import-btn" type="button">
@@ -249,7 +312,6 @@
 <script src="js/figure-library.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/workspace-ui.js"></script>
-<script src="js/figure-import.js"></script>
 <script src="js/drawing.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/bones.js"></script>
