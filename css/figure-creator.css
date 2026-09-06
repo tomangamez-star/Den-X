@@ -187,9 +187,9 @@ input {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
-    #202020;
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
+    #2a2a2a;
   background-size: 28px 28px;
 }
 
@@ -235,14 +235,14 @@ input {
 .creator-node {
   fill: transparent;
   stroke: #f3f3f3;
-  stroke-width: 2;
+  stroke-width: 1.4;
   pointer-events: none;
 }
 
 .creator-main-node {
   fill: var(--primary);
   stroke: #111;
-  stroke-width: 2;
+  stroke-width: 1.4;
 }
 
 .creator-build-preview {

@@ -869,3 +869,12 @@
     font-size: 7.5px;
   }
 }
+
+
+/* DenX expanded toolbar V2 */
+#panTool.active {
+  background: var(--primary);
+  color: #050505;
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 0 13px rgba(0,200,255,.52);
+}
