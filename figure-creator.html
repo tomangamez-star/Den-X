@@ -15,14 +15,21 @@
 <body>
 <section class="creator-shell">
   <header class="creator-topbar">
-    <button id="creatorCancelBtn" class="creator-top-btn">←</button>
+    <button id="creatorCancelBtn" class="creator-top-btn" aria-label="Back">←</button>
+
+    <div class="creator-history">
+      <button id="creatorUndoBtn" class="creator-top-btn" title="Undo" aria-label="Undo">↶</button>
+      <button id="creatorRedoBtn" class="creator-top-btn" title="Redo" aria-label="Redo">↷</button>
+    </div>
+
     <input id="figureNameInput" class="figure-name-input" value="New Figure" maxlength="40" aria-label="Figure name">
     <button id="creatorSaveBtn" class="creator-save-btn">Save</button>
   </header>
 
   <main class="creator-main">
-    <aside class="creator-toolbar">
-      <section class="creator-tool-section">
+    <aside id="creatorToolbar" class="creator-toolbar">
+
+      <section class="creator-tool-section" data-creator-section="segments">
         <div class="creator-section-title">Segments</div>
         <button class="segment-type-btn" data-segment-type="none">None</button>
         <button class="segment-type-btn active" data-segment-type="rounded">Rounded</button>
@@ -33,7 +40,7 @@
         <button class="segment-type-btn" data-segment-type="hexagon">Hexagon</button>
       </section>
 
-      <section class="creator-tool-section">
+      <section class="creator-tool-section" data-creator-section="segment">
         <div class="creator-section-title">Segment</div>
 
         <label class="creator-control">
@@ -41,26 +48,74 @@
           <input id="segmentColorInput" type="color" value="#111111">
         </label>
 
+        <div class="creator-palette" id="creatorPalette" aria-label="Color palette">
+          <button data-color="#111111" style="--swatch:#111111" aria-label="Black"></button>
+          <button data-color="#ffffff" style="--swatch:#ffffff" aria-label="White"></button>
+          <button data-color="#ff2d2d" style="--swatch:#ff2d2d" aria-label="Red"></button>
+          <button data-color="#ff9f1a" style="--swatch:#ff9f1a" aria-label="Orange"></button>
+          <button data-color="#ffd60a" style="--swatch:#ffd60a" aria-label="Yellow"></button>
+          <button data-color="#38d96b" style="--swatch:#38d96b" aria-label="Green"></button>
+          <button data-color="#00c8ff" style="--swatch:#00c8ff" aria-label="Cyan"></button>
+          <button data-color="#3468ff" style="--swatch:#3468ff" aria-label="Blue"></button>
+          <button data-color="#9b5cff" style="--swatch:#9b5cff" aria-label="Purple"></button>
+          <button data-color="#ff4fb3" style="--swatch:#ff4fb3" aria-label="Pink"></button>
+        </div>
+
         <label class="creator-control creator-range-control">
           <span>Size</span>
           <input id="segmentWidthInput" type="range" min="2" max="80" value="18">
         </label>
 
+        <label class="creator-toggle-control">
+          <span>Elastic</span>
+          <input id="elasticToggle" type="checkbox">
+        </label>
+
         <button id="deleteSegmentBtn" class="creator-action-btn">Delete</button>
       </section>
 
-      <section class="creator-tool-section">
+      <section class="creator-tool-section" data-creator-section="polyfill">
+        <div class="creator-section-title">Polyfill</div>
+
+        <button id="polyfillBeginBtn" class="creator-action-btn">Begin</button>
+
+        <label class="creator-control">
+          <span>Color</span>
+          <input id="polyfillColorInput" type="color" value="#00c8ff">
+        </label>
+
+        <button id="polyfillUndoPointBtn" class="creator-action-btn" disabled>Undo Point</button>
+        <button id="polyfillFinishBtn" class="creator-action-btn" disabled>Finish</button>
+      </section>
+
+      <section class="creator-tool-section" data-creator-section="figure">
         <div class="creator-section-title">Figure</div>
         <div class="creator-hint">
           Drag from a node to create.<br>
-          Choose <b>None</b> to move nodes.
+          Choose <b>None</b> to move/edit nodes.<br>
+          Elastic is OFF by default.
         </div>
       </section>
     </aside>
 
-    <section class="creator-stage-wrap">
-      <svg id="creatorStage" viewBox="0 0 1000 700" aria-label="Figure creator stage"></svg>
+    <nav class="creator-quickfind" aria-label="Figure creator quick find">
+      <button class="creator-quick-link active" data-creator-target="segments">Segments</button>
+      <button class="creator-quick-link" data-creator-target="segment">Segment</button>
+      <button class="creator-quick-link" data-creator-target="polyfill">Polyfill</button>
+      <button class="creator-quick-link" data-creator-target="figure">Figure</button>
+    </nav>
+
+    <section class="creator-stage-wrap" id="creatorStageWrap">
+      <div id="creatorCamera" class="creator-camera">
+        <svg id="creatorStage" viewBox="0 0 1000 700" aria-label="Figure creator stage"></svg>
+      </div>
+
       <div class="creator-stage-note">MAIN ■</div>
+
+      <div class="creator-zoom-controls" aria-label="Creator zoom">
+        <button id="creatorZoomIn" class="creator-zoom-btn">＋</button>
+        <button id="creatorZoomOut" class="creator-zoom-btn">−</button>
+      </div>
     </section>
   </main>
 </section>
