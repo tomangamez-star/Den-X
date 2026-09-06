@@ -884,3 +884,215 @@
 .figure-polyfill {
   pointer-events: none;
 }
+
+
+/* ============================================================
+   DENX ANIMATION CORE V4
+   ============================================================ */
+
+#stage {
+  background: #fff;
+}
+
+#onionCanvas,
+#drawingCanvas,
+#onionFigureLayer,
+#figureLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#onionCanvas,
+#onionFigureLayer {
+  pointer-events: none;
+}
+
+#onionCanvas {
+  z-index: 1;
+}
+
+#drawingCanvas {
+  z-index: 2;
+  background: transparent !important;
+}
+
+#onionFigureLayer {
+  z-index: 3;
+  overflow: visible;
+}
+
+#figureLayer {
+  z-index: 4;
+}
+
+#onionFigureLayer .onion-prev .figure-segment,
+#onionFigureLayer .onion-prev .figure-head,
+#onionFigureLayer .onion-prev .onion-polyfill {
+  stroke: #00b7ff !important;
+  fill: #00b7ff !important;
+}
+
+#onionFigureLayer .onion-next .figure-segment,
+#onionFigureLayer .onion-next .figure-head,
+#onionFigureLayer .onion-next .onion-polyfill {
+  stroke: #ff4f9a !important;
+  fill: #ff4f9a !important;
+}
+
+body.denx-playing #drawingCanvas,
+body.denx-playing #figureLayer {
+  pointer-events: none !important;
+}
+
+#playBtn.playing {
+  color: var(--primary);
+  border-color: rgba(0,200,255,.5);
+  box-shadow: 0 0 10px rgba(0,200,255,.32);
+}
+
+#onionSkinBtn.active {
+  color: var(--primary);
+  border-color: rgba(0,200,255,.5);
+  background: rgba(0,200,255,.12);
+}
+
+.animation-number-control,
+.animation-toggle-control,
+.animation-range-control {
+  min-height: 40px;
+  padding: 6px 7px;
+  border-radius: 9px;
+  background: #151515;
+  color: #eee;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.animation-number-control,
+.animation-toggle-control {
+  display: grid;
+  grid-template-columns: 1fr 34px;
+  align-items: center;
+  gap: 6px;
+}
+
+.animation-number-control input {
+  width: 34px;
+  height: 27px;
+  border: 1px solid #303030;
+  border-radius: 7px;
+  background: #0b0b0b;
+  color: #fff;
+  text-align: center;
+  font-size: 10px;
+}
+
+.animation-toggle-control input {
+  width: 18px;
+  height: 18px;
+  justify-self: end;
+  accent-color: var(--primary);
+}
+
+.animation-range-control {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.animation-range-control input {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+/* Figure Browser */
+.figure-browser-card {
+  width: min(430px, 100%);
+}
+
+.figure-browser-section + .figure-browser-section {
+  margin-top: 15px;
+}
+
+.figure-modal-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.figure-count-badge {
+  min-width: 21px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #202020;
+  color: #ccc;
+  font-size: 9px;
+}
+
+.saved-figure-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.saved-figure-source {
+  color: #777;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.figure-list-empty span {
+  color: #666;
+  font-size: 9px;
+}
+
+.phone-import-btn {
+  width: 100%;
+  min-height: 58px;
+  margin-top: 15px;
+  padding: 8px 11px;
+  border: 1px solid rgba(0,200,255,.34);
+  border-radius: 12px;
+  background: rgba(0,200,255,.09);
+  color: #fff;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 9px;
+  align-items: center;
+  text-align: left;
+}
+
+.phone-import-icon {
+  color: var(--primary);
+  font-size: 25px;
+  text-align: center;
+}
+
+.phone-import-btn strong,
+.phone-import-btn small {
+  display: block;
+}
+
+.phone-import-btn strong {
+  font-size: 11px;
+}
+
+.phone-import-btn small {
+  margin-top: 2px;
+  color: #8d8d8d;
+  font-size: 8px;
+}
+
+.hidden-file-input {
+  position: fixed;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
