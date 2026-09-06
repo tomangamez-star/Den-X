@@ -19,6 +19,26 @@ const activeTouches = new Map();
 let pinchStartDistance = null;
 let pinchStartZoom = 1;
 
+// During live pan/zoom DenX temporarily drops expensive editor effects.
+// The artwork itself stays intact; only editor chrome/effects are reduced.
+let navigationQualityTimer = null;
+let navigationQualityActive = false;
+
+function pulseNavigationQuality() {
+    if (!navigationQualityActive) {
+        navigationQualityActive = true;
+        document.body.classList.add("denx-navigating");
+        window.dispatchEvent(new Event("denx:navigationstart"));
+    }
+
+    clearTimeout(navigationQualityTimer);
+    navigationQualityTimer = setTimeout(() => {
+        navigationQualityActive = false;
+        document.body.classList.remove("denx-navigating");
+        window.dispatchEvent(new Event("denx:navigationend"));
+    }, 120);
+}
+
 const viewport = document.getElementById("viewport");
 const cameraElement = document.getElementById("camera");
 const cameraFrameEl = document.getElementById("cameraFrame");
@@ -289,6 +309,7 @@ function autoPanWorkspace(clientX, clientY) {
 
     camera.x += dx;
     camera.y += dy;
+    pulseNavigationQuality();
     updateWorkspace();
     return true;
 }
@@ -376,6 +397,7 @@ function startPan(e) {
     panPointerId = e.pointerId;
     lastX = e.clientX;
     lastY = e.clientY;
+    pulseNavigationQuality();
 
     try {
         viewport.setPointerCapture(e.pointerId);
@@ -408,6 +430,7 @@ function movePan(e) {
 
         const ratio = distance / pinchStartDistance;
         camera.zoom = clamp(pinchStartZoom * ratio, 0.3, 5);
+        pulseNavigationQuality();
         updateWorkspace();
         return;
     }
@@ -420,6 +443,7 @@ function movePan(e) {
     lastX = e.clientX;
     lastY = e.clientY;
 
+    pulseNavigationQuality();
     updateWorkspace();
 }
 
@@ -671,6 +695,7 @@ if (moveHandle) {
 if (zoomIn) {
     zoomIn.onclick = () => {
         camera.zoom = clamp(camera.zoom + 0.1, 0.3, 5);
+        pulseNavigationQuality();
         updateWorkspace();
     };
 }
@@ -678,6 +703,7 @@ if (zoomIn) {
 if (zoomOut) {
     zoomOut.onclick = () => {
         camera.zoom = clamp(camera.zoom - 0.1, 0.3, 5);
+        pulseNavigationQuality();
         updateWorkspace();
     };
 }

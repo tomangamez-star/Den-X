@@ -85,6 +85,10 @@ function stopPlayback() {
 
     window.denxExitPlaybackMonitor?.();
 
+    // Playback renders clean artwork with no pose controls. Rebuild the
+    // editing overlay as soon as we return to the workspace.
+    window.denxBonesRefresh?.();
+
     updatePlayButton();
     refreshOnionSkin();
 }

@@ -263,7 +263,8 @@ function appendFigureSegment(group, figure, segment, from, to) {
             cy: (from.y + to.y) / 2,
             r: radius,
             fill: color,
-            class: "figure-segment figure-segment-shape"
+            class: "figure-segment figure-segment-shape",
+            "data-denx-segment-id": segment.id
         }));
 
         return;
@@ -282,7 +283,8 @@ function appendFigureSegment(group, figure, segment, from, to) {
         group.appendChild(createSvg("polygon", {
             points,
             fill: color,
-            class: "figure-segment figure-segment-shape"
+            class: "figure-segment figure-segment-shape",
+            "data-denx-segment-id": segment.id
         }));
 
         return;
@@ -294,6 +296,7 @@ function appendFigureSegment(group, figure, segment, from, to) {
         x2: to.x,
         y2: to.y,
         class: "figure-segment",
+        "data-denx-segment-id": segment.id,
         stroke: color,
         "stroke-width": width,
         "stroke-linecap": "round"
@@ -360,7 +363,8 @@ function appendOnionFigure(frameNumber, className, opacity) {
                 cx: head.x,
                 cy: head.y,
                 r: figure.style?.headRadius || 18,
-                class: "figure-head"
+                class: "figure-head",
+                "data-denx-head": "1"
             }));
         }
 
@@ -476,12 +480,203 @@ function frameFigureThumbnailDataUrl(frameNumber = currentFrame) {
 window.denxBonesFrameThumbnailDataUrl =
     frameFigureThumbnailDataUrl;
 
+// ============================================================
+// DENX v0.2 VELOCITY — live figure renderer
+// ============================================================
+// Pose drags no longer rebuild every figure on every pointer event. Only the
+// active figure's existing SVG geometry is updated, once per animation frame.
+// Full rebuilds are reserved for structural/frame/tool changes.
+
+let activeFigureRenderRaf = null;
+let activeFigureRenderId = null;
+let viewportCullTimer = null;
+
+function figureGroupFor(figureId) {
+    if (!figureLayer) return null;
+
+    return [...figureLayer.querySelectorAll(".denx-figure")].find(
+        group => group.getAttribute("data-figure-id") === figureId
+    ) || null;
+}
+
+function updateSegmentGeometry(element, figure, segment, from, to) {
+    if (!element || !from || !to) return;
+
+    const type = segment.type || "rounded";
+    const width = Number(segment.style?.width) || figure.style?.thickness || 12;
+
+    if (type === "circle") {
+        const diameter = Math.max(8, Math.hypot(to.x - from.x, to.y - from.y));
+        element.setAttribute("cx", (from.x + to.x) / 2);
+        element.setAttribute("cy", (from.y + to.y) / 2);
+        element.setAttribute("r", diameter / 2);
+        return;
+    }
+
+    if (
+        type === "rectangle" ||
+        type === "triangle" ||
+        type === "diamond" ||
+        type === "hexagon"
+    ) {
+        const points = segmentPolygonPoints(type, from, to, width)
+            .map(point => `${point.x},${point.y}`)
+            .join(" ");
+        element.setAttribute("points", points);
+        return;
+    }
+
+    element.setAttribute("x1", from.x);
+    element.setAttribute("y1", from.y);
+    element.setAttribute("x2", to.x);
+    element.setAttribute("y2", to.y);
+}
+
+function updateFigureGeometry(figureId) {
+    const figure = getFigure(figureId);
+    const pose = getFigurePose(figureId);
+    const group = figureGroupFor(figureId);
+
+    if (!figure || !pose || !group) {
+        renderFigures();
+        return;
+    }
+
+    figure.segments.forEach(segment => {
+        const from = pose.nodes[segment.from];
+        const to = pose.nodes[segment.to];
+        const element = [...group.querySelectorAll("[data-denx-segment-id]")].find(
+            el => el.getAttribute("data-denx-segment-id") === String(segment.id)
+        );
+        updateSegmentGeometry(element, figure, segment, from, to);
+    });
+
+    if (Array.isArray(figure.polyfills)) {
+        figure.polyfills.forEach(polyfill => {
+            const element = [...group.querySelectorAll("[data-denx-polyfill-id]")].find(
+                el => el.getAttribute("data-denx-polyfill-id") === String(polyfill.id)
+            );
+            if (!element) return;
+
+            const points = polyfill.nodeIds
+                .map(nodeId => pose.nodes[nodeId])
+                .filter(Boolean);
+
+            if (points.length >= 3) {
+                element.setAttribute(
+                    "points",
+                    points.map(point => `${point.x},${point.y}`).join(" ")
+                );
+            }
+        });
+    }
+
+    if (figure.headNodeId && pose.nodes[figure.headNodeId]) {
+        const head = pose.nodes[figure.headNodeId];
+        const headElement = group.querySelector("[data-denx-head='1']");
+        if (headElement) {
+            headElement.setAttribute("cx", head.x);
+            headElement.setAttribute("cy", head.y);
+        }
+    }
+
+    const handleMetrics = getHandleMetrics();
+
+    figure.nodes.forEach(node => {
+        const point = pose.nodes[node.id];
+        if (!point) return;
+
+        const controls = [...group.querySelectorAll("[data-node-id]")].filter(
+            el => el.getAttribute("data-node-id") === String(node.id)
+        );
+
+        controls.forEach(control => {
+            if (node.id === figure.rootNodeId) {
+                if (control.classList.contains("figure-node-touch-target")) {
+                    const size = handleMetrics.rootTouchSize;
+                    control.setAttribute("x", point.x - size / 2);
+                    control.setAttribute("y", point.y - size / 2);
+                    control.setAttribute("width", size);
+                    control.setAttribute("height", size);
+                } else {
+                    const size = handleMetrics.rootSize;
+                    control.setAttribute("x", point.x - size / 2);
+                    control.setAttribute("y", point.y - size / 2);
+                    control.setAttribute("width", size);
+                    control.setAttribute("height", size);
+                }
+            } else {
+                control.setAttribute("cx", point.x);
+                control.setAttribute("cy", point.y);
+            }
+        });
+    });
+}
+
+function scheduleActiveFigureRender(figureId) {
+    activeFigureRenderId = figureId;
+    if (activeFigureRenderRaf) return;
+
+    activeFigureRenderRaf = requestAnimationFrame(() => {
+        activeFigureRenderRaf = null;
+        const id = activeFigureRenderId;
+        activeFigureRenderId = null;
+        if (id) updateFigureGeometry(id);
+    });
+}
+
+function refreshViewportCulling() {
+    viewportCullTimer = null;
+
+    if (!figureLayer) return;
+
+    const viewportEl = document.getElementById("viewport");
+    if (!viewportEl || window.denxIsPlaying?.()) {
+        figureLayer.querySelectorAll(".denx-figure-offscreen").forEach(group => {
+            group.classList.remove("denx-figure-offscreen");
+        });
+        return;
+    }
+
+    const viewportRect = viewportEl.getBoundingClientRect();
+    const margin = 96;
+
+    figureLayer.querySelectorAll(".denx-figure").forEach(group => {
+        // visibility:hidden keeps SVG geometry measurable, allowing figures to
+        // wake again when a later pan brings them back into view.
+        const rect = group.getBoundingClientRect();
+        const offscreen = (
+            rect.right < viewportRect.left - margin ||
+            rect.left > viewportRect.right + margin ||
+            rect.bottom < viewportRect.top - margin ||
+            rect.top > viewportRect.bottom + margin
+        );
+
+        group.classList.toggle("denx-figure-offscreen", offscreen);
+    });
+}
+
+function scheduleViewportCulling(delay = 90) {
+    if (viewportCullTimer) return;
+    viewportCullTimer = setTimeout(refreshViewportCulling, delay);
+}
+
 function renderFigures() {
     if (!figureLayer) return;
+
+    if (activeFigureRenderRaf) {
+        cancelAnimationFrame(activeFigureRenderRaf);
+        activeFigureRenderRaf = null;
+        activeFigureRenderId = null;
+    }
 
     figureLayer.innerHTML = "";
 
     const framePose = getFramePose(currentFrame);
+    const editingFigures =
+        currentTool === "select" &&
+        !window.denxIsPlaying?.() &&
+        !window.denxPlaybackMonitorActive?.();
 
     figures.forEach(figure => {
         const pose = framePose[figure.id];
@@ -512,7 +707,8 @@ function renderFigures() {
                         .map(point => `${point.x},${point.y}`)
                         .join(" "),
                     fill: polyfill.color || "#00c8ff",
-                    class: "figure-polyfill"
+                    class: "figure-polyfill",
+                    "data-denx-polyfill-id": polyfill.id
                 }));
             });
         }
@@ -535,79 +731,89 @@ function renderFigures() {
                 cx: head.x,
                 cy: head.y,
                 r: figure.style?.headRadius || 18,
-                class: "figure-head"
+                class: "figure-head",
+                "data-denx-head": "1"
             }));
         }
 
-        // Editing controls.
-        const handleMetrics = getHandleMetrics();
+        // Editing controls. Only the selected figure gets the complete node
+        // set. Other figures keep a lightweight MAIN/root control so they can
+        // still be selected without carrying every joint in the live DOM.
+        if (editingFigures) {
+            const handleMetrics = getHandleMetrics();
+            const fullControls = selectedFigureId === figure.id;
 
-        figure.nodes.forEach(node => {
-            const point = pose.nodes[node.id];
-            if (!point) return;
+            figure.nodes.forEach(node => {
+                if (!fullControls && node.id !== figure.rootNodeId) return;
 
-            if (node.id === figure.rootNodeId) {
-                const touchSize = handleMetrics.rootTouchSize;
-                const rootTouch = createSvg("rect", {
-                    x: point.x - touchSize / 2,
-                    y: point.y - touchSize / 2,
-                    width: touchSize,
-                    height: touchSize,
-                    rx: Math.max(1, handleMetrics.rootRadius * 2),
-                    class: "figure-node-touch-target figure-root-touch-target",
-                    "data-denx-node": "1",
-                    "data-figure-id": figure.id,
-                    "data-node-id": node.id
-                });
+                const point = pose.nodes[node.id];
+                if (!point) return;
 
-                const rootSize = handleMetrics.rootSize;
-                const rootVisual = createSvg("rect", {
-                    x: point.x - rootSize / 2,
-                    y: point.y - rootSize / 2,
-                    width: rootSize,
-                    height: rootSize,
-                    rx: handleMetrics.rootRadius,
-                    class: "figure-node-visual figure-root-node",
-                    style:
-                        `--denx-node-stroke:${handleMetrics.rootStrokeWidth}px;` +
-                        `--denx-node-selected-stroke:${handleMetrics.selectedStrokeWidth}px;`
-                });
+                if (node.id === figure.rootNodeId) {
+                    const touchSize = handleMetrics.rootTouchSize;
+                    const rootTouch = createSvg("rect", {
+                        x: point.x - touchSize / 2,
+                        y: point.y - touchSize / 2,
+                        width: touchSize,
+                        height: touchSize,
+                        rx: Math.max(1, handleMetrics.rootRadius * 2),
+                        class: "figure-node-touch-target figure-root-touch-target",
+                        "data-denx-node": "1",
+                        "data-figure-id": figure.id,
+                        "data-node-id": node.id
+                    });
 
-                if (selectedFigureId === figure.id && selectedNodeId === node.id) {
-                    rootVisual.classList.add("selected");
+                    const rootSize = handleMetrics.rootSize;
+                    const rootVisual = createSvg("rect", {
+                        x: point.x - rootSize / 2,
+                        y: point.y - rootSize / 2,
+                        width: rootSize,
+                        height: rootSize,
+                        rx: handleMetrics.rootRadius,
+                        class: "figure-node-visual figure-root-node",
+                        "data-node-id": node.id,
+                        style:
+                            `--denx-node-stroke:${handleMetrics.rootStrokeWidth}px;` +
+                            `--denx-node-selected-stroke:${handleMetrics.selectedStrokeWidth}px;`
+                    });
+
+                    if (selectedFigureId === figure.id && selectedNodeId === node.id) {
+                        rootVisual.classList.add("selected");
+                    }
+
+                    group.appendChild(rootTouch);
+                    group.appendChild(rootVisual);
+                } else {
+                    const touch = createSvg("circle", {
+                        cx: point.x,
+                        cy: point.y,
+                        r: handleMetrics.normalTouchRadius,
+                        class: "figure-node-touch-target figure-normal-touch-target",
+                        "data-denx-node": "1",
+                        "data-figure-id": figure.id,
+                        "data-node-id": node.id
+                    });
+
+                    const handle = createSvg("circle", {
+                        cx: point.x,
+                        cy: point.y,
+                        r: handleMetrics.normalVisualRadius,
+                        class: "figure-node-visual figure-normal-node",
+                        "data-node-id": node.id,
+                        style:
+                            `--denx-node-stroke:${handleMetrics.normalStrokeWidth}px;` +
+                            `--denx-node-selected-stroke:${handleMetrics.selectedStrokeWidth}px;`
+                    });
+
+                    if (selectedFigureId === figure.id && selectedNodeId === node.id) {
+                        handle.classList.add("selected");
+                    }
+
+                    group.appendChild(touch);
+                    group.appendChild(handle);
                 }
-
-                group.appendChild(rootTouch);
-                group.appendChild(rootVisual);
-            } else {
-                const touch = createSvg("circle", {
-                    cx: point.x,
-                    cy: point.y,
-                    r: handleMetrics.normalTouchRadius,
-                    class: "figure-node-touch-target figure-normal-touch-target",
-                    "data-denx-node": "1",
-                    "data-figure-id": figure.id,
-                    "data-node-id": node.id
-                });
-
-                const handle = createSvg("circle", {
-                    cx: point.x,
-                    cy: point.y,
-                    r: handleMetrics.normalVisualRadius,
-                    class: "figure-node-visual figure-normal-node",
-                    style:
-                        `--denx-node-stroke:${handleMetrics.normalStrokeWidth}px;` +
-                        `--denx-node-selected-stroke:${handleMetrics.selectedStrokeWidth}px;`
-                });
-
-                if (selectedFigureId === figure.id && selectedNodeId === node.id) {
-                    handle.classList.add("selected");
-                }
-
-                group.appendChild(touch);
-                group.appendChild(handle);
-            }
-        });
+            });
+        }
 
         figureLayer.appendChild(group);
     });
@@ -630,12 +836,16 @@ function renderFigures() {
     }
 
     updateFigureInteractionMode();
+    scheduleViewportCulling(0);
 }
 
 function updateFigureInteractionMode() {
     if (!figureLayer) return;
 
-    const editingFigures = currentTool === "select";
+    const editingFigures =
+        currentTool === "select" &&
+        !window.denxIsPlaying?.() &&
+        !window.denxPlaybackMonitorActive?.();
 
     figureLayer.classList.toggle("figure-controls-visible", editingFigures);
     figureLayer.classList.remove("bone-build-mode");
@@ -1060,7 +1270,9 @@ function movePoseInteraction(e) {
         boneInteraction.mode === "build-new-figure"
     ) {
         boneInteraction.changed = true;
-        renderFigures();
+        // Figure construction is not used in the animation workspace, but keep
+        // its preview frame-limited as a safe legacy path.
+        scheduleActiveFigureRender(boneInteraction.figureId);
         return;
     }
 
@@ -1146,7 +1358,7 @@ function movePoseInteraction(e) {
     }
 
     e.preventDefault();
-    renderFigures();
+    scheduleActiveFigureRender(boneInteraction.figureId);
 }
 
 function normalizedBuildEnd(start, end) {
@@ -1484,6 +1696,8 @@ function addFigureDefinitionToWorkspace(definition) {
 window.denxAddFigureDefinition = definition =>
     addFigureDefinitionToWorkspace(definition);
 
+window.denxBonesRefresh = () => renderFigures();
+
 if (figureLayer) {
     figureLayer.addEventListener("pointerdown", e => {
         if (currentTool !== "select") return;
@@ -1514,13 +1728,48 @@ let lastHandleZoom = null;
 
 window.addEventListener("denx:camera-updated", (e) => {
     const zoom = Number(e.detail?.zoom);
+    const safeZoom = Number.isFinite(zoom) ? zoom : getCameraZoom();
 
-    if (Number.isFinite(zoom) && lastHandleZoom !== null && Math.abs(zoom - lastHandleZoom) < 0.0001) {
+    // Artwork already follows the camera transform for free. A full SVG rebuild
+    // during a live pan/pinch was only being done to resize editor handles, so
+    // Velocity deliberately postpones that work until navigation settles.
+    const navigating = document.body.classList.contains("denx-navigating");
+    const needsHandles =
+        currentTool === "select" &&
+        !window.denxIsPlaying?.();
+
+    if (!navigating && needsHandles) {
+        const zoomChangedEnough =
+            lastHandleZoom === null ||
+            Math.abs(safeZoom - lastHandleZoom) >= 0.05;
+
+        if (zoomChangedEnough) {
+            lastHandleZoom = safeZoom;
+            renderFigures();
+        }
+    }
+
+    scheduleViewportCulling();
+});
+
+window.addEventListener("denx:navigationend", () => {
+    const settledZoom = getCameraZoom();
+
+    if (
+        currentTool === "select" &&
+        !window.denxIsPlaying?.() &&
+        (lastHandleZoom === null || Math.abs(settledZoom - lastHandleZoom) > 0.0001)
+    ) {
+        lastHandleZoom = settledZoom;
+        renderFigures();
         return;
     }
 
-    lastHandleZoom = Number.isFinite(zoom) ? zoom : getCameraZoom();
-    renderFigures();
+    refreshViewportCulling();
+});
+
+window.addEventListener("resize", () => {
+    scheduleViewportCulling(0);
 });
 
 // Animation workspaces begin without automatically spawning a figure.

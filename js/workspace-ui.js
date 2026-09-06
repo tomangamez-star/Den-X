@@ -578,6 +578,104 @@
         }, 220);
     }
 
+    // --------------------------------------------------------
+    // Quick Find gesture-passive rail
+    // --------------------------------------------------------
+    // When asleep the rail is visible but pointer-transparent, so a pinch or
+    // pan that begins on top of it still belongs to the workspace underneath.
+    // A clean tap inside its bounds wakes it for normal section selection.
+
+    const quickRail = document.querySelector(".tool-quickfind");
+    const quickRailPointers = new Map();
+    const activeRailPointers = new Set();
+    let quickRailTimer = null;
+
+    function sleepQuickRail() {
+        quickRail?.classList.remove("quickfind-awake");
+        clearTimeout(quickRailTimer);
+        quickRailTimer = null;
+    }
+
+    function wakeQuickRail() {
+        if (!quickRail) return;
+        quickRail.classList.add("quickfind-awake");
+        clearTimeout(quickRailTimer);
+        quickRailTimer = setTimeout(sleepQuickRail, 5000);
+    }
+
+    function pointInsideQuickRail(x, y) {
+        if (!quickRail) return false;
+        const rect = quickRail.getBoundingClientRect();
+        return (
+            x >= rect.left && x <= rect.right &&
+            y >= rect.top && y <= rect.bottom
+        );
+    }
+
+    document.addEventListener("pointerdown", event => {
+        activeRailPointers.add(event.pointerId);
+
+        if (activeRailPointers.size > 1) {
+            quickRailPointers.forEach(state => {
+                state.multiTouch = true;
+            });
+        }
+
+        if (quickRail?.classList.contains("quickfind-awake")) {
+            if (!pointInsideQuickRail(event.clientX, event.clientY)) {
+                sleepQuickRail();
+            } else {
+                wakeQuickRail();
+            }
+            return;
+        }
+
+        if (!pointInsideQuickRail(event.clientX, event.clientY)) return;
+
+        quickRailPointers.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+            moved: false,
+            multiTouch: activeRailPointers.size > 1
+        });
+    }, true);
+
+    document.addEventListener("pointermove", event => {
+        const state = quickRailPointers.get(event.pointerId);
+        if (!state) return;
+
+        if (
+            Math.hypot(
+                event.clientX - state.x,
+                event.clientY - state.y
+            ) > 9
+        ) {
+            state.moved = true;
+        }
+    }, true);
+
+    function finishQuickRailPointer(event) {
+        const state = quickRailPointers.get(event.pointerId);
+        quickRailPointers.delete(event.pointerId);
+        activeRailPointers.delete(event.pointerId);
+
+        if (!state || state.moved || state.multiTouch) return;
+
+        if (pointInsideQuickRail(event.clientX, event.clientY)) {
+            wakeQuickRail();
+        }
+    }
+
+    document.addEventListener("pointerup", finishQuickRailPointer, true);
+    document.addEventListener("pointercancel", event => {
+        quickRailPointers.delete(event.pointerId);
+        activeRailPointers.delete(event.pointerId);
+    }, true);
+
+    quickLinks.forEach(link => {
+        link.addEventListener("click", wakeQuickRail);
+    });
+
     renderProjectFigures();
     updateQuickFindFromScroll();
 })();
