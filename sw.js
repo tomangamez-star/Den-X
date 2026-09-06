@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v9-expanded-toolbox-figure-creator";
+const CACHE_NAME = "denx-animator-v10-figure-refine";
 const APP_SHELL = [
   "./",
   "./index.html",
