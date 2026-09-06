@@ -532,7 +532,7 @@
    ============================================================ */
 
 :root {
-  --denx-toolbox-width: 118px;
+  --denx-toolbox-width: 132px;
 }
 
 .toolbar.expanded-toolbar {
@@ -856,7 +856,7 @@
 
 @media (max-width: 420px) {
   :root {
-    --denx-toolbox-width: 108px;
+    --denx-toolbox-width: 122px;
   }
 
   .toolbar.expanded-toolbar {
@@ -1095,4 +1095,237 @@ body.denx-playing #figureLayer {
   width: 1px;
   height: 1px;
   opacity: 0;
+}
+
+
+/* ============================================================
+   DENX V5 — thumbnail timeline
+   ============================================================ */
+
+.topbar {
+  height: 82px;
+  min-height: 82px;
+}
+
+.top-timeline {
+  padding: 6px 8px;
+}
+
+.frame.frame-with-thumb {
+  width: 64px;
+  min-width: 64px;
+  height: 62px;
+  min-height: 62px;
+  padding: 4px;
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.frame-thumb {
+  position: relative;
+  width: 100%;
+  height: 46px;
+  display: block;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset;
+}
+
+.frame-thumb-drawing,
+.frame-thumb-figure {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.frame-number {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  min-width: 18px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.72);
+  color: #fff;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.frame.active .frame-number {
+  background: #050505;
+  color: var(--primary);
+}
+
+/* ============================================================
+   Mobile-first numeric steppers
+   ============================================================ */
+
+.animation-stepper-control {
+  min-height: 46px;
+  padding: 6px;
+  border-radius: 9px;
+  background: #151515;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.animation-stepper-label {
+  color: #eee;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.denx-number-stepper {
+  display: grid;
+  grid-template-columns: 28px minmax(34px, 1fr) 28px;
+  gap: 4px;
+  align-items: center;
+}
+
+.toolbar.expanded-toolbar .denx-number-stepper button,
+.camera-properties .denx-number-stepper button {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid #303030;
+  border-radius: 7px;
+  background: #0d0d0d;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.denx-number-display {
+  height: 28px;
+  padding: 0 3px;
+  border: 1px solid #292929;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: #191919;
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.range-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+
+.range-label-row output {
+  color: var(--primary);
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.camera-step-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 7px;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.camera-step-row > span {
+  color: #ddd;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.camera-number-stepper {
+  grid-template-columns: 30px minmax(44px,1fr) 30px;
+}
+
+/* ============================================================
+   Camera-only playback TV
+   ============================================================ */
+
+.playback-monitor {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255,255,255,.025), transparent 52%),
+    #080808;
+}
+
+.playback-monitor.hidden {
+  display: none !important;
+}
+
+.playback-monitor-head {
+  width: min(92%, 900px);
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #242424;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  background: #111;
+  color: #aaa;
+  font-size: 8px;
+  letter-spacing: .55px;
+}
+
+.playback-monitor-head strong {
+  color: #ddd;
+  font-size: 8px;
+}
+
+.playback-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(0,200,255,.8);
+}
+
+.playback-screen {
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border: 2px solid #222;
+  border-radius: 10px;
+  background: #000;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.035),
+    0 18px 50px rgba(0,0,0,.55);
+}
+
+.denx-camera-preview-playing #cameraFrame,
+.denx-camera-preview-playing #stageGuide {
+  visibility: hidden !important;
+}
+
+/* Figure browser gets an unmistakable open state. */
+.figure-modal:not(.hidden) {
+  display: grid !important;
 }
