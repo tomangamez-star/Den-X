@@ -31,7 +31,7 @@ if (canvas && ctx) {
             ctx.lineWidth = 4;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            ctx.strokeStyle = "#000";
+            ctx.strokeStyle = window.denxDrawColor || "#000000";
             ctx.globalCompositeOperation = "source-over";
 
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -131,7 +131,7 @@ if (canvas && ctx) {
         } else {
 
             ctx.globalCompositeOperation = "source-over";
-            ctx.strokeStyle = "#000";
+            ctx.strokeStyle = window.denxDrawColor || "#000000";
             ctx.lineWidth = 4;
 
         }

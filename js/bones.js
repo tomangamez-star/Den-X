@@ -199,6 +199,47 @@ function createSvg(tag, attrs = {}) {
     return el;
 }
 
+
+function appendFigureSegment(group, figure, segment, from, to) {
+    const type = segment.type || "rounded";
+    const width = Number(segment.style?.width) || figure.style?.thickness || 12;
+    const color = segment.style?.color || figure.style?.color || "#111111";
+
+    if (type === "circle") {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length = Math.max(1, Math.hypot(dx, dy));
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        const cx = (from.x + to.x) / 2;
+        const cy = (from.y + to.y) / 2;
+
+        group.appendChild(createSvg("ellipse", {
+            cx,
+            cy,
+            rx: length / 2,
+            ry: Math.max(2, width / 2),
+            fill: color,
+            class: "figure-segment figure-segment-shape",
+            transform: `rotate(${angle} ${cx} ${cy})`
+        }));
+
+        return;
+    }
+
+    const line = createSvg("line", {
+        x1: from.x,
+        y1: from.y,
+        x2: to.x,
+        y2: to.y,
+        class: "figure-segment",
+        stroke: color,
+        "stroke-width": width,
+        "stroke-linecap": type === "rounded" ? "round" : "butt"
+    });
+
+    group.appendChild(line);
+}
+
 function renderFigures() {
     if (!figureLayer) return;
 
@@ -228,16 +269,7 @@ function renderFigures() {
 
             if (!from || !to) return;
 
-            const line = createSvg("line", {
-                x1: from.x,
-                y1: from.y,
-                x2: to.x,
-                y2: to.y,
-                class: "figure-segment",
-                "stroke-width": figure.style?.thickness || 12
-            });
-
-            group.appendChild(line);
+            appendFigureSegment(group, figure, segment, from, to);
         });
 
         // Optional simple head circle for starter/humanoid-style figures.
@@ -348,13 +380,14 @@ function renderFigures() {
 function updateFigureInteractionMode() {
     if (!figureLayer) return;
 
-    const editingFigures = currentTool === "select" || currentTool === "bone";
+    const editingFigures = currentTool === "select";
 
     figureLayer.classList.toggle("figure-controls-visible", editingFigures);
-    figureLayer.classList.toggle("bone-build-mode", currentTool === "bone");
-    figureLayer.classList.toggle("figure-select-mode", currentTool === "select");
+    figureLayer.classList.remove("bone-build-mode");
+    figureLayer.classList.toggle("figure-select-mode", editingFigures);
 
-    // Pencil/Eraser/Camera pass through this layer completely.
+    // Figure construction lives in Figure Creator.
+    // Pencil/Eraser/Camera pass through the object layer.
     figureLayer.style.pointerEvents = editingFigures ? "auto" : "none";
 }
 
@@ -1049,29 +1082,139 @@ function cancelBoneInteraction(e) {
     }
 }
 
+
+function addFigureDefinitionToWorkspace(definition) {
+    if (!definition || !Array.isArray(definition.nodes) || !Array.isArray(definition.segments)) {
+        return null;
+    }
+
+    const beforeState = captureBoneProjectState();
+    const figureId = `figure-${nextFigureId++}`;
+
+    const nodeMap = new Map();
+    definition.nodes.forEach(node => {
+        nodeMap.set(String(node.id), `node-${nextNodeId++}`);
+    });
+
+    const runtimeRootId = nodeMap.get(String(definition.rootNodeId));
+    if (!runtimeRootId) return null;
+
+    const runtimeNodes = definition.nodes.map(node => ({
+        id: nodeMap.get(String(node.id)),
+        parentId: node.parentId == null
+            ? null
+            : nodeMap.get(String(node.parentId)),
+        role: node.role || "custom"
+    }));
+
+    const runtimeSegments = definition.segments.map(segment => ({
+        id: `seg-${nextSegmentId++}`,
+        from: nodeMap.get(String(segment.from)),
+        to: nodeMap.get(String(segment.to)),
+        type: segment.type || "rounded",
+        length: Number(segment.length) || null,
+        style: {
+            color: segment.style?.color || definition.style?.color || "#111111",
+            width: Number(segment.style?.width) || Number(definition.style?.thickness) || 12
+        }
+    })).filter(segment => segment.from && segment.to);
+
+    const sourcePose = definition.initialPose || {};
+    const sourcePoints = definition.nodes
+        .map(node => sourcePose[node.id])
+        .filter(Boolean);
+
+    if (sourcePoints.length === 0) return null;
+
+    const minX = Math.min(...sourcePoints.map(point => Number(point.x) || 0));
+    const maxX = Math.max(...sourcePoints.map(point => Number(point.x) || 0));
+    const minY = Math.min(...sourcePoints.map(point => Number(point.y) || 0));
+    const maxY = Math.max(...sourcePoints.map(point => Number(point.y) || 0));
+
+    const sourceCenter = {
+        x: (minX + maxX) / 2,
+        y: (minY + maxY) / 2
+    };
+
+    const targetCenter = {
+        x: STAGE_WIDTH / 2,
+        y: STAGE_HEIGHT / 2
+    };
+
+    const runtimePoseNodes = {};
+
+    definition.nodes.forEach(node => {
+        const source = sourcePose[node.id];
+        const runtimeId = nodeMap.get(String(node.id));
+        if (!source || !runtimeId) return;
+
+        runtimePoseNodes[runtimeId] = {
+            x: targetCenter.x + (Number(source.x) - sourceCenter.x),
+            y: targetCenter.y + (Number(source.y) - sourceCenter.y)
+        };
+    });
+
+    const figure = {
+        id: figureId,
+        sourceDefinitionId: definition.id || null,
+        name: definition.name || "Figure",
+        rootNodeId: runtimeRootId,
+        headNodeId: null,
+        style: {
+            color: definition.style?.color || "#111111",
+            thickness: Number(definition.style?.thickness) || 12,
+            headRadius: 18
+        },
+        nodes: runtimeNodes,
+        segments: runtimeSegments
+    };
+
+    figures.push(figure);
+
+    ensureFigureSegmentLengths(figure, {
+        visible: true,
+        nodes: runtimePoseNodes
+    });
+
+    const frameNumbers = new Set(
+        Object.keys(boneFramePoses).map(Number)
+    );
+    frameNumbers.add(currentFrame);
+
+    frameNumbers.forEach(frameNumber => {
+        const framePose = getFramePose(frameNumber);
+
+        framePose[figureId] = {
+            visible: frameNumber >= currentFrame,
+            nodes: deepClone(runtimePoseNodes)
+        };
+    });
+
+    selectedFigureId = figureId;
+    selectedNodeId = runtimeRootId;
+
+    recordBoneOperation(beforeState);
+    renderFigures();
+
+    return figureId;
+}
+
+window.denxAddFigureDefinition = definition =>
+    addFigureDefinitionToWorkspace(definition);
+
 if (figureLayer) {
     figureLayer.addEventListener("pointerdown", e => {
-        if (currentTool !== "select" && currentTool !== "bone") return;
+        if (currentTool !== "select") return;
         if (!e.isPrimary) return;
 
         const nodeEl = e.target.closest?.('[data-denx-node="1"]');
+        if (!nodeEl) return;
 
-        if (nodeEl) {
-            const figureId = nodeEl.getAttribute("data-figure-id");
-            const nodeId = nodeEl.getAttribute("data-node-id");
-
-            if (currentTool === "select") {
-                beginNodePose(e, figureId, nodeId);
-            } else {
-                beginBoneBuildFromNode(e, figureId, nodeId);
-            }
-
-            return;
-        }
-
-        if (currentTool === "bone" && e.target === figureLayer) {
-            beginNewFigureBuild(e);
-        }
+        beginNodePose(
+            e,
+            nodeEl.getAttribute("data-figure-id"),
+            nodeEl.getAttribute("data-node-id")
+        );
     });
 
     figureLayer.addEventListener("pointermove", movePoseInteraction);
@@ -1098,9 +1241,10 @@ window.addEventListener("denx:camera-updated", (e) => {
     renderFigures();
 });
 
-// Initial project contains one real editable starter figure.
-createStarterFigure();
-selectedFigureId = figures[0]?.id || null;
-selectedNodeId = figures[0]?.rootNodeId || null;
+// Animation workspaces begin without automatically spawning a figure.
+// Saved/imported definitions only become canvas instances when Add is pressed.
+boneFramePoses = { 1: {} };
+selectedFigureId = null;
+selectedNodeId = null;
 lastHandleZoom = getCameraZoom();
 renderFigures();

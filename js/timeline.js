@@ -167,6 +167,10 @@ window.denxRedoTimelineAction = () => {
     return true;
 };
 
+// Used when DenX temporarily leaves the animation room for Figure Creator.
+window.denxTimelineCaptureSession = () => captureTimelineSnapshot();
+window.denxTimelineRestoreSession = snapshot => restoreTimelineSnapshot(snapshot);
+
 function shiftStateMapUp(map, fromFrame) {
     const keys = Object.keys(map)
         .map(Number)
