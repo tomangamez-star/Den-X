@@ -254,11 +254,12 @@ function appendFigureSegment(group, figure, segment, from, to) {
     const color = segment.style?.color || figure.style?.color || "#111111";
 
     if (type === "circle") {
-        const radius = Math.max(3, Math.hypot(to.x - from.x, to.y - from.y));
+        const diameter = Math.max(8, Math.hypot(to.x - from.x, to.y - from.y));
+        const radius = diameter / 2;
 
         group.appendChild(createSvg("circle", {
-            cx: from.x,
-            cy: from.y,
+            cx: (from.x + to.x) / 2,
+            cy: (from.y + to.y) / 2,
             r: radius,
             fill: color,
             class: "figure-segment figure-segment-shape"
@@ -319,6 +320,25 @@ function renderFigures() {
             "--denx-node-contrast",
             getAutomaticNodeContrast(figure)
         );
+
+        // Polyfills live behind the segment geometry and deform with nodes.
+        if (Array.isArray(figure.polyfills)) {
+            figure.polyfills.forEach(polyfill => {
+                const points = polyfill.nodeIds
+                    .map(nodeId => pose.nodes[nodeId])
+                    .filter(Boolean);
+
+                if (points.length < 3) return;
+
+                group.appendChild(createSvg("polygon", {
+                    points: points
+                        .map(point => `${point.x},${point.y}`)
+                        .join(" "),
+                    fill: polyfill.color || "#00c8ff",
+                    class: "figure-polyfill"
+                }));
+            });
+        }
 
         // Body segments
         figure.segments.forEach(segment => {
@@ -1171,6 +1191,7 @@ function addFigureDefinitionToWorkspace(definition) {
         to: nodeMap.get(String(segment.to)),
         type: segment.type || "rounded",
         length: Number(segment.length) || null,
+        elastic: !!segment.elastic,
         style: {
             color: segment.style?.color || definition.style?.color || "#111111",
             width: Number(segment.style?.width) || Number(definition.style?.thickness) || 12
@@ -1224,7 +1245,16 @@ function addFigureDefinitionToWorkspace(definition) {
             headRadius: 18
         },
         nodes: runtimeNodes,
-        segments: runtimeSegments
+        segments: runtimeSegments,
+        polyfills: Array.isArray(definition.polyfills)
+            ? definition.polyfills.map(polyfill => ({
+                id: polyfill.id || `poly-${nextSegmentId++}`,
+                nodeIds: polyfill.nodeIds
+                    .map(id => nodeMap.get(String(id)))
+                    .filter(Boolean),
+                color: polyfill.color || "#00c8ff"
+            })).filter(polyfill => polyfill.nodeIds.length >= 3)
+            : []
     };
 
     figures.push(figure);

@@ -204,10 +204,21 @@
             return;
         }
 
+        // Always pull fresh data from the shared V3 store at the exact
+        // moment Import is pressed.
         renderSavedFigures();
+
         modal.classList.remove("hidden");
         modal.style.display = "grid";
         modal.setAttribute("aria-hidden", "false");
+
+        requestAnimationFrame(() => {
+            const count = DenXFigureLibrary.getLibraryCount?.() ?? 0;
+
+            if (count === 0) {
+                showToast("My Figures is empty.");
+            }
+        });
     }
 
     importFigureBtn?.addEventListener("click", openImportModal);
@@ -270,7 +281,13 @@
     const createdNotice = sessionStorage.getItem("denx.figureCreatedNotice");
     if (createdNotice) {
         sessionStorage.removeItem("denx.figureCreatedNotice");
-        setTimeout(() => showToast(`${createdNotice} saved to My Figures ✓`), 220);
+        renderSavedFigures();
+        renderProjectFigures();
+
+        setTimeout(() => {
+            const count = DenXFigureLibrary.getLibraryCount?.() ?? 0;
+            showToast(`${createdNotice} saved ✓  My Figures: ${count}`);
+        }, 220);
     }
 
     renderProjectFigures();
