@@ -15,8 +15,6 @@
 <body>
 <section class="creator-shell">
   <header class="creator-topbar">
-    <button id="creatorCancelBtn" class="creator-top-btn" aria-label="Back">←</button>
-
     <div class="creator-history">
       <button id="creatorUndoBtn" class="creator-top-btn" title="Undo" aria-label="Undo">↶</button>
       <button id="creatorRedoBtn" class="creator-top-btn" title="Redo" aria-label="Redo">↷</button>
@@ -88,6 +86,23 @@
         <button id="polyfillFinishBtn" class="creator-action-btn" disabled>Finish</button>
       </section>
 
+      <section class="creator-tool-section" data-creator-section="reference">
+        <div class="creator-section-title">Reference</div>
+
+        <button id="referenceImportBtn" class="creator-action-btn">Import Image</button>
+
+        <label class="creator-control creator-range-control">
+          <span>Opacity</span>
+          <input id="referenceOpacityInput" type="range" min="0.08" max="1" step="0.01" value="0.45">
+        </label>
+
+        <button id="referenceHideBtn" class="creator-action-btn" disabled>Hide</button>
+        <button id="referenceRemoveBtn" class="creator-action-btn" disabled>Remove</button>
+        <button id="creatorCancelBtn" class="creator-action-btn creator-cancel-btn">Cancel</button>
+
+        <input id="referenceFileInput" type="file" accept="image/*" hidden>
+      </section>
+
       <section class="creator-tool-section" data-creator-section="figure">
         <div class="creator-section-title">Figure</div>
         <div class="creator-hint">
@@ -102,6 +117,7 @@
       <button class="creator-quick-link active" data-creator-target="segments">Segments</button>
       <button class="creator-quick-link" data-creator-target="segment">Segment</button>
       <button class="creator-quick-link" data-creator-target="polyfill">Polyfill</button>
+      <button class="creator-quick-link" data-creator-target="reference">Reference</button>
       <button class="creator-quick-link" data-creator-target="figure">Figure</button>
     </nav>
 

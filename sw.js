@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v11-figure-creator-v3";
+const CACHE_NAME = "denx-animator-v12-animation-core-import-browser";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -13,6 +13,7 @@ const APP_SHELL = [
   "./js/figure-library.js",
   "./js/tools.js",
   "./js/workspace-ui.js",
+  "./js/figure-import.js",
   "./js/drawing.js",
   "./js/camera.js",
   "./js/bones.js",

@@ -77,6 +77,39 @@
         </button>
       </section>
 
+      <section class="tool-section" id="tool-animation" data-tool-section="animation">
+        <div class="tool-section-title">Animate</div>
+
+        <button id="onionSkinBtn" class="tool-row tool-action" title="Toggle onion skin" aria-label="Toggle onion skin" aria-pressed="false">
+          <span class="tool-icon">◉</span><span class="tool-label">Onion</span>
+        </button>
+
+        <label class="animation-number-control">
+          <span>FPS</span>
+          <input id="animationFpsInput" type="number" min="1" max="60" step="1" value="12" inputmode="numeric">
+        </label>
+
+        <label class="animation-toggle-control">
+          <span>Previous</span>
+          <input id="onionPrevToggle" type="checkbox" checked>
+        </label>
+
+        <label class="animation-toggle-control">
+          <span>Next</span>
+          <input id="onionNextToggle" type="checkbox" checked>
+        </label>
+
+        <label class="animation-range-control">
+          <span>Ghost</span>
+          <input id="onionOpacityInput" type="range" min="0.08" max="0.65" step="0.01" value="0.28">
+        </label>
+
+        <label class="animation-toggle-control">
+          <span>Loop</span>
+          <input id="animationLoopToggle" type="checkbox" checked>
+        </label>
+      </section>
+
       <section class="tool-section" id="tool-figure" data-tool-section="figure">
         <div class="tool-section-title">Figure</div>
 
@@ -112,6 +145,7 @@
     <nav class="tool-quickfind" aria-label="Toolbox quick find">
       <button class="quickfind-link active" data-tool-target="general">General</button>
       <button class="quickfind-link" data-tool-target="draw">Draw</button>
+      <button class="quickfind-link" data-tool-target="animation">Animate</button>
       <button class="quickfind-link" data-tool-target="figure">Figure</button>
       <button class="quickfind-link" data-tool-target="camera">Camera</button>
     </nav>
@@ -140,7 +174,15 @@
       <div id="camera">
         <div id="stageGuide" aria-hidden="true"></div>
         <div id="stage">
+          <canvas id="onionCanvas" aria-hidden="true"></canvas>
           <canvas id="drawingCanvas"></canvas>
+
+          <svg
+            id="onionFigureLayer"
+            viewBox="0 0 2048 1152"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          ></svg>
 
           <svg
             id="figureLayer"
@@ -166,22 +208,37 @@
 </section>
 
 <div id="figureImportModal" class="figure-modal hidden" aria-hidden="true">
-  <div class="figure-modal-card" role="dialog" aria-modal="true" aria-labelledby="figureImportTitle">
+  <div class="figure-modal-card figure-browser-card" role="dialog" aria-modal="true" aria-labelledby="figureImportTitle">
     <div class="figure-modal-head">
       <div>
-        <strong id="figureImportTitle">Import Figure</strong>
-        <small>Import to this project first. Nothing is added to the canvas yet.</small>
+        <strong id="figureImportTitle">Figure Browser</strong>
+        <small>Import makes a figure available to this project. It will not appear on the canvas until you press Add.</small>
       </div>
       <button id="closeFigureImportBtn" class="modal-close" aria-label="Close">×</button>
     </div>
 
-    <div class="figure-modal-section-title">My Figures</div>
-    <div id="savedFigureList" class="saved-figure-list"></div>
+    <div class="figure-browser-section">
+      <div class="figure-modal-section-title">Built-in Figures</div>
+      <div id="builtinFigureList" class="saved-figure-list"></div>
+    </div>
 
-    <label class="file-import-row">
-      <span>Import .dxf file</span>
-      <input id="figureFileInput" type="file" accept=".dxf,.json,application/json">
-    </label>
+    <div class="figure-browser-section">
+      <div class="figure-modal-section-title">
+        <span>My Figures</span>
+        <span id="myFiguresCount" class="figure-count-badge">0</span>
+      </div>
+      <div id="savedFigureList" class="saved-figure-list"></div>
+    </div>
+
+    <button id="importFromPhoneBtn" class="phone-import-btn" type="button">
+      <span class="phone-import-icon">⇩</span>
+      <span>
+        <strong>Import from Phone</strong>
+        <small>.dxf or DenX JSON figure</small>
+      </span>
+    </button>
+
+    <input id="figureFileInput" class="hidden-file-input" type="file" accept=".dxf,.json,application/json">
   </div>
 </div>
 
@@ -192,6 +249,7 @@
 <script src="js/figure-library.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/workspace-ui.js"></script>
+<script src="js/figure-import.js"></script>
 <script src="js/drawing.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/bones.js"></script>
