@@ -659,20 +659,20 @@ function createFrameButton(frameNumber) {
     const thumb = document.createElement("span");
     thumb.className = "frame-thumb";
 
-    const drawing = document.createElement("img");
-    drawing.className = "frame-thumb-drawing";
-    drawing.alt = "";
-
-    const figure = document.createElement("img");
-    figure.className = "frame-thumb-figure";
-    figure.alt = "";
+    const cameraImage = document.createElement("img");
+    cameraImage.className = "frame-thumb-camera";
+    cameraImage.alt = "";
 
     const number = document.createElement("span");
     number.className = "frame-number";
     number.textContent = frameNumber;
 
-    thumb.append(drawing, figure);
-    frame.append(thumb, number);
+    const playhead = document.createElement("span");
+    playhead.className = "frame-playhead";
+    playhead.setAttribute("aria-hidden", "true");
+
+    thumb.append(cameraImage);
+    frame.append(thumb, number, playhead);
 
     frame.onclick = () => {
         if (playbackActive) {
@@ -691,8 +691,184 @@ function createFrameButton(frameNumber) {
     return frame;
 }
 
+const thumbnailImageCache = new Map();
+const thumbnailTokens = new Map();
 
-function refreshFrameThumbnail(frameNumber) {
+function loadThumbnailImage(source) {
+    if (!source) return Promise.resolve(null);
+
+    if (thumbnailImageCache.has(source)) {
+        return thumbnailImageCache.get(source);
+    }
+
+    const promise = new Promise(resolve => {
+        const image = new Image();
+
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = source;
+    });
+
+    thumbnailImageCache.set(source, promise);
+
+    if (thumbnailImageCache.size > 60) {
+        const first =
+            thumbnailImageCache.keys().next().value;
+
+        thumbnailImageCache.delete(first);
+    }
+
+    return promise;
+}
+
+async function buildCameraThumbnail(frameNumber) {
+    const cameraState =
+        window.denxGetCameraFrameState?.(frameNumber) || {
+            x: 0,
+            y: 0,
+            width: 260,
+            height: 150,
+            rotation: 0
+        };
+
+    const drawingSource =
+        frames[frameNumber - 1];
+
+    const figureSource =
+        window.denxBonesFrameThumbnailDataUrl?.(
+            frameNumber
+        );
+
+    const [drawingImage, figureImage] =
+        await Promise.all([
+            loadThumbnailImage(drawingSource),
+            loadThumbnailImage(figureSource)
+        ]);
+
+    const outWidth = 180;
+    const outHeight = 104;
+
+    const thumbCanvas =
+        document.createElement("canvas");
+
+    thumbCanvas.width = outWidth;
+    thumbCanvas.height = outHeight;
+
+    const tctx =
+        thumbCanvas.getContext("2d");
+
+    if (!tctx) return null;
+
+    // Black bars make the exact camera aspect visible.
+    tctx.fillStyle = "#080808";
+    tctx.fillRect(
+        0,
+        0,
+        outWidth,
+        outHeight
+    );
+
+    const cropWidth =
+        Math.max(40, cameraState.width);
+
+    const cropHeight =
+        Math.max(40, cameraState.height);
+
+    const fit =
+        Math.min(
+            outWidth / cropWidth,
+            outHeight / cropHeight
+        );
+
+    const viewWidth =
+        cropWidth * fit;
+
+    const viewHeight =
+        cropHeight * fit;
+
+    const viewLeft =
+        (outWidth - viewWidth) / 2;
+
+    const viewTop =
+        (outHeight - viewHeight) / 2;
+
+    tctx.save();
+
+    tctx.beginPath();
+    tctx.rect(
+        viewLeft,
+        viewTop,
+        viewWidth,
+        viewHeight
+    );
+    tctx.clip();
+
+    tctx.fillStyle =
+        window.denxStageBackgroundColor ||
+        localStorage.getItem(
+            "denx.stageBackground"
+        ) ||
+        "#ffffff";
+
+    tctx.fillRect(
+        viewLeft,
+        viewTop,
+        viewWidth,
+        viewHeight
+    );
+
+    const cropCenterX =
+        1024 + cameraState.x;
+
+    const cropCenterY =
+        576 + cameraState.y;
+
+    tctx.translate(
+        outWidth / 2,
+        outHeight / 2
+    );
+
+    tctx.scale(fit, fit);
+
+    tctx.rotate(
+        (-cameraState.rotation * Math.PI) /
+        180
+    );
+
+    tctx.translate(
+        -cropCenterX,
+        -cropCenterY
+    );
+
+    if (drawingImage) {
+        tctx.drawImage(
+            drawingImage,
+            0,
+            0,
+            2048,
+            1152
+        );
+    }
+
+    if (figureImage) {
+        tctx.drawImage(
+            figureImage,
+            0,
+            0,
+            2048,
+            1152
+        );
+    }
+
+    tctx.restore();
+
+    return thumbCanvas.toDataURL(
+        "image/webp",
+        0.76
+    );
+}
+
+async function refreshFrameThumbnail(frameNumber) {
     const button =
         document.querySelector(
             `.frame[data-frame="${frameNumber}"]`
@@ -700,44 +876,40 @@ function refreshFrameThumbnail(frameNumber) {
 
     if (!button) return;
 
-    const drawing =
-        button.querySelector(".frame-thumb-drawing");
+    const image =
+        button.querySelector(".frame-thumb-camera");
 
-    const figure =
-        button.querySelector(".frame-thumb-figure");
+    if (!image) return;
 
-    const thumb =
-        button.querySelector(".frame-thumb");
+    const token =
+        (thumbnailTokens.get(frameNumber) || 0) + 1;
 
-    if (thumb) {
-        thumb.style.background =
-            window.denxStageBackgroundColor ||
-            localStorage.getItem("denx.stageBackground") ||
-            "#ffffff";
-    }
+    thumbnailTokens.set(
+        frameNumber,
+        token
+    );
 
-    if (drawing) {
+    try {
         const source =
-            frames[frameNumber - 1];
+            await buildCameraThumbnail(frameNumber);
+
+        if (
+            thumbnailTokens.get(frameNumber) !== token
+        ) {
+            return;
+        }
 
         if (source) {
-            drawing.src = source;
+            image.src = source;
         } else {
-            drawing.removeAttribute("src");
+            image.removeAttribute("src");
         }
-    }
-
-    if (figure) {
-        const figureSource =
-            window.denxBonesFrameThumbnailDataUrl?.(
-                frameNumber
-            );
-
-        if (figureSource) {
-            figure.src = figureSource;
-        } else {
-            figure.removeAttribute("src");
-        }
+    } catch (error) {
+        console.warn(
+            "DenX thumbnail render failed:",
+            frameNumber,
+            error
+        );
     }
 }
 
@@ -752,6 +924,135 @@ window.denxRefreshFrameThumbnail =
 
 window.denxRefreshAllFrameThumbnails =
     refreshAllFrameThumbnails;
+
+// ------------------------------------------------------------
+// Timeline scrubber
+// Drag across frame thumbnails to scrub the animation.
+// ------------------------------------------------------------
+
+let timelineScrubActive = false;
+let timelineScrubPointerId = null;
+let lastScrubFrame = null;
+
+function frameFromScreenPoint(clientX, clientY) {
+    const element =
+        document.elementFromPoint(
+            clientX,
+            clientY
+        );
+
+    const frame =
+        element?.closest?.(".frame");
+
+    if (!frame) return null;
+
+    const number =
+        Number(frame.dataset.frame);
+
+    return Number.isFinite(number)
+        ? number
+        : null;
+}
+
+function scrubToFrame(frameNumber) {
+    if (
+        !frameNumber ||
+        frameNumber === lastScrubFrame
+    ) {
+        return;
+    }
+
+    lastScrubFrame = frameNumber;
+
+    selectFrame(frameNumber);
+}
+
+frameContainer?.addEventListener(
+    "pointerdown",
+    event => {
+        const frameNumber =
+            frameFromScreenPoint(
+                event.clientX,
+                event.clientY
+            );
+
+        if (!frameNumber) return;
+
+        if (playbackActive) {
+            stopPlayback();
+        }
+
+        timelineScrubActive = true;
+        timelineScrubPointerId =
+            event.pointerId;
+
+        lastScrubFrame = null;
+
+        try {
+            frameContainer.setPointerCapture(
+                event.pointerId
+            );
+        } catch (_) {}
+
+        scrubToFrame(frameNumber);
+        event.preventDefault();
+    }
+);
+
+frameContainer?.addEventListener(
+    "pointermove",
+    event => {
+        if (
+            !timelineScrubActive ||
+            event.pointerId !==
+                timelineScrubPointerId
+        ) {
+            return;
+        }
+
+        const frameNumber =
+            frameFromScreenPoint(
+                event.clientX,
+                event.clientY
+            );
+
+        if (frameNumber) {
+            scrubToFrame(frameNumber);
+        }
+
+        event.preventDefault();
+    }
+);
+
+function endTimelineScrub(event) {
+    if (
+        !timelineScrubActive ||
+        event.pointerId !==
+            timelineScrubPointerId
+    ) {
+        return;
+    }
+
+    timelineScrubActive = false;
+    timelineScrubPointerId = null;
+    lastScrubFrame = null;
+
+    try {
+        frameContainer.releasePointerCapture(
+            event.pointerId
+        );
+    } catch (_) {}
+}
+
+frameContainer?.addEventListener(
+    "pointerup",
+    endTimelineScrub
+);
+
+frameContainer?.addEventListener(
+    "pointercancel",
+    endTimelineScrub
+);
 
 function updateTimelineButtons() {
     if (removeFrameBtn) {

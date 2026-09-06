@@ -294,18 +294,62 @@
     });
 
     // --------------------------------------------------------
-    // FIGURE BROWSER — kept in this already-existing file.
-    // The HTML Import button also has a direct fallback.
+    // FIGURE BROWSER V6 — native dialog + failure isolation.
+    // The dialog opens BEFORE any storage/library work is attempted.
     // --------------------------------------------------------
 
     const importFigureBtn = document.getElementById("importFigureBtn");
     const figureImportModal = document.getElementById("figureImportModal");
     const closeFigureImportBtn = document.getElementById("closeFigureImportBtn");
+    const cancelFigureImportBtn = document.getElementById("cancelFigureImportBtn");
     const builtinFigureList = document.getElementById("builtinFigureList");
     const savedFigureList = document.getElementById("savedFigureList");
     const myFiguresCount = document.getElementById("myFiguresCount");
     const importFromPhoneBtn = document.getElementById("importFromPhoneBtn");
     const figureFileInput = document.getElementById("figureFileInput");
+
+    function showFigureDialogNow() {
+        if (!figureImportModal) {
+            showToast("Figure Browser element is missing.");
+            return false;
+        }
+
+        try {
+            if (
+                typeof figureImportModal.showModal === "function" &&
+                !figureImportModal.open
+            ) {
+                figureImportModal.showModal();
+            } else {
+                figureImportModal.setAttribute("open", "");
+            }
+        } catch (error) {
+            // Last-resort native-dialog fallback.
+            figureImportModal.setAttribute("open", "");
+            figureImportModal.style.display = "block";
+        }
+
+        return true;
+    }
+
+    function closeFigureBrowser() {
+        if (!figureImportModal) return;
+
+        try {
+            if (
+                typeof figureImportModal.close === "function" &&
+                figureImportModal.open
+            ) {
+                figureImportModal.close();
+            } else {
+                figureImportModal.removeAttribute("open");
+            }
+        } catch (_) {
+            figureImportModal.removeAttribute("open");
+        }
+
+        figureImportModal.style.display = "";
+    }
 
     function figureBrowserRow(figure, sourceLabel) {
         const row = document.createElement("button");
@@ -356,92 +400,125 @@
         return row;
     }
 
-    function renderFigureBrowser() {
-        if (!window.DenXFigureLibrary) {
-            if (builtinFigureList) {
-                builtinFigureList.innerHTML =
-                    '<div class="figure-list-empty">Figure library is not ready.</div>';
-            }
+    function renderBuiltInFiguresSafe() {
+        if (!builtinFigureList) return;
 
-            return;
-        }
+        builtinFigureList.innerHTML = "";
 
-        if (builtinFigureList) {
-            builtinFigureList.innerHTML = "";
-
+        try {
             const builtIns =
-                DenXFigureLibrary.getBuiltIns?.() || [];
+                window.DenXFigureLibrary?.getBuiltIns?.() || [];
+
+            if (!builtIns.length) {
+                builtinFigureList.innerHTML =
+                    '<div class="figure-list-empty">No built-in figures available.</div>';
+                return;
+            }
 
             builtIns.forEach(figure => {
                 builtinFigureList.appendChild(
                     figureBrowserRow(figure, "Built in")
                 );
             });
+        } catch (error) {
+            console.error("DenX built-in figure browser error:", error);
+            builtinFigureList.innerHTML =
+                '<div class="figure-list-error">Built-ins failed to load.<br><span>The browser is still usable.</span></div>';
         }
+    }
 
-        if (savedFigureList) {
-            savedFigureList.innerHTML = "";
+    function renderMyFiguresSafe() {
+        if (!savedFigureList) return;
 
+        savedFigureList.innerHTML = "";
+
+        try {
             const library =
-                DenXFigureLibrary.getLibrary();
+                window.DenXFigureLibrary?.getLibrary?.() || [];
 
             if (myFiguresCount) {
                 myFiguresCount.textContent = String(library.length);
             }
 
-            if (library.length === 0) {
-                const empty = document.createElement("div");
-                empty.className = "figure-list-empty";
-                empty.innerHTML =
-                    'No saved figures yet.<br><span>Create one or import from your phone.</span>';
-
-                savedFigureList.appendChild(empty);
-            } else {
-                library.forEach(figure => {
-                    savedFigureList.appendChild(
-                        figureBrowserRow(figure, "My Figures")
-                    );
-                });
+            if (!library.length) {
+                savedFigureList.innerHTML =
+                    '<div class="figure-list-empty">No readable saved figures yet.<br><span>Create one or import from your phone.</span></div>';
+                return;
             }
+
+            library.forEach(figure => {
+                savedFigureList.appendChild(
+                    figureBrowserRow(figure, "My Figures")
+                );
+            });
+        } catch (error) {
+            console.error("DenX My Figures browser error:", error);
+
+            if (myFiguresCount) {
+                myFiguresCount.textContent = "!";
+            }
+
+            savedFigureList.innerHTML =
+                '<div class="figure-list-error">My Figures could not be read.<br><span>You can still import a figure from your phone.</span></div>';
         }
+    }
+
+    function hydrateFigureBrowser() {
+        // Separate tasks: failure in one section cannot stop the other.
+        renderBuiltInFiguresSafe();
+        renderMyFiguresSafe();
     }
 
     function openFigureBrowser() {
-        if (!figureImportModal) {
-            showToast("Figure Browser could not open.");
-            return;
-        }
+        // Critical ordering: OPEN FIRST.
+        if (!showFigureDialogNow()) return;
 
-        renderFigureBrowser();
-
-        figureImportModal.classList.remove("hidden");
-        figureImportModal.style.display = "grid";
-        figureImportModal.setAttribute("aria-hidden", "false");
-    }
-
-    function closeFigureBrowser() {
-        if (!figureImportModal) return;
-
-        figureImportModal.classList.add("hidden");
-        figureImportModal.style.display = "none";
-        figureImportModal.setAttribute("aria-hidden", "true");
+        requestAnimationFrame(() => {
+            hydrateFigureBrowser();
+        });
     }
 
     window.denxOpenFigureBrowser = openFigureBrowser;
     window.denxCloseFigureBrowser = closeFigureBrowser;
+    window.denxHydrateFigureBrowser = hydrateFigureBrowser;
 
-    // Once this file has booted, replace the HTML fallback with the real handler.
     if (importFigureBtn) {
-        importFigureBtn.removeAttribute("onclick");
-        importFigureBtn.addEventListener("click", openFigureBrowser);
+        // Keep the inline HTML kill-switch as an independent fallback.
+        importFigureBtn.addEventListener("click", event => {
+            event.preventDefault();
+            openFigureBrowser();
+        });
     }
 
-    closeFigureImportBtn?.addEventListener("click", closeFigureBrowser);
+    closeFigureImportBtn?.addEventListener(
+        "click",
+        closeFigureBrowser
+    );
 
-    figureImportModal?.addEventListener("pointerdown", event => {
-        if (event.target === figureImportModal) {
+    cancelFigureImportBtn?.addEventListener(
+        "click",
+        closeFigureBrowser
+    );
+
+    figureImportModal?.addEventListener("click", event => {
+        // Native dialog backdrop click.
+        const rect =
+            figureImportModal.getBoundingClientRect();
+
+        const inside =
+            event.clientX >= rect.left &&
+            event.clientX <= rect.right &&
+            event.clientY >= rect.top &&
+            event.clientY <= rect.bottom;
+
+        if (!inside) {
             closeFigureBrowser();
         }
+    });
+
+    figureImportModal?.addEventListener("cancel", event => {
+        event.preventDefault();
+        closeFigureBrowser();
     });
 
     importFromPhoneBtn?.addEventListener("click", () => {
@@ -457,23 +534,18 @@
             const parsed =
                 DenXFigureLibrary.parseFigureFile(text);
 
-            // Phone import belongs to My Figures first.
             const saved =
                 DenXFigureLibrary.saveToLibrary(parsed);
 
-            renderFigureBrowser();
-
-            // And is also explicitly made available to this project.
             const imported =
                 DenXFigureLibrary.importToProject(saved);
 
             renderProjectFigures(imported.id);
+            hydrateFigureBrowser();
 
             showToast(
                 `${saved.name} saved to My Figures + imported ✓`
             );
-
-            closeFigureBrowser();
         } catch (error) {
             showToast(
                 error?.message ||

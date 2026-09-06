@@ -8,9 +8,10 @@
 // ============================================================
 
 (() => {
-    const STORE_KEY = "denx.figureStore.v4";
+    const STORE_KEY = "denx.figureStore.v6";
 
     const LEGACY_LIBRARY_KEYS = [
+        "denx.figureStore.v4",
         "denx.figureStore.v3",
         "denx.figureLibrary.v2",
         "denx.figureLibrary.v1"
@@ -380,13 +381,43 @@
         return clone(BUILT_INS);
     }
 
+    function safeSanitizeList(items) {
+        const valid = [];
+        const rejected = [];
+
+        (items || []).forEach((item, index) => {
+            try {
+                valid.push(sanitizeDefinition(item));
+            } catch (error) {
+                rejected.push({
+                    index,
+                    name: String(item?.name || "Unknown figure"),
+                    reason: String(error?.message || "Invalid figure")
+                });
+            }
+        });
+
+        return { valid, rejected };
+    }
+
     function getLibrary() {
         const store = readStore();
+        const result = safeSanitizeList(store.library);
 
-        // Persist the merged result so older figures are recovered once.
+        // Persist only definitions DenX can actually read. A broken figure
+        // from an early development build is skipped instead of crashing
+        // the entire Import browser.
+        store.library = result.valid;
         writeStore(store);
 
-        return clone(store.library.map(sanitizeDefinition));
+        if (result.rejected.length) {
+            console.warn(
+                "DenX skipped unreadable legacy figures:",
+                result.rejected
+            );
+        }
+
+        return clone(result.valid);
     }
 
     function saveToLibrary(definition) {
@@ -409,9 +440,12 @@
 
     function getProjectFigures() {
         const store = readStore();
+        const result = safeSanitizeList(store.projectFigures);
+
+        store.projectFigures = result.valid;
         writeStore(store);
 
-        return clone(store.projectFigures.map(sanitizeDefinition));
+        return clone(result.valid);
     }
 
     function importToProject(definition) {

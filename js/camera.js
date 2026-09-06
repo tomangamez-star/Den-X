@@ -37,6 +37,8 @@ const toggleToolbar = document.getElementById("toggleToolbar");
 const toolbar = document.querySelector(".toolbar");
 
 const cameraPropertiesPanel = document.getElementById("cameraProperties");
+const cameraPropertiesCloseBtn = document.getElementById("cameraPropertiesCloseBtn");
+const cameraPropertiesDoneBtn = document.getElementById("cameraPropertiesDoneBtn");
 const cameraPropX = document.getElementById("cameraPropX");
 const cameraPropY = document.getElementById("cameraPropY");
 const cameraPropWidth = document.getElementById("cameraPropWidth");
@@ -73,6 +75,7 @@ const cameraFrameStates = window.denxCameraFrameStates || {
 window.denxCameraFrameStates = cameraFrameStates;
 
 let cameraFrameState = null;
+let cameraPropertiesDismissed = false;
 
 function getCameraFrameState(frameNumber = currentFrame) {
     if (!cameraFrameStates[frameNumber]) {
@@ -198,7 +201,10 @@ function syncCameraFrame() {
 function updateCameraPropertiesVisibility() {
     if (!cameraPropertiesPanel) return;
 
-    const showPanel = currentTool === "camera";
+    const showPanel =
+        currentTool === "camera" &&
+        !cameraPropertiesDismissed;
+
     cameraPropertiesPanel.classList.toggle("hidden", !showPanel);
     cameraPropertiesPanel.setAttribute("aria-hidden", String(!showPanel));
 }
@@ -231,6 +237,10 @@ function readNumberInput(input, fallback) {
     return Number.isFinite(value) ? value : fallback;
 }
 
+function notifyCameraFrameChanged() {
+    window.denxRefreshFrameThumbnail?.(currentFrame);
+}
+
 function applyCameraPropertiesFromPanel() {
     if (!cameraFrameState) return;
 
@@ -244,6 +254,7 @@ function applyCameraPropertiesFromPanel() {
 
     syncCameraFrame();
     saveCameraFrameState(currentFrame);
+    notifyCameraFrameChanged();
 }
 
 function updateCameraInteractionUI() {
@@ -534,6 +545,7 @@ function endCameraHandleInteraction(e) {
     handleState.mode = null;
 
     saveCameraFrameState(currentFrame);
+    notifyCameraFrameChanged();
 
     try {
         e.currentTarget.releasePointerCapture(e.pointerId);
@@ -598,6 +610,7 @@ function endCameraBodyDrag(e) {
     handleState.mode = null;
 
     saveCameraFrameState(currentFrame);
+    notifyCameraFrameChanged();
 
     try {
         cameraFrameEl.releasePointerCapture(e.pointerId);
@@ -751,6 +764,16 @@ function fitPlaybackScreen(state) {
 
     playbackScreenEl.style.width = `${width}px`;
     playbackScreenEl.style.height = `${height}px`;
+
+    playbackMonitorEl?.style.setProperty(
+        "--denx-playback-screen-width",
+        `${width}px`
+    );
+
+    playbackMonitorEl?.style.setProperty(
+        "--denx-playback-screen-height",
+        `${height}px`
+    );
 
     return {
         width,
@@ -913,6 +936,22 @@ window.addEventListener("resize", () => {
         });
     }
 });
+
+
+function dismissCameraProperties() {
+    cameraPropertiesDismissed = true;
+    updateCameraPropertiesVisibility();
+}
+
+cameraPropertiesCloseBtn?.addEventListener(
+    "click",
+    dismissCameraProperties
+);
+
+cameraPropertiesDoneBtn?.addEventListener(
+    "click",
+    dismissCameraProperties
+);
 
 function resetCamera() {
     camera.x = 0;
