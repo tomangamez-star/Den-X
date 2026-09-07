@@ -1691,3 +1691,59 @@ body.denx-navigating .figure-context-toolbar {
   }
 }
 
+
+
+/* ============================================================
+   DENX v0.2.4 VELOCITY — whole-figure transform controls
+   ============================================================ */
+.figure-context-toolbar button,
+.figure-context-toolbar .denx-number-stepper,
+.figure-context-toolbar .figure-axis-buttons {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.figure-context-toolbar button {
+  touch-action: manipulation;
+}
+
+.figure-flip-control,
+.figure-rotate-control {
+  min-height: 58px;
+}
+
+.figure-axis-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.figure-context-toolbar .figure-axis-buttons button,
+.figure-context-toolbar .figure-rotate-stepper button {
+  min-width: 0 !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid #303030;
+  border-radius: 7px;
+  background: #0d0d0d;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.figure-context-toolbar .figure-axis-buttons button:active,
+.figure-context-toolbar .figure-rotate-stepper button:active {
+  background: #242424;
+  color: var(--primary);
+}
+
+.figure-context-toolbar .figure-rotate-stepper .denx-number-display {
+  color: var(--primary);
+}
