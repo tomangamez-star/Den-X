@@ -1571,3 +1571,67 @@ body.denx-camera-preview-playing #figureLayer .figure-node-touch-target {
   height: 100%;
 }
 
+
+
+/* ============================================================
+   DENX v0.2.2 VELOCITY — contextual Figure Rail
+   ============================================================ */
+.figure-actions-rail {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 112px;
+  padding: 9px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  background: rgba(12,12,14,.90);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 38px rgba(0,0,0,.34);
+  z-index: 18;
+  display: grid;
+  gap: 7px;
+  transition: opacity .14s ease, transform .14s ease;
+}
+.figure-actions-rail.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(12px,-50%);
+}
+.figure-actions-head { padding: 2px 4px 6px; min-width: 0; }
+.figure-actions-kicker { display:block; font-size:9px; letter-spacing:.16em; opacity:.55; }
+.figure-actions-head strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
+.figure-action-btn,
+.figure-action-color,
+.figure-action-scale {
+  min-height: 39px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.055);
+  color: #f6f6f6;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  font: inherit;
+  font-size: 11px;
+}
+.figure-action-btn { width:100%; cursor:pointer; }
+.figure-action-btn:active { transform: scale(.97); }
+.figure-action-btn.danger { color:#ff8b8b; border-color:rgba(255,80,80,.18); }
+.figure-action-icon { width:18px; text-align:center; font-size:15px; flex:0 0 18px; }
+.figure-action-color input[type="color"] {
+  margin-left:auto; width:25px; height:25px; border:0; padding:0; border-radius:8px; background:transparent;
+}
+.figure-action-scale { flex-wrap:wrap; }
+.figure-scale-buttons { margin-left:auto; display:flex; gap:3px; }
+.figure-scale-buttons button {
+  width:27px; height:27px; border-radius:8px; border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.07); color:#fff; font-size:17px; line-height:1;
+}
+body.denx-playing .figure-actions-rail,
+body.denx-camera-preview-playing .figure-actions-rail,
+body.denx-navigating .figure-actions-rail { opacity:0; pointer-events:none; }
+@media (max-width: 700px) {
+  .figure-actions-rail { right:7px; width:104px; padding:7px; }
+}
