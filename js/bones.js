@@ -491,6 +491,14 @@ let activeFigureRenderRaf = null;
 let activeFigureRenderId = null;
 let viewportCullTimer = null;
 
+// v0.2.1 Velocity: inactive figures are flattened into one SVG image each.
+// Only the selected figure stays as fully editable live SVG geometry.
+const staticFigureArtworkCache = new Map();
+
+function invalidateStaticFigureArtwork() {
+    staticFigureArtworkCache.clear();
+}
+
 function figureGroupFor(figureId) {
     if (!figureLayer) return null;
 
@@ -661,6 +669,119 @@ function scheduleViewportCulling(delay = 90) {
     viewportCullTimer = setTimeout(refreshViewportCulling, delay);
 }
 
+
+function figureArtworkBounds(figure, pose) {
+    const points = Object.values(pose?.nodes || {}).filter(Boolean);
+    if (!points.length) {
+        return { x: 0, y: 0, width: 1, height: 1 };
+    }
+
+    let minX = Math.min(...points.map(point => Number(point.x) || 0));
+    let maxX = Math.max(...points.map(point => Number(point.x) || 0));
+    let minY = Math.min(...points.map(point => Number(point.y) || 0));
+    let maxY = Math.max(...points.map(point => Number(point.y) || 0));
+
+    let margin = Math.max(6, Number(figure.style?.headRadius) || 0);
+
+    (figure.segments || []).forEach(segment => {
+        const from = pose.nodes?.[segment.from];
+        const to = pose.nodes?.[segment.to];
+        if (!from || !to) return;
+
+        const width = Number(segment.style?.width) || Number(figure.style?.thickness) || 12;
+        margin = Math.max(margin, width / 2 + 4);
+
+        if ((segment.type || "rounded") === "circle") {
+            const radius = Math.max(4, Math.hypot(to.x - from.x, to.y - from.y) / 2);
+            const cx = (from.x + to.x) / 2;
+            const cy = (from.y + to.y) / 2;
+            minX = Math.min(minX, cx - radius);
+            maxX = Math.max(maxX, cx + radius);
+            minY = Math.min(minY, cy - radius);
+            maxY = Math.max(maxY, cy + radius);
+        }
+    });
+
+    minX -= margin;
+    minY -= margin;
+    maxX += margin;
+    maxY += margin;
+
+    return {
+        x: minX,
+        y: minY,
+        width: Math.max(1, maxX - minX),
+        height: Math.max(1, maxY - minY)
+    };
+}
+
+function staticFigureArtwork(figure, pose, frameNumber = currentFrame) {
+    const key = `${frameNumber}:${figure.id}`;
+    const cached = staticFigureArtworkCache.get(key);
+    if (cached) return cached;
+
+    const bounds = figureArtworkBounds(figure, pose);
+    const root = createSvg("svg", {
+        xmlns: SVG_NS,
+        viewBox: `${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`,
+        preserveAspectRatio: "none"
+    });
+
+    if (Array.isArray(figure.polyfills)) {
+        figure.polyfills.forEach(polyfill => {
+            const points = polyfill.nodeIds
+                .map(nodeId => pose.nodes[nodeId])
+                .filter(Boolean);
+            if (points.length < 3) return;
+
+            root.appendChild(createSvg("polygon", {
+                points: points.map(point => `${point.x},${point.y}`).join(" "),
+                fill: polyfill.color || "#00c8ff"
+            }));
+        });
+    }
+
+    figure.segments.forEach(segment => {
+        const from = pose.nodes[segment.from];
+        const to = pose.nodes[segment.to];
+        if (!from || !to) return;
+        appendFigureSegment(root, figure, segment, from, to);
+    });
+
+    if (figure.headNodeId && pose.nodes[figure.headNodeId]) {
+        const head = pose.nodes[figure.headNodeId];
+        root.appendChild(createSvg("circle", {
+            cx: head.x,
+            cy: head.y,
+            r: figure.style?.headRadius || 18,
+            fill: figure.style?.color || "#111111"
+        }));
+    }
+
+    const result = {
+        ...bounds,
+        href: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(root.outerHTML)}`
+    };
+
+    staticFigureArtworkCache.set(key, result);
+    return result;
+}
+
+function appendStaticFigureArtwork(group, figure, pose) {
+    const artwork = staticFigureArtwork(figure, pose, currentFrame);
+    const image = createSvg("image", {
+        x: artwork.x,
+        y: artwork.y,
+        width: artwork.width,
+        height: artwork.height,
+        href: artwork.href,
+        preserveAspectRatio: "none",
+        class: "denx-static-figure-artwork",
+        "pointer-events": "none"
+    });
+    group.appendChild(image);
+}
+
 function renderFigures() {
     if (!figureLayer) return;
 
@@ -693,47 +814,50 @@ function renderFigures() {
             getAutomaticNodeContrast(figure)
         );
 
-        // Polyfills live behind the segment geometry and deform with nodes.
-        if (Array.isArray(figure.polyfills)) {
-            figure.polyfills.forEach(polyfill => {
-                const points = polyfill.nodeIds
-                    .map(nodeId => pose.nodes[nodeId])
-                    .filter(Boolean);
+        const liveFigure = editingFigures && selectedFigureId === figure.id;
 
-                if (points.length < 3) return;
+        if (!liveFigure) {
+            // One DOM image instead of one SVG element per segment/polyfill.
+            // Playback also benefits: it needs artwork, not editor structure.
+            appendStaticFigureArtwork(group, figure, pose);
+        } else {
+            // Selected figure remains fully live/editable.
+            if (Array.isArray(figure.polyfills)) {
+                figure.polyfills.forEach(polyfill => {
+                    const points = polyfill.nodeIds
+                        .map(nodeId => pose.nodes[nodeId])
+                        .filter(Boolean);
 
-                group.appendChild(createSvg("polygon", {
-                    points: points
-                        .map(point => `${point.x},${point.y}`)
-                        .join(" "),
-                    fill: polyfill.color || "#00c8ff",
-                    class: "figure-polyfill",
-                    "data-denx-polyfill-id": polyfill.id
-                }));
+                    if (points.length < 3) return;
+
+                    group.appendChild(createSvg("polygon", {
+                        points: points
+                            .map(point => `${point.x},${point.y}`)
+                            .join(" "),
+                        fill: polyfill.color || "#00c8ff",
+                        class: "figure-polyfill",
+                        "data-denx-polyfill-id": polyfill.id
+                    }));
+                });
+            }
+
+            figure.segments.forEach(segment => {
+                const from = pose.nodes[segment.from];
+                const to = pose.nodes[segment.to];
+                if (!from || !to) return;
+                appendFigureSegment(group, figure, segment, from, to);
             });
-        }
 
-        // Body segments
-        figure.segments.forEach(segment => {
-            const from = pose.nodes[segment.from];
-            const to = pose.nodes[segment.to];
-
-            if (!from || !to) return;
-
-            appendFigureSegment(group, figure, segment, from, to);
-        });
-
-        // Optional simple head circle for starter/humanoid-style figures.
-        if (figure.headNodeId && pose.nodes[figure.headNodeId]) {
-            const head = pose.nodes[figure.headNodeId];
-
-            group.appendChild(createSvg("circle", {
-                cx: head.x,
-                cy: head.y,
-                r: figure.style?.headRadius || 18,
-                class: "figure-head",
-                "data-denx-head": "1"
-            }));
+            if (figure.headNodeId && pose.nodes[figure.headNodeId]) {
+                const head = pose.nodes[figure.headNodeId];
+                group.appendChild(createSvg("circle", {
+                    cx: head.x,
+                    cy: head.y,
+                    r: figure.style?.headRadius || 18,
+                    class: "figure-head",
+                    "data-denx-head": "1"
+                }));
+            }
         }
 
         // Editing controls. Only the selected figure gets the complete node
@@ -880,6 +1004,7 @@ function restoreBoneProjectState(snapshot) {
     selectedNodeId = snapshot.selectedNodeId || null;
 
     getFramePose(currentFrame);
+    invalidateStaticFigureArtwork();
     renderFigures();
 }
 
@@ -960,6 +1085,7 @@ window.denxBonesInsertFrame = (newFrame, sourceFrame, poseOverride = null) => {
         ? deepClone(poseOverride)
         : deepClone(getFramePose(sourceFrame));
 
+    invalidateStaticFigureArtwork();
     renderFigures();
 };
 
@@ -975,6 +1101,8 @@ window.denxBonesRemoveFrame = removedFrame => {
         boneFramePoses[key - 1] = boneFramePoses[key];
         delete boneFramePoses[key];
     });
+
+    invalidateStaticFigureArtwork();
 };
 
 window.denxBonesLoadFrame = frameNumber => {
@@ -1289,15 +1417,16 @@ function movePoseInteraction(e) {
     }
 
     if (boneInteraction.mode === "move-root") {
-        // MAIN/root square translates the complete figure with no deformation.
-        Object.keys(boneInteraction.startPose.nodes).forEach(nodeId => {
-            const start = boneInteraction.startPose.nodes[nodeId];
+        // v0.2.1: MAIN drag is a single compositor-friendly group transform.
+        // Actual node coordinates are committed once on pointer-up.
+        const group = figureGroupFor(boneInteraction.figureId);
+        if (group) {
+            group.setAttribute("transform", `translate(${dx} ${dy})`);
+            group.classList.add("denx-root-dragging");
+        }
 
-            pose.nodes[nodeId] = {
-                x: start.x + dx,
-                y: start.y + dy
-            };
-        });
+        e.preventDefault();
+        return;
     } else if (boneInteraction.mode === "pose-node") {
         // Rigid hierarchical rotation:
         // the selected node rotates around its parent at a fixed radius,
@@ -1506,6 +1635,18 @@ function finishBoneInteraction(e) {
         const endpoint = normalizedBuildEnd(boneInteraction.startPoint, end);
         addNewFigure(boneInteraction.startPoint, endpoint);
         boneInteraction.changed = true;
+    } else if (boneInteraction.mode === "move-root" && boneInteraction.changed) {
+        const pose = getFigurePose(boneInteraction.figureId);
+        const dx = end.x - boneInteraction.startPoint.x;
+        const dy = end.y - boneInteraction.startPoint.y;
+
+        Object.keys(boneInteraction.startPose?.nodes || {}).forEach(nodeId => {
+            const start = boneInteraction.startPose.nodes[nodeId];
+            pose.nodes[nodeId] = {
+                x: start.x + dx,
+                y: start.y + dy
+            };
+        });
     }
 
     const changed = boneInteraction.changed;
@@ -1527,6 +1668,7 @@ function finishBoneInteraction(e) {
 
     if (changed && beforeState) {
         recordBoneOperation(beforeState);
+        invalidateStaticFigureArtwork();
     }
 
     renderFigures();
@@ -1683,6 +1825,7 @@ function addFigureDefinitionToWorkspace(definition) {
     selectedNodeId = runtimeRootId;
 
     recordBoneOperation(beforeState);
+    invalidateStaticFigureArtwork();
     renderFigures();
 
     requestAnimationFrame(() => {
