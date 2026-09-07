@@ -225,6 +225,36 @@
       <button id="cameraPropertiesDoneBtn" class="camera-properties__done" type="button">Close</button>
     </aside>
 
+    <aside id="figureActionsRail" class="figure-actions-rail hidden" aria-hidden="true" aria-label="Selected figure actions">
+      <div class="figure-actions-head">
+        <span class="figure-actions-kicker">FIGURE</span>
+        <strong id="figureActionsName">Selected Figure</strong>
+      </div>
+
+      <label class="figure-action-color" title="Color every segment in this figure">
+        <span class="figure-action-icon">●</span>
+        <span>Color</span>
+        <input id="figureMainColorInput" type="color" value="#111111" aria-label="Figure color">
+      </label>
+
+      <div class="figure-action-scale" aria-label="Scale selected figure">
+        <span class="figure-action-icon">↔</span>
+        <span>Scale</span>
+        <div class="figure-scale-buttons">
+          <button id="figureScaleDownBtn" type="button" aria-label="Scale figure down">−</button>
+          <button id="figureScaleUpBtn" type="button" aria-label="Scale figure up">＋</button>
+        </div>
+      </div>
+
+      <button id="figureEditBtn" class="figure-action-btn" type="button" title="Edit this figure in Figure Creator">
+        <span class="figure-action-icon">✎</span><span>Edit</span>
+      </button>
+
+      <button id="figureDeleteBtn" class="figure-action-btn danger" type="button" title="Delete this figure from the animation">
+        <span class="figure-action-icon">⌫</span><span>Delete</span>
+      </button>
+    </aside>
+
     <div id="viewport">
       <div id="camera">
         <div id="stageGuide" aria-hidden="true"></div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v16-velocity-0-2-1-static";
+const CACHE_NAME = "denx-animator-v17-velocity-0-2-2-figure-rail";
 const APP_SHELL = [
   "./",
   "./index.html",
