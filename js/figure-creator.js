@@ -85,9 +85,22 @@
         zoom: 1
     };
 
+    // The creator can edit figures whose workspace coordinates extend well
+    // beyond the default 1000×700 construction room. Keep the actual figure
+    // coordinates untouched and fit the SVG viewBox around them instead.
+    const stageView = {
+        x: 0,
+        y: 0,
+        width: 1000,
+        height: 700
+    };
+    let editViewNeedsFit = false;
+
     const pointerMap = new Map();
     let pinchStartDistance = null;
     let pinchStartZoom = 1;
+    let pinchStartCenter = null;
+    let pinchStartCamera = null;
     let panPointerId = null;
     let panLast = null;
 
@@ -131,6 +144,7 @@
         nextNodeId = Math.max(2, ...nodeNums) + 1;
         nextSegmentId = Math.max(1, ...segNums) + 1;
         nextPolyfillId = Math.max(0, ...polyfills.map(poly => Number(String(poly.id).match(/(\d+)$/)?.[1] || 0))) + 1;
+        editViewNeedsFit = true;
     }
 
     function snapshot() {
@@ -220,6 +234,61 @@
         return el;
     }
 
+    function updateStageViewBox() {
+        stage.setAttribute(
+            "viewBox",
+            `${stageView.x} ${stageView.y} ${stageView.width} ${stageView.height}`
+        );
+    }
+
+    function fitStageViewToPose() {
+        const points = Object.values(pose).filter(point =>
+            Number.isFinite(Number(point?.x)) && Number.isFinite(Number(point?.y))
+        );
+        if (!points.length) return;
+
+        let minX = Math.min(...points.map(point => Number(point.x)));
+        let maxX = Math.max(...points.map(point => Number(point.x)));
+        let minY = Math.min(...points.map(point => Number(point.y)));
+        let maxY = Math.max(...points.map(point => Number(point.y)));
+
+        const rawWidth = Math.max(80, maxX - minX);
+        const rawHeight = Math.max(80, maxY - minY);
+        const padding = Math.max(60, Math.max(rawWidth, rawHeight) * 0.22);
+        minX -= padding;
+        maxX += padding;
+        minY -= padding;
+        maxY += padding;
+
+        let width = Math.max(160, maxX - minX);
+        let height = Math.max(120, maxY - minY);
+        const rect = stageWrap.getBoundingClientRect();
+        const aspect = rect.width > 0 && rect.height > 0
+            ? rect.width / rect.height
+            : 1000 / 700;
+        const currentAspect = width / height;
+
+        if (currentAspect > aspect) {
+            const nextHeight = width / aspect;
+            minY -= (nextHeight - height) / 2;
+            height = nextHeight;
+        } else {
+            const nextWidth = height * aspect;
+            minX -= (nextWidth - width) / 2;
+            width = nextWidth;
+        }
+
+        stageView.x = minX;
+        stageView.y = minY;
+        stageView.width = width;
+        stageView.height = height;
+        camera.x = 0;
+        camera.y = 0;
+        camera.zoom = 1;
+        updateStageViewBox();
+        updateCamera();
+    }
+
     function updateCamera() {
         cameraEl.style.transform =
             `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
@@ -233,15 +302,17 @@
 
         const cameraX = (screenX - camera.x) / camera.zoom;
         const cameraY = (screenY - camera.y) / camera.zoom;
+        const normalizedX = cameraX / Math.max(1, rect.width);
+        const normalizedY = cameraY / Math.max(1, rect.height);
 
         return {
-            x: Math.max(0, Math.min(
-                1000,
-                (cameraX / Math.max(1, rect.width)) * 1000
+            x: Math.max(stageView.x, Math.min(
+                stageView.x + stageView.width,
+                stageView.x + normalizedX * stageView.width
             )),
-            y: Math.max(0, Math.min(
-                700,
-                (cameraY / Math.max(1, rect.height)) * 700
+            y: Math.max(stageView.y, Math.min(
+                stageView.y + stageView.height,
+                stageView.y + normalizedY * stageView.height
             ))
         };
     }
@@ -250,8 +321,16 @@
         return screenToStage(e.clientX, e.clientY);
     }
 
-    function setZoom(nextZoom) {
-        camera.zoom = Math.max(0.5, Math.min(8, nextZoom));
+    function setZoom(nextZoom, clientX = null, clientY = null) {
+        const rect = stageWrap.getBoundingClientRect();
+        const next = Math.max(0.5, Math.min(8, nextZoom));
+        const anchorX = clientX == null ? rect.width / 2 : clientX - rect.left;
+        const anchorY = clientY == null ? rect.height / 2 : clientY - rect.top;
+        const worldScreenX = (anchorX - camera.x) / camera.zoom;
+        const worldScreenY = (anchorY - camera.y) / camera.zoom;
+        camera.x = anchorX - worldScreenX * next;
+        camera.y = anchorY - worldScreenY * next;
+        camera.zoom = next;
         updateCamera();
     }
 
@@ -1034,7 +1113,7 @@
     });
 
     // -------------------------------------------------------------
-    // Zoom + two-finger pan/pinch
+    // Zoom + direct canvas pan + two-finger pan/pinch
     // -------------------------------------------------------------
     zoomInBtn.addEventListener("click", () => {
         setZoom(camera.zoom * 1.2);
@@ -1046,6 +1125,12 @@
         render();
     });
 
+    stageWrap.addEventListener("wheel", event => {
+        event.preventDefault();
+        setZoom(camera.zoom * (event.deltaY < 0 ? 1.12 : 0.89), event.clientX, event.clientY);
+        render();
+    }, { passive: false });
+
     stageWrap.addEventListener("pointerdown", e => {
         if (e.pointerType !== "touch") return;
 
@@ -1054,6 +1139,13 @@
             y: e.clientY
         });
 
+        // A one-finger drag on empty creator canvas pans the room. Node/segment
+        // interactions still own their own pointer gestures.
+        if (pointerMap.size === 1 && e.target === stage) {
+            panPointerId = e.pointerId;
+            panLast = { x: e.clientX, y: e.clientY };
+        }
+
         if (pointerMap.size === 2) {
             const pts = [...pointerMap.values()];
             pinchStartDistance = Math.hypot(
@@ -1061,6 +1153,13 @@
                 pts[1].y - pts[0].y
             );
             pinchStartZoom = camera.zoom;
+            pinchStartCenter = {
+                x: (pts[0].x + pts[1].x) / 2,
+                y: (pts[0].y + pts[1].y) / 2
+            };
+            pinchStartCamera = { x: camera.x, y: camera.y };
+            panPointerId = null;
+            panLast = null;
             cancelInteraction();
         }
     }, true);
@@ -1079,12 +1178,38 @@
                 pts[1].x - pts[0].x,
                 pts[1].y - pts[0].y
             );
+            const center = {
+                x: (pts[0].x + pts[1].x) / 2,
+                y: (pts[0].y + pts[1].y) / 2
+            };
 
-            if (pinchStartDistance > 0) {
-                setZoom(pinchStartZoom * (distance / pinchStartDistance));
+            if (pinchStartDistance > 0 && pinchStartCenter && pinchStartCamera) {
+                const nextZoom = Math.max(0.5, Math.min(8,
+                    pinchStartZoom * (distance / pinchStartDistance)
+                ));
+                const rect = stageWrap.getBoundingClientRect();
+                const startX = pinchStartCenter.x - rect.left;
+                const startY = pinchStartCenter.y - rect.top;
+                const nowX = center.x - rect.left;
+                const nowY = center.y - rect.top;
+                const ratio = nextZoom / pinchStartZoom;
+
+                camera.x = nowX - (startX - pinchStartCamera.x) * ratio;
+                camera.y = nowY - (startY - pinchStartCamera.y) * ratio;
+                camera.zoom = nextZoom;
+                updateCamera();
                 render();
             }
 
+            e.preventDefault();
+            return;
+        }
+
+        if (pointerMap.size === 1 && panPointerId === e.pointerId && panLast) {
+            camera.x += e.clientX - panLast.x;
+            camera.y += e.clientY - panLast.y;
+            panLast = { x: e.clientX, y: e.clientY };
+            updateCamera();
             e.preventDefault();
         }
     }, true);
@@ -1092,8 +1217,15 @@
     function removePointer(e) {
         pointerMap.delete(e.pointerId);
 
+        if (panPointerId === e.pointerId) {
+            panPointerId = null;
+            panLast = null;
+        }
+
         if (pointerMap.size < 2) {
             pinchStartDistance = null;
+            pinchStartCenter = null;
+            pinchStartCamera = null;
         }
     }
 
@@ -1189,5 +1321,13 @@
     syncPolyfillButtons();
     syncQuickFromScroll();
     updateCamera();
+    updateStageViewBox();
+    if (editViewNeedsFit) {
+        requestAnimationFrame(() => {
+            fitStageViewToPose();
+            render();
+        });
+    }
+
     render();
 })();

@@ -32,6 +32,8 @@ let boneUndoEligible = false;
 
 let selectedFigureId = null;
 let selectedNodeId = null;
+let emptyCanvasDeselectArmed = false;
+let figureTransformTransaction = null;
 
 const boneInteraction = {
     active: false,
@@ -73,6 +75,7 @@ function dispatchFigureSelectionChanged() {
 function setSelectedFigure(figureId, nodeId = null) {
     selectedFigureId = figureId || null;
     selectedNodeId = figureId ? nodeId : null;
+    emptyCanvasDeselectArmed = false;
     dispatchFigureSelectionChanged();
 }
 
@@ -112,11 +115,44 @@ function recolorFigure(figureId, color) {
     return true;
 }
 
-function scaleFigure(figureId, factor) {
+function beginFigureTransform(figureId) {
+    if (!getFigure(figureId)) return false;
+    if (figureTransformTransaction?.figureId === figureId) return true;
+    figureTransformTransaction = {
+        figureId,
+        beforeState: captureBoneProjectState(),
+        changed: false
+    };
+    return true;
+}
+
+function endFigureTransform(figureId) {
+    const transaction = figureTransformTransaction;
+    figureTransformTransaction = null;
+    if (!transaction || transaction.figureId !== figureId || !transaction.changed) return false;
+    recordBoneOperation(transaction.beforeState);
+    return true;
+}
+
+function markFigureTransformChanged(figureId) {
+    if (figureTransformTransaction?.figureId === figureId) {
+        figureTransformTransaction.changed = true;
+    }
+}
+
+function refreshFigureTransformVisuals() {
+    invalidateStaticFigureArtwork();
+    renderFigures();
+    window.denxRefreshOnionSkin?.();
+    window.denxRefreshFrameThumbnail?.(currentFrame);
+}
+
+function scaleFigure(figureId, factor, options = {}) {
     const figure = getFigure(figureId);
     factor = Number(factor);
     if (!figure || !Number.isFinite(factor) || factor <= 0) return false;
-    const beforeState = captureBoneProjectState();
+    const record = options.record !== false;
+    const beforeState = record ? captureBoneProjectState() : null;
     let changed = false;
     Object.keys(boneFramePoses).forEach(frameKey => {
         const pose = boneFramePoses[frameKey]?.[figureId];
@@ -146,6 +182,85 @@ function scaleFigure(figureId, factor) {
     if (figure.style && Number.isFinite(Number(figure.style.headRadius))) {
         figure.style.headRadius = Math.max(1, Number(figure.style.headRadius) * factor);
     }
+    if (record) recordBoneOperation(beforeState);
+    else markFigureTransformChanged(figureId);
+    refreshFigureTransformVisuals();
+    return true;
+}
+
+function rotateFigure(figureId, degrees) {
+    const figure = getFigure(figureId);
+    degrees = Number(degrees);
+    if (!figure || !Number.isFinite(degrees) || Math.abs(degrees) < 0.0001) return false;
+    const beforeState = captureBoneProjectState();
+    const radians = degrees * Math.PI / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    let changed = false;
+
+    Object.keys(boneFramePoses).forEach(frameKey => {
+        const pose = boneFramePoses[frameKey]?.[figureId];
+        const root = pose?.nodes?.[figure.rootNodeId];
+        if (!root || pose.visible === false) return;
+        Object.entries(pose.nodes || {}).forEach(([nodeId, point]) => {
+            if (nodeId === figure.rootNodeId || !point) return;
+            const dx = point.x - root.x;
+            const dy = point.y - root.y;
+            pose.nodes[nodeId] = {
+                x: root.x + dx * cos - dy * sin,
+                y: root.y + dx * sin + dy * cos
+            };
+        });
+        changed = true;
+    });
+
+    if (!changed) return false;
+    recordBoneOperation(beforeState);
+    refreshFigureTransformVisuals();
+    return true;
+}
+
+function flipFigure(figureId, axis) {
+    const figure = getFigure(figureId);
+    axis = String(axis || '').toLowerCase();
+    if (!figure || !['x', 'y', 'z'].includes(axis)) return false;
+    const beforeState = captureBoneProjectState();
+    let changed = false;
+
+    Object.keys(boneFramePoses).forEach(frameKey => {
+        const pose = boneFramePoses[frameKey]?.[figureId];
+        const root = pose?.nodes?.[figure.rootNodeId];
+        if (!root || pose.visible === false) return;
+        Object.entries(pose.nodes || {}).forEach(([nodeId, point]) => {
+            if (nodeId === figure.rootNodeId || !point) return;
+            const dx = point.x - root.x;
+            const dy = point.y - root.y;
+            if (axis === 'x') {
+                pose.nodes[nodeId] = { x: root.x - dx, y: point.y };
+            } else if (axis === 'y') {
+                pose.nodes[nodeId] = { x: point.x, y: root.y - dy };
+            } else {
+                // In DenX's 2D stage, a Z flip is the in-plane 180° turn.
+                pose.nodes[nodeId] = { x: root.x - dx, y: root.y - dy };
+            }
+        });
+        changed = true;
+    });
+
+    if (!changed) return false;
+    recordBoneOperation(beforeState);
+    refreshFigureTransformVisuals();
+    return true;
+}
+
+function moveFigureLayer(figureId, direction) {
+    const index = figures.findIndex(figure => figure.id === figureId);
+    if (index < 0) return false;
+    const step = direction === 'front' ? 1 : direction === 'back' ? -1 : 0;
+    const target = index + step;
+    if (!step || target < 0 || target >= figures.length) return false;
+    const beforeState = captureBoneProjectState();
+    [figures[index], figures[target]] = [figures[target], figures[index]];
     recordBoneOperation(beforeState);
     invalidateStaticFigureArtwork();
     renderFigures();
@@ -1198,6 +1313,7 @@ function restoreBoneProjectState(snapshot) {
     getFramePose(currentFrame);
     invalidateStaticFigureArtwork();
     renderFigures();
+    dispatchFigureSelectionChanged();
 }
 
 function recordBoneOperation(beforeState) {
@@ -2047,6 +2163,12 @@ window.denxGetSelectedFigure = () => selectedFigureId;
 window.denxFigureDefinitionForEdit = figureId => figureDefinitionFromRuntime(figureId);
 window.denxRecolorFigure = (figureId, color) => recolorFigure(figureId, color);
 window.denxScaleFigure = (figureId, factor) => scaleFigure(figureId, factor);
+window.denxScaleFigureLive = (figureId, factor) => scaleFigure(figureId, factor, { record: false });
+window.denxBeginFigureTransform = figureId => beginFigureTransform(figureId);
+window.denxEndFigureTransform = figureId => endFigureTransform(figureId);
+window.denxFlipFigure = (figureId, axis) => flipFigure(figureId, axis);
+window.denxRotateFigure = (figureId, degrees) => rotateFigure(figureId, degrees);
+window.denxMoveFigureLayer = (figureId, direction) => moveFigureLayer(figureId, direction);
 window.denxDeleteFigure = figureId => deleteFigure(figureId);
 window.denxApplyEditedFigureDefinition = (figureId, definition) => applyEditedFigureDefinition(figureId, definition);
 
@@ -2074,6 +2196,12 @@ if (figureLayer) {
             setSelectedFigure(figureId, figure.rootNodeId);
             renderFigures();
             e.preventDefault();
+            return;
+        }
+
+        if (selectedFigureId && !emptyCanvasDeselectArmed) {
+            // First empty-canvas tap keeps the contextual figure toolbar alive.
+            emptyCanvasDeselectArmed = true;
             return;
         }
 

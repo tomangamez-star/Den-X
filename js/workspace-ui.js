@@ -24,6 +24,14 @@
     const figureScaleDownBtn = document.getElementById("figureScaleDownBtn");
     const figureScaleUpBtn = document.getElementById("figureScaleUpBtn");
     const figureScaleDisplay = document.getElementById("figureScaleDisplay");
+    const figureFlipXBtn = document.getElementById("figureFlipXBtn");
+    const figureFlipYBtn = document.getElementById("figureFlipYBtn");
+    const figureFlipZBtn = document.getElementById("figureFlipZBtn");
+    const figureRotateLeftBtn = document.getElementById("figureRotateLeftBtn");
+    const figureRotateRightBtn = document.getElementById("figureRotateRightBtn");
+    const figureRotateDisplay = document.getElementById("figureRotateDisplay");
+    const figureMoveFrontBtn = document.getElementById("figureMoveFrontBtn");
+    const figureMoveBackBtn = document.getElementById("figureMoveBackBtn");
     const figureEditBtn = document.getElementById("figureEditBtn");
     const figureDeleteBtn = document.getElementById("figureDeleteBtn");
     let contextualFigureId = null;
@@ -688,6 +696,7 @@
 
 
     let contextualFigureScalePercent = 100;
+    let contextualFigureRotation = 0;
 
     function syncFigureRail(detail) {
         const nextFigureId = detail?.figureId || null;
@@ -697,8 +706,12 @@
         figureActionsRail?.classList.toggle("hidden", !visible);
         figureActionsRail?.setAttribute("aria-hidden", visible ? "false" : "true");
         if (!visible) return;
-        if (changedFigure) contextualFigureScalePercent = 100;
+        if (changedFigure) {
+            contextualFigureScalePercent = 100;
+            contextualFigureRotation = 0;
+        }
         if (figureScaleDisplay) figureScaleDisplay.textContent = `${contextualFigureScalePercent}%`;
+        if (figureRotateDisplay) figureRotateDisplay.textContent = `${contextualFigureRotation}°`;
         if (figureActionsName) figureActionsName.textContent = detail.name || "Figure";
         if (figureMainColorInput && /^#[0-9a-f]{6}$/i.test(detail.color || "")) {
             figureMainColorInput.value = detail.color;
@@ -714,15 +727,100 @@
         window.denxRecolorFigure?.(contextualFigureId, event.target.value);
     });
 
-    function applyContextualFigureScale(factor) {
-        if (!contextualFigureId) return;
-        window.denxScaleFigure?.(contextualFigureId, factor);
+    function applyContextualFigureScale(factor, live = false) {
+        if (!contextualFigureId) return false;
+        const worked = live
+            ? window.denxScaleFigureLive?.(contextualFigureId, factor)
+            : window.denxScaleFigure?.(contextualFigureId, factor);
+        if (!worked) return false;
         contextualFigureScalePercent = Math.max(10, Math.min(500, Math.round(contextualFigureScalePercent * factor)));
         if (figureScaleDisplay) figureScaleDisplay.textContent = `${contextualFigureScalePercent}%`;
+        return true;
     }
 
-    figureScaleDownBtn?.addEventListener("click", () => applyContextualFigureScale(0.90));
-    figureScaleUpBtn?.addEventListener("click", () => applyContextualFigureScale(1.10));
+    function bindScaleHold(button, factor) {
+        if (!button) return;
+        let holdTimer = null;
+        let repeatTimer = null;
+        let activePointerId = null;
+
+        const clear = () => {
+            clearTimeout(holdTimer);
+            clearInterval(repeatTimer);
+            holdTimer = null;
+            repeatTimer = null;
+            if (activePointerId !== null && contextualFigureId) {
+                window.denxEndFigureTransform?.(contextualFigureId);
+            }
+            activePointerId = null;
+        };
+
+        button.addEventListener("contextmenu", event => event.preventDefault());
+        button.addEventListener("pointerdown", event => {
+            if (!contextualFigureId || activePointerId !== null) return;
+            activePointerId = event.pointerId;
+            button.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+            window.denxBeginFigureTransform?.(contextualFigureId);
+            applyContextualFigureScale(factor, true);
+
+            holdTimer = setTimeout(() => {
+                let ticks = 0;
+                repeatTimer = setInterval(() => {
+                    ticks += 1;
+                    const accelerated = ticks > 12
+                        ? (factor > 1 ? 1.14 : 0.86)
+                        : factor;
+                    applyContextualFigureScale(accelerated, true);
+                }, 85);
+            }, 330);
+        });
+        button.addEventListener("pointerup", clear);
+        button.addEventListener("pointercancel", clear);
+        button.addEventListener("lostpointercapture", clear);
+    }
+
+    bindScaleHold(figureScaleDownBtn, 0.90);
+    bindScaleHold(figureScaleUpBtn, 1.10);
+
+    function applyFigureFlip(axis) {
+        if (!contextualFigureId) return;
+        if (window.denxFlipFigure?.(contextualFigureId, axis)) {
+            if (axis === "z") {
+                contextualFigureRotation = ((contextualFigureRotation + 180 + 540) % 360) - 180;
+                if (figureRotateDisplay) figureRotateDisplay.textContent = `${contextualFigureRotation}°`;
+            }
+        }
+    }
+
+    figureFlipXBtn?.addEventListener("click", () => applyFigureFlip("x"));
+    figureFlipYBtn?.addEventListener("click", () => applyFigureFlip("y"));
+    figureFlipZBtn?.addEventListener("click", () => applyFigureFlip("z"));
+
+    function rotateContextualFigure(degrees) {
+        if (!contextualFigureId) return;
+        if (!window.denxRotateFigure?.(contextualFigureId, degrees)) return;
+        contextualFigureRotation += degrees;
+        contextualFigureRotation = ((contextualFigureRotation + 540) % 360) - 180;
+        if (figureRotateDisplay) figureRotateDisplay.textContent = `${contextualFigureRotation}°`;
+    }
+
+    figureRotateLeftBtn?.addEventListener("click", () => rotateContextualFigure(-5));
+    figureRotateRightBtn?.addEventListener("click", () => rotateContextualFigure(5));
+
+    figureMoveFrontBtn?.addEventListener("click", () => {
+        if (!contextualFigureId) return;
+        if (!window.denxMoveFigureLayer?.(contextualFigureId, "front")) {
+            showToast("Figure is already at the front.");
+        }
+    });
+
+    figureMoveBackBtn?.addEventListener("click", () => {
+        if (!contextualFigureId) return;
+        if (!window.denxMoveFigureLayer?.(contextualFigureId, "back")) {
+            showToast("Figure is already at the back.");
+        }
+    });
 
     figureDeleteBtn?.addEventListener("click", () => {
         if (!contextualFigureId) return;
