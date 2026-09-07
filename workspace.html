@@ -225,34 +225,34 @@
       <button id="cameraPropertiesDoneBtn" class="camera-properties__done" type="button">Close</button>
     </aside>
 
-    <aside id="figureActionsRail" class="figure-actions-rail hidden" aria-hidden="true" aria-label="Selected figure actions">
-      <div class="figure-actions-head">
-        <span class="figure-actions-kicker">FIGURE</span>
-        <strong id="figureActionsName">Selected Figure</strong>
-      </div>
+    <aside id="figureActionsRail" class="toolbar expanded-toolbar figure-context-toolbar hidden" aria-hidden="true" aria-label="Selected figure tools">
+      <section class="tool-section figure-context-section">
+        <div class="tool-section-title">Selected Figure</div>
+        <div class="figure-context-name" id="figureActionsName">Selected Figure</div>
 
-      <label class="figure-action-color" title="Color every segment in this figure">
-        <span class="figure-action-icon">●</span>
-        <span>Color</span>
-        <input id="figureMainColorInput" type="color" value="#111111" aria-label="Figure color">
-      </label>
+        <label class="tool-control figure-context-color" title="Color every segment in this figure">
+          <span class="tool-control-icon">●</span>
+          <span class="tool-control-name">Color</span>
+          <input id="figureMainColorInput" type="color" value="#111111" aria-label="Figure color">
+        </label>
 
-      <div class="figure-action-scale" aria-label="Scale selected figure">
-        <span class="figure-action-icon">↔</span>
-        <span>Scale</span>
-        <div class="figure-scale-buttons">
-          <button id="figureScaleDownBtn" type="button" aria-label="Scale figure down">−</button>
-          <button id="figureScaleUpBtn" type="button" aria-label="Scale figure up">＋</button>
+        <div class="animation-stepper-control figure-scale-control" aria-label="Scale selected figure">
+          <span class="animation-stepper-label">Scale</span>
+          <div class="denx-number-stepper figure-scale-stepper">
+            <button id="figureScaleDownBtn" type="button" aria-label="Scale figure down">−</button>
+            <span id="figureScaleDisplay" class="denx-number-display">100%</span>
+            <button id="figureScaleUpBtn" type="button" aria-label="Scale figure up">＋</button>
+          </div>
         </div>
-      </div>
 
-      <button id="figureEditBtn" class="figure-action-btn" type="button" title="Edit this figure in Figure Creator">
-        <span class="figure-action-icon">✎</span><span>Edit</span>
-      </button>
+        <button id="figureEditBtn" class="tool-row tool-action" type="button" title="Edit this figure in Figure Creator" aria-label="Edit selected figure">
+          <span class="tool-icon">✎</span><span class="tool-label">Edit</span>
+        </button>
 
-      <button id="figureDeleteBtn" class="figure-action-btn danger" type="button" title="Delete this figure from the animation">
-        <span class="figure-action-icon">⌫</span><span>Delete</span>
-      </button>
+        <button id="figureDeleteBtn" class="tool-row tool-action figure-delete-action" type="button" title="Delete this figure from the animation" aria-label="Delete selected figure">
+          <span class="tool-icon">⌫</span><span class="tool-label">Delete</span>
+        </button>
+      </section>
     </aside>
 
     <div id="viewport">
