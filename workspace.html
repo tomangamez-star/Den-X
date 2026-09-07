@@ -245,6 +245,32 @@
           </div>
         </div>
 
+        <div class="animation-stepper-control figure-flip-control" aria-label="Flip selected figure">
+          <span class="animation-stepper-label">Flip</span>
+          <div class="figure-axis-buttons">
+            <button id="figureFlipXBtn" type="button" title="Flip horizontally around MAIN" aria-label="Flip figure on X axis">X</button>
+            <button id="figureFlipYBtn" type="button" title="Flip vertically around MAIN" aria-label="Flip figure on Y axis">Y</button>
+            <button id="figureFlipZBtn" type="button" title="Flip around Z axis (180 degree turn)" aria-label="Flip figure on Z axis">Z</button>
+          </div>
+        </div>
+
+        <div class="animation-stepper-control figure-rotate-control" aria-label="Rotate selected figure">
+          <span class="animation-stepper-label">Rotate</span>
+          <div class="denx-number-stepper figure-rotate-stepper">
+            <button id="figureRotateLeftBtn" type="button" aria-label="Rotate figure left">↶</button>
+            <span id="figureRotateDisplay" class="denx-number-display">0°</span>
+            <button id="figureRotateRightBtn" type="button" aria-label="Rotate figure right">↷</button>
+          </div>
+        </div>
+
+        <button id="figureMoveFrontBtn" class="tool-row tool-action" type="button" title="Move this figure one layer forward" aria-label="Move selected figure forward">
+          <span class="tool-icon">⇧</span><span class="tool-label">Front</span>
+        </button>
+
+        <button id="figureMoveBackBtn" class="tool-row tool-action" type="button" title="Move this figure one layer backward" aria-label="Move selected figure backward">
+          <span class="tool-icon">⇩</span><span class="tool-label">Back</span>
+        </button>
+
         <button id="figureEditBtn" class="tool-row tool-action" type="button" title="Edit this figure in Figure Creator" aria-label="Edit selected figure">
           <span class="tool-icon">✎</span><span class="tool-label">Edit</span>
         </button>
