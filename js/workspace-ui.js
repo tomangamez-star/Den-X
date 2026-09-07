@@ -23,6 +23,7 @@
     const figureMainColorInput = document.getElementById("figureMainColorInput");
     const figureScaleDownBtn = document.getElementById("figureScaleDownBtn");
     const figureScaleUpBtn = document.getElementById("figureScaleUpBtn");
+    const figureScaleDisplay = document.getElementById("figureScaleDisplay");
     const figureEditBtn = document.getElementById("figureEditBtn");
     const figureDeleteBtn = document.getElementById("figureDeleteBtn");
     let contextualFigureId = null;
@@ -686,12 +687,18 @@
     });
 
 
+    let contextualFigureScalePercent = 100;
+
     function syncFigureRail(detail) {
-        contextualFigureId = detail?.figureId || null;
+        const nextFigureId = detail?.figureId || null;
+        const changedFigure = nextFigureId !== contextualFigureId;
+        contextualFigureId = nextFigureId;
         const visible = !!contextualFigureId;
         figureActionsRail?.classList.toggle("hidden", !visible);
         figureActionsRail?.setAttribute("aria-hidden", visible ? "false" : "true");
         if (!visible) return;
+        if (changedFigure) contextualFigureScalePercent = 100;
+        if (figureScaleDisplay) figureScaleDisplay.textContent = `${contextualFigureScalePercent}%`;
         if (figureActionsName) figureActionsName.textContent = detail.name || "Figure";
         if (figureMainColorInput && /^#[0-9a-f]{6}$/i.test(detail.color || "")) {
             figureMainColorInput.value = detail.color;
@@ -707,12 +714,15 @@
         window.denxRecolorFigure?.(contextualFigureId, event.target.value);
     });
 
-    figureScaleDownBtn?.addEventListener("click", () => {
-        if (contextualFigureId) window.denxScaleFigure?.(contextualFigureId, 0.90);
-    });
-    figureScaleUpBtn?.addEventListener("click", () => {
-        if (contextualFigureId) window.denxScaleFigure?.(contextualFigureId, 1.10);
-    });
+    function applyContextualFigureScale(factor) {
+        if (!contextualFigureId) return;
+        window.denxScaleFigure?.(contextualFigureId, factor);
+        contextualFigureScalePercent = Math.max(10, Math.min(500, Math.round(contextualFigureScalePercent * factor)));
+        if (figureScaleDisplay) figureScaleDisplay.textContent = `${contextualFigureScalePercent}%`;
+    }
+
+    figureScaleDownBtn?.addEventListener("click", () => applyContextualFigureScale(0.90));
+    figureScaleUpBtn?.addEventListener("click", () => applyContextualFigureScale(1.10));
 
     figureDeleteBtn?.addEventListener("click", () => {
         if (!contextualFigureId) return;
