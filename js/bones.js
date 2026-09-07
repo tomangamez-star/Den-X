@@ -54,6 +54,182 @@ function getFigure(figureId) {
     return figures.find(figure => figure.id === figureId) || null;
 }
 
+
+function selectedFigure() {
+    return selectedFigureId ? getFigure(selectedFigureId) : null;
+}
+
+function dispatchFigureSelectionChanged() {
+    const figure = selectedFigure();
+    window.dispatchEvent(new CustomEvent("denx:figureselectionchange", {
+        detail: figure ? {
+            figureId: figure.id,
+            name: figure.name || "Figure",
+            color: figure.style?.color || figure.segments?.[0]?.style?.color || "#111111"
+        } : null
+    }));
+}
+
+function setSelectedFigure(figureId, nodeId = null) {
+    selectedFigureId = figureId || null;
+    selectedNodeId = figureId ? nodeId : null;
+    dispatchFigureSelectionChanged();
+}
+
+function figureDefinitionFromRuntime(figureId) {
+    const figure = getFigure(figureId);
+    const pose = figure ? getFigurePose(figureId) : null;
+    if (!figure || !pose) return null;
+
+    return deepClone({
+        format: "denx-figure",
+        version: 2,
+        id: figure.id,
+        name: figure.name || "Figure",
+        rootNodeId: figure.rootNodeId,
+        style: figure.style || { color: "#111111", thickness: 12 },
+        nodes: figure.nodes || [],
+        segments: figure.segments || [],
+        polyfills: figure.polyfills || [],
+        initialPose: pose.nodes || {}
+    });
+}
+
+function recolorFigure(figureId, color) {
+    const figure = getFigure(figureId);
+    if (!figure || !/^#[0-9a-f]{6}$/i.test(String(color || ""))) return false;
+    const beforeState = captureBoneProjectState();
+    figure.style = { ...(figure.style || {}), color };
+    (figure.segments || []).forEach(segment => {
+        segment.style = { ...(segment.style || {}), color };
+    });
+    recordBoneOperation(beforeState);
+    invalidateStaticFigureArtwork();
+    renderFigures();
+    window.denxRefreshOnionSkin?.();
+    window.denxRefreshFrameThumbnail?.(currentFrame);
+    dispatchFigureSelectionChanged();
+    return true;
+}
+
+function scaleFigure(figureId, factor) {
+    const figure = getFigure(figureId);
+    factor = Number(factor);
+    if (!figure || !Number.isFinite(factor) || factor <= 0) return false;
+    const beforeState = captureBoneProjectState();
+    let changed = false;
+    Object.keys(boneFramePoses).forEach(frameKey => {
+        const pose = boneFramePoses[frameKey]?.[figureId];
+        const root = pose?.nodes?.[figure.rootNodeId];
+        if (!root || pose.visible === false) return;
+        Object.keys(pose.nodes || {}).forEach(nodeId => {
+            if (nodeId === figure.rootNodeId) return;
+            const p = pose.nodes[nodeId];
+            if (!p) return;
+            pose.nodes[nodeId] = {
+                x: root.x + (p.x - root.x) * factor,
+                y: root.y + (p.y - root.y) * factor
+            };
+        });
+        changed = true;
+    });
+    if (!changed) return false;
+    (figure.segments || []).forEach(segment => {
+        if (Number.isFinite(Number(segment.length))) segment.length = Number(segment.length) * factor;
+        if (segment.style && Number.isFinite(Number(segment.style.width))) {
+            segment.style.width = Math.max(1, Number(segment.style.width) * factor);
+        }
+    });
+    if (figure.style && Number.isFinite(Number(figure.style.thickness))) {
+        figure.style.thickness = Math.max(1, Number(figure.style.thickness) * factor);
+    }
+    if (figure.style && Number.isFinite(Number(figure.style.headRadius))) {
+        figure.style.headRadius = Math.max(1, Number(figure.style.headRadius) * factor);
+    }
+    recordBoneOperation(beforeState);
+    invalidateStaticFigureArtwork();
+    renderFigures();
+    window.denxRefreshOnionSkin?.();
+    window.denxRefreshFrameThumbnail?.(currentFrame);
+    return true;
+}
+
+function deleteFigure(figureId) {
+    const index = figures.findIndex(figure => figure.id === figureId);
+    if (index < 0) return false;
+    const beforeState = captureBoneProjectState();
+    figures.splice(index, 1);
+    Object.values(boneFramePoses).forEach(framePose => {
+        if (framePose) delete framePose[figureId];
+    });
+    setSelectedFigure(null);
+    recordBoneOperation(beforeState);
+    invalidateStaticFigureArtwork();
+    renderFigures();
+    window.denxRefreshOnionSkin?.();
+    window.denxRefreshFrameThumbnail?.(currentFrame);
+    return true;
+}
+
+function applyEditedFigureDefinition(figureId, definition) {
+    const figure = getFigure(figureId);
+    if (!figure || !definition || !Array.isArray(definition.nodes) || !Array.isArray(definition.segments)) return false;
+    const beforeState = captureBoneProjectState();
+    const oldRootId = figure.rootNodeId;
+    const newRootId = String(definition.rootNodeId || definition.nodes.find(n => n.parentId == null)?.id || "");
+    if (!newRootId || !definition.initialPose?.[newRootId]) return false;
+
+    figure.name = String(definition.name || figure.name || "Figure");
+    figure.rootNodeId = newRootId;
+    figure.nodes = deepClone(definition.nodes);
+    figure.segments = deepClone(definition.segments);
+    figure.polyfills = deepClone(definition.polyfills || []);
+    figure.style = deepClone(definition.style || figure.style || {});
+    figure.headNodeId = figure.nodes.find(node => node.role === "head")?.id || null;
+
+    const editRoot = definition.initialPose[newRootId];
+    Object.keys(boneFramePoses).forEach(frameKey => {
+        const runtimePose = boneFramePoses[frameKey]?.[figureId];
+        if (!runtimePose) return;
+        const previousNodes = runtimePose.nodes || {};
+        const frameRoot = previousNodes[oldRootId] || previousNodes[newRootId] || editRoot;
+        const nextNodes = {};
+        figure.nodes.forEach(node => {
+            const existing = previousNodes[node.id];
+            if (existing) {
+                nextNodes[node.id] = existing;
+                return;
+            }
+            const source = definition.initialPose[node.id] || editRoot;
+            nextNodes[node.id] = {
+                x: frameRoot.x + (source.x - editRoot.x),
+                y: frameRoot.y + (source.y - editRoot.y)
+            };
+        });
+        if (definition.initialPose && Number(frameKey) === Number(currentFrame)) {
+            const targetRoot = frameRoot;
+            figure.nodes.forEach(node => {
+                const source = definition.initialPose[node.id];
+                if (!source) return;
+                nextNodes[node.id] = {
+                    x: targetRoot.x + (source.x - editRoot.x),
+                    y: targetRoot.y + (source.y - editRoot.y)
+                };
+            });
+        }
+        runtimePose.nodes = nextNodes;
+    });
+
+    ensureFigureSegmentLengths(figure, getFigurePose(figureId));
+    setSelectedFigure(figureId, newRootId);
+    recordBoneOperation(beforeState);
+    invalidateStaticFigureArtwork();
+    renderFigures();
+    window.denxRefreshOnionSkin?.();
+    window.denxRefreshAllFrameThumbnails?.();
+    return true;
+}
+
 function getFramePose(frameNumber = currentFrame) {
     if (!boneFramePoses[frameNumber]) {
         const sourceFrame =
@@ -550,12 +726,17 @@ function updateFigureGeometry(figureId) {
         return;
     }
 
+    // v0.2.2: build DOM lookup maps once per rendered frame instead of
+    // rescanning the selected figure for every segment and every node.
+    const segmentElements = new Map();
+    group.querySelectorAll("[data-denx-segment-id]").forEach(el => {
+        segmentElements.set(el.getAttribute("data-denx-segment-id"), el);
+    });
+
     figure.segments.forEach(segment => {
         const from = pose.nodes[segment.from];
         const to = pose.nodes[segment.to];
-        const element = [...group.querySelectorAll("[data-denx-segment-id]")].find(
-            el => el.getAttribute("data-denx-segment-id") === String(segment.id)
-        );
+        const element = segmentElements.get(String(segment.id));
         updateSegmentGeometry(element, figure, segment, from, to);
     });
 
@@ -589,14 +770,18 @@ function updateFigureGeometry(figureId) {
     }
 
     const handleMetrics = getHandleMetrics();
+    const nodeControls = new Map();
+    group.querySelectorAll("[data-node-id]").forEach(el => {
+        const id = el.getAttribute("data-node-id");
+        if (!nodeControls.has(id)) nodeControls.set(id, []);
+        nodeControls.get(id).push(el);
+    });
 
     figure.nodes.forEach(node => {
         const point = pose.nodes[node.id];
         if (!point) return;
 
-        const controls = [...group.querySelectorAll("[data-node-id]")].filter(
-            el => el.getAttribute("data-node-id") === String(node.id)
-        );
+        const controls = nodeControls.get(String(node.id)) || [];
 
         controls.forEach(control => {
             if (node.id === figure.rootNodeId) {
@@ -769,6 +954,13 @@ function staticFigureArtwork(figure, pose, frameNumber = currentFrame) {
 
 function appendStaticFigureArtwork(group, figure, pose) {
     const artwork = staticFigureArtwork(figure, pose, currentFrame);
+    if (currentTool === "select" && !window.denxIsPlaying?.() && !window.denxPlaybackMonitorActive?.()) {
+        group.appendChild(createSvg("rect", {
+            x: artwork.x, y: artwork.y, width: artwork.width, height: artwork.height,
+            fill: "transparent", class: "denx-static-figure-hit",
+            "data-figure-id": figure.id, "pointer-events": "all"
+        }));
+    }
     const image = createSvg("image", {
         x: artwork.x,
         y: artwork.y,
@@ -1282,19 +1474,37 @@ function getAutomaticNodeContrast(figure) {
     return luminance > 0.46 ? "#111111" : "#f4f4f4";
 }
 
+const figureHierarchyCache = new Map();
+
+function hierarchyForFigure(figure) {
+    const signature = (figure.nodes || [])
+        .map(node => `${node.id}:${node.parentId || ""}`)
+        .join("|");
+    const cached = figureHierarchyCache.get(figure.id);
+    if (cached?.signature === signature) return cached.children;
+
+    const children = new Map();
+    (figure.nodes || []).forEach(node => {
+        if (node.parentId == null) return;
+        if (!children.has(node.parentId)) children.set(node.parentId, []);
+        children.get(node.parentId).push(node.id);
+    });
+    figureHierarchyCache.set(figure.id, { signature, children });
+    return children;
+}
+
 function descendantNodeIds(figure, nodeId) {
     const result = [];
+    const seen = new Set();
     const queue = [nodeId];
+    const children = hierarchyForFigure(figure);
 
-    while (queue.length) {
-        const current = queue.shift();
-        if (result.includes(current)) continue;
-
+    for (let index = 0; index < queue.length; index++) {
+        const current = queue[index];
+        if (seen.has(current)) continue;
+        seen.add(current);
         result.push(current);
-
-        figure.nodes
-            .filter(node => node.parentId === current)
-            .forEach(child => queue.push(child.id));
+        (children.get(current) || []).forEach(childId => queue.push(childId));
     }
 
     return result;
@@ -1320,8 +1530,7 @@ function beginNodePose(e, figureId, nodeId) {
     boneInteraction.mode =
         nodeId === figure.rootNodeId ? "move-root" : "pose-node";
 
-    selectedFigureId = figureId;
-    selectedNodeId = nodeId;
+    setSelectedFigure(figureId, nodeId);
 
     try {
         figureLayer.setPointerCapture(e.pointerId);
@@ -1349,8 +1558,7 @@ function beginBoneBuildFromNode(e, figureId, nodeId) {
     boneInteraction.beforeState = captureBoneProjectState();
     boneInteraction.changed = false;
 
-    selectedFigureId = figureId;
-    selectedNodeId = nodeId;
+    setSelectedFigure(figureId, nodeId);
 
     try {
         figureLayer.setPointerCapture(e.pointerId);
@@ -1545,8 +1753,7 @@ function addChildSegment(figureId, parentNodeId, endpoint) {
         };
     });
 
-    selectedFigureId = figureId;
-    selectedNodeId = newNodeId;
+    setSelectedFigure(figureId, newNodeId);
 }
 
 function addNewFigure(startPoint, endPoint) {
@@ -1611,8 +1818,7 @@ function addNewFigure(startPoint, endPoint) {
         }
     };
 
-    selectedFigureId = figureId;
-    selectedNodeId = childId;
+    setSelectedFigure(figureId, childId);
 }
 
 function finishBoneInteraction(e) {
@@ -1821,8 +2027,7 @@ function addFigureDefinitionToWorkspace(definition) {
         };
     });
 
-    selectedFigureId = figureId;
-    selectedNodeId = runtimeRootId;
+    setSelectedFigure(figureId, runtimeRootId);
 
     recordBoneOperation(beforeState);
     invalidateStaticFigureArtwork();
@@ -1838,6 +2043,12 @@ function addFigureDefinitionToWorkspace(definition) {
 
 window.denxAddFigureDefinition = definition =>
     addFigureDefinitionToWorkspace(definition);
+window.denxGetSelectedFigure = () => selectedFigureId;
+window.denxFigureDefinitionForEdit = figureId => figureDefinitionFromRuntime(figureId);
+window.denxRecolorFigure = (figureId, color) => recolorFigure(figureId, color);
+window.denxScaleFigure = (figureId, factor) => scaleFigure(figureId, factor);
+window.denxDeleteFigure = figureId => deleteFigure(figureId);
+window.denxApplyEditedFigureDefinition = (figureId, definition) => applyEditedFigureDefinition(figureId, definition);
 
 window.denxBonesRefresh = () => renderFigures();
 
@@ -1847,13 +2058,27 @@ if (figureLayer) {
         if (!e.isPrimary) return;
 
         const nodeEl = e.target.closest?.('[data-denx-node="1"]');
-        if (!nodeEl) return;
+        if (nodeEl) {
+            beginNodePose(
+                e,
+                nodeEl.getAttribute("data-figure-id"),
+                nodeEl.getAttribute("data-node-id")
+            );
+            return;
+        }
 
-        beginNodePose(
-            e,
-            nodeEl.getAttribute("data-figure-id"),
-            nodeEl.getAttribute("data-node-id")
-        );
+        const figureEl = e.target.closest?.('[data-figure-id]');
+        const figureId = figureEl?.getAttribute?.("data-figure-id");
+        if (figureId && getFigure(figureId)) {
+            const figure = getFigure(figureId);
+            setSelectedFigure(figureId, figure.rootNodeId);
+            renderFigures();
+            e.preventDefault();
+            return;
+        }
+
+        setSelectedFigure(null);
+        renderFigures();
     });
 
     figureLayer.addEventListener("pointermove", movePoseInteraction);
@@ -1922,3 +2147,4 @@ selectedFigureId = null;
 selectedNodeId = null;
 lastHandleZoom = getCameraZoom();
 renderFigures();
+queueMicrotask(dispatchFigureSelectionChanged);

@@ -18,6 +18,15 @@
     const drawingCanvas = document.getElementById("drawingCanvas");
     const toast = document.getElementById("denxToast");
 
+    const figureActionsRail = document.getElementById("figureActionsRail");
+    const figureActionsName = document.getElementById("figureActionsName");
+    const figureMainColorInput = document.getElementById("figureMainColorInput");
+    const figureScaleDownBtn = document.getElementById("figureScaleDownBtn");
+    const figureScaleUpBtn = document.getElementById("figureScaleUpBtn");
+    const figureEditBtn = document.getElementById("figureEditBtn");
+    const figureDeleteBtn = document.getElementById("figureDeleteBtn");
+    let contextualFigureId = null;
+
     let toastTimer = null;
 
     function showToast(message) {
@@ -675,6 +684,79 @@
     quickLinks.forEach(link => {
         link.addEventListener("click", wakeQuickRail);
     });
+
+
+    function syncFigureRail(detail) {
+        contextualFigureId = detail?.figureId || null;
+        const visible = !!contextualFigureId;
+        figureActionsRail?.classList.toggle("hidden", !visible);
+        figureActionsRail?.setAttribute("aria-hidden", visible ? "false" : "true");
+        if (!visible) return;
+        if (figureActionsName) figureActionsName.textContent = detail.name || "Figure";
+        if (figureMainColorInput && /^#[0-9a-f]{6}$/i.test(detail.color || "")) {
+            figureMainColorInput.value = detail.color;
+        }
+    }
+
+    window.addEventListener("denx:figureselectionchange", event => {
+        syncFigureRail(event.detail);
+    });
+
+    figureMainColorInput?.addEventListener("change", event => {
+        if (!contextualFigureId) return;
+        window.denxRecolorFigure?.(contextualFigureId, event.target.value);
+    });
+
+    figureScaleDownBtn?.addEventListener("click", () => {
+        if (contextualFigureId) window.denxScaleFigure?.(contextualFigureId, 0.90);
+    });
+    figureScaleUpBtn?.addEventListener("click", () => {
+        if (contextualFigureId) window.denxScaleFigure?.(contextualFigureId, 1.10);
+    });
+
+    figureDeleteBtn?.addEventListener("click", () => {
+        if (!contextualFigureId) return;
+        if (window.denxDeleteFigure?.(contextualFigureId)) {
+            showToast("Figure deleted — Undo is available.");
+        }
+    });
+
+    figureEditBtn?.addEventListener("click", () => {
+        if (!contextualFigureId) return;
+        const definition = window.denxFigureDefinitionForEdit?.(contextualFigureId);
+        const timelineSession = window.denxTimelineCaptureSession?.();
+        if (!definition || !timelineSession) {
+            showToast("Could not open Figure Creator.");
+            return;
+        }
+        sessionStorage.setItem("denx.figureEditPayload", JSON.stringify({
+            figureId: contextualFigureId,
+            definition,
+            timelineSession
+        }));
+        window.location.href = "figure-creator.html";
+    });
+
+    // Figure Creator returns through sessionStorage so the animation timeline is
+    // restored before applying the edited structure to the original instance.
+    setTimeout(() => {
+        const raw = sessionStorage.getItem("denx.figureEditReturn");
+        if (!raw) return;
+        sessionStorage.removeItem("denx.figureEditReturn");
+        try {
+            const handoff = JSON.parse(raw);
+            if (handoff.timelineSession) {
+                window.denxTimelineRestoreSession?.(handoff.timelineSession);
+            }
+            if (handoff.figureId && handoff.definition) {
+                window.denxApplyEditedFigureDefinition?.(handoff.figureId, handoff.definition);
+                showToast(`${handoff.definition.name || "Figure"} updated ✓`);
+            }
+        } catch (error) {
+            console.error("DenX figure edit return failed:", error);
+            showToast("Figure edit could not be restored.");
+        }
+    }, 0);
 
     renderProjectFigures();
     updateQuickFindFromScroll();

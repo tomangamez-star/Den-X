@@ -5,12 +5,6 @@
 
 (() => {
     const SVG_NS = "http://www.w3.org/2000/svg";
-
-    const WORLD_WIDTH = 4096;
-    const WORLD_HEIGHT = 4096;
-    const WORLD_CENTER_X = WORLD_WIDTH / 2;
-    const WORLD_CENTER_Y = WORLD_HEIGHT / 2;
-
     const stage = document.getElementById("creatorStage");
     const stageWrap = document.getElementById("creatorStageWrap");
     const cameraEl = document.getElementById("creatorCamera");
@@ -24,7 +18,6 @@
     const segmentTypeButtons = [...document.querySelectorAll(".segment-type-btn")];
     const segmentColorInput = document.getElementById("segmentColorInput");
     const segmentWidthInput = document.getElementById("segmentWidthInput");
-    const segmentWidthValue = document.getElementById("segmentWidthValue");
     const elasticToggle = document.getElementById("elasticToggle");
     const deleteSegmentBtn = document.getElementById("deleteSegmentBtn");
     const paletteButtons = [...document.querySelectorAll("[data-color]")];
@@ -41,13 +34,6 @@
     const zoomInBtn = document.getElementById("creatorZoomIn");
     const zoomOutBtn = document.getElementById("creatorZoomOut");
     const toast = document.getElementById("creatorToast");
-
-    const referenceImportBtn = document.getElementById("referenceImportBtn");
-    const referenceFileInput = document.getElementById("referenceFileInput");
-    const referenceOpacityInput = document.getElementById("referenceOpacityInput");
-    const referenceOpacityValue = document.getElementById("referenceOpacityValue");
-    const referenceHideBtn = document.getElementById("referenceHideBtn");
-    const referenceRemoveBtn = document.getElementById("referenceRemoveBtn");
 
     let selectedType = "rounded";
     let selectedSegmentId = "seg-1";
@@ -77,8 +63,8 @@
     ];
 
     const pose = {
-        "node-1": { x: WORLD_CENTER_X - 45, y: WORLD_CENTER_Y },
-        "node-2": { x: WORLD_CENTER_X + 45, y: WORLD_CENTER_Y }
+        "node-1": { x: 460, y: 350 },
+        "node-2": { x: 550, y: 350 }
     };
 
     const polyfills = [];
@@ -94,43 +80,16 @@
     };
 
     const camera = {
-        centerX: WORLD_CENTER_X,
-        centerY: WORLD_CENTER_Y,
-        zoom: 1,
-        viewLeft: 0,
-        viewTop: 0,
-        viewWidth: 1,
-        viewHeight: 1
+        x: 0,
+        y: 0,
+        zoom: 1
     };
 
     const pointerMap = new Map();
-
-    const panState = {
-        active: false,
-        pointerId: null,
-        startX: 0,
-        startY: 0,
-        cameraCenterX: WORLD_CENTER_X,
-        cameraCenterY: WORLD_CENTER_Y
-    };
-
-    const pinchState = {
-        active: false,
-        startDistance: 0,
-        startZoom: 1,
-        startCenterX: WORLD_CENTER_X,
-        startCenterY: WORLD_CENTER_Y,
-        anchorWorldX: WORLD_CENTER_X,
-        anchorWorldY: WORLD_CENTER_Y
-    };
-
-    const reference = {
-        dataUrl: null,
-        opacity: 0.45,
-        visible: true,
-        width: 560,
-        height: 420
-    };
+    let pinchStartDistance = null;
+    let pinchStartZoom = 1;
+    let panPointerId = null;
+    let panLast = null;
 
     const interaction = {
         active: false,
@@ -143,8 +102,35 @@
         beforeState: null
     };
 
+
+    let editHandoff = null;
+    try {
+        const raw = sessionStorage.getItem("denx.figureEditPayload");
+        if (raw) editHandoff = JSON.parse(raw);
+    } catch (_) {}
+
     function clone(value) {
         return JSON.parse(JSON.stringify(value));
+    }
+
+
+    if (editHandoff?.definition) {
+        const d = editHandoff.definition;
+        nodes.splice(0, nodes.length, ...clone(d.nodes || []));
+        segments.splice(0, segments.length, ...clone(d.segments || []));
+        Object.keys(pose).forEach(key => delete pose[key]);
+        Object.assign(pose, clone(d.initialPose || {}));
+        polyfills.splice(0, polyfills.length, ...clone(d.polyfills || []));
+        nameInput.value = d.name || "Figure";
+        saveBtn.textContent = "Save Changes";
+        selectedSegmentId = segments[0]?.id || null;
+        defaultColor = d.style?.color || segments[0]?.style?.color || defaultColor;
+        defaultWidth = Number(d.style?.thickness) || Number(segments[0]?.style?.width) || defaultWidth;
+        const nodeNums = nodes.map(n => Number(String(n.id).match(/(\d+)$/)?.[1] || 0));
+        const segNums = segments.map(seg => Number(String(seg.id).match(/(\d+)$/)?.[1] || 0));
+        nextNodeId = Math.max(2, ...nodeNums) + 1;
+        nextSegmentId = Math.max(1, ...segNums) + 1;
+        nextPolyfillId = Math.max(0, ...polyfills.map(poly => Number(String(poly.id).match(/(\d+)$/)?.[1] || 0))) + 1;
     }
 
     function snapshot() {
@@ -234,250 +220,38 @@
         return el;
     }
 
-    function minZoomForViewport() {
-        const rect = stageWrap.getBoundingClientRect();
-
-        return Math.max(
-            rect.width / WORLD_WIDTH,
-            rect.height / WORLD_HEIGHT,
-            0.08
-        );
-    }
-
-    function clampCameraCenter() {
-        const rect = stageWrap.getBoundingClientRect();
-
-        const viewWidth =
-            Math.min(
-                WORLD_WIDTH,
-                rect.width / camera.zoom
-            );
-
-        const viewHeight =
-            Math.min(
-                WORLD_HEIGHT,
-                rect.height / camera.zoom
-            );
-
-        const halfW = viewWidth / 2;
-        const halfH = viewHeight / 2;
-
-        camera.centerX =
-            Math.max(
-                halfW,
-                Math.min(
-                    WORLD_WIDTH - halfW,
-                    camera.centerX
-                )
-            );
-
-        camera.centerY =
-            Math.max(
-                halfH,
-                Math.min(
-                    WORLD_HEIGHT - halfH,
-                    camera.centerY
-                )
-            );
-
-        camera.viewWidth = viewWidth;
-        camera.viewHeight = viewHeight;
-        camera.viewLeft =
-            camera.centerX - halfW;
-        camera.viewTop =
-            camera.centerY - halfH;
-    }
-
-    function chooseGridSpacing() {
-        // Keep minor grid lines roughly 28-56 screen pixels apart.
-        let spacing = 32;
-
-        while (spacing * camera.zoom < 28) {
-            spacing *= 2;
-        }
-
-        while (
-            spacing > 8 &&
-            spacing * camera.zoom > 56
-        ) {
-            spacing /= 2;
-        }
-
-        return spacing;
-    }
-
-    function updateGrid() {
-        const spacing = chooseGridSpacing();
-        const major = spacing * 4;
-
-        const minorPx = spacing * camera.zoom;
-        const majorPx = major * camera.zoom;
-
-        stageWrap.style.backgroundSize =
-            `${minorPx}px ${minorPx}px, ` +
-            `${minorPx}px ${minorPx}px, ` +
-            `${majorPx}px ${majorPx}px, ` +
-            `${majorPx}px ${majorPx}px`;
-
-        const minorX =
-            -(camera.viewLeft % spacing) *
-            camera.zoom;
-
-        const minorY =
-            -(camera.viewTop % spacing) *
-            camera.zoom;
-
-        const majorX =
-            -(camera.viewLeft % major) *
-            camera.zoom;
-
-        const majorY =
-            -(camera.viewTop % major) *
-            camera.zoom;
-
-        stageWrap.style.backgroundPosition =
-            `${minorX}px ${minorY}px, ` +
-            `${minorX}px ${minorY}px, ` +
-            `${majorX}px ${majorY}px, ` +
-            `${majorX}px ${majorY}px`;
-    }
-
     function updateCamera() {
-        const minimum =
-            minZoomForViewport();
-
-        camera.zoom =
-            Math.max(
-                minimum,
-                Math.min(12, camera.zoom)
-            );
-
-        clampCameraCenter();
-
-        stage.setAttribute(
-            "viewBox",
-            `${camera.viewLeft} ${camera.viewTop} ${camera.viewWidth} ${camera.viewHeight}`
-        );
-
-        // The SVG always occupies the viewport. We move through the finite
-        // 4K world using its viewBox instead of scaling a finite board image.
-        cameraEl.style.transform = "none";
-
-        updateGrid();
+        cameraEl.style.transform =
+            `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
     }
 
     function screenToStage(clientX, clientY) {
-        const rect =
-            stageWrap.getBoundingClientRect();
+        const rect = stageWrap.getBoundingClientRect();
 
-        const screenX =
-            Math.max(
-                0,
-                Math.min(
-                    rect.width,
-                    clientX - rect.left
-                )
-            );
+        const screenX = clientX - rect.left;
+        const screenY = clientY - rect.top;
 
-        const screenY =
-            Math.max(
-                0,
-                Math.min(
-                    rect.height,
-                    clientY - rect.top
-                )
-            );
+        const cameraX = (screenX - camera.x) / camera.zoom;
+        const cameraY = (screenY - camera.y) / camera.zoom;
 
         return {
-            x: Math.max(
-                0,
-                Math.min(
-                    WORLD_WIDTH,
-                    camera.viewLeft +
-                    (screenX / Math.max(1, rect.width)) *
-                    camera.viewWidth
-                )
-            ),
-            y: Math.max(
-                0,
-                Math.min(
-                    WORLD_HEIGHT,
-                    camera.viewTop +
-                    (screenY / Math.max(1, rect.height)) *
-                    camera.viewHeight
-                )
-            )
+            x: Math.max(0, Math.min(
+                1000,
+                (cameraX / Math.max(1, rect.width)) * 1000
+            )),
+            y: Math.max(0, Math.min(
+                700,
+                (cameraY / Math.max(1, rect.height)) * 700
+            ))
         };
     }
 
     function pointFromEvent(e) {
-        return screenToStage(
-            e.clientX,
-            e.clientY
-        );
+        return screenToStage(e.clientX, e.clientY);
     }
 
-    function setZoom(
-        nextZoom,
-        screenAnchor = null
-    ) {
-        const rect =
-            stageWrap.getBoundingClientRect();
-
-        const minimum =
-            minZoomForViewport();
-
-        const next =
-            Math.max(
-                minimum,
-                Math.min(12, nextZoom)
-            );
-
-        const anchor =
-            screenAnchor || {
-                x: rect.width / 2,
-                y: rect.height / 2
-            };
-
-        const anchorClient = {
-            x: rect.left + anchor.x,
-            y: rect.top + anchor.y
-        };
-
-        const worldBefore =
-            screenToStage(
-                anchorClient.x,
-                anchorClient.y
-            );
-
-        camera.zoom = next;
-
-        const nextViewWidth =
-            Math.min(
-                WORLD_WIDTH,
-                rect.width / next
-            );
-
-        const nextViewHeight =
-            Math.min(
-                WORLD_HEIGHT,
-                rect.height / next
-            );
-
-        camera.centerX =
-            worldBefore.x -
-            (
-                anchor.x / Math.max(1, rect.width) -
-                0.5
-            ) * nextViewWidth;
-
-        camera.centerY =
-            worldBefore.y -
-            (
-                anchor.y / Math.max(1, rect.height) -
-                0.5
-            ) * nextViewHeight;
-
+    function setZoom(nextZoom) {
+        camera.zoom = Math.max(0.5, Math.min(8, nextZoom));
         updateCamera();
     }
 
@@ -529,15 +303,6 @@
 
         segmentColorInput.value = segment.style?.color || defaultColor;
         segmentWidthInput.value = Number(segment.style?.width) || defaultWidth;
-
-        if (segmentWidthValue) {
-            segmentWidthValue.textContent =
-                String(
-                    Number(segmentWidthInput.value) ||
-                    defaultWidth
-                );
-        }
-
         elasticToggle.checked = !!segment.elastic;
     }
 
@@ -710,19 +475,6 @@
 
     function render() {
         stage.innerHTML = "";
-
-        if (reference.dataUrl && reference.visible) {
-            stage.appendChild(svg("image", {
-                href: reference.dataUrl,
-                x: WORLD_CENTER_X - reference.width / 2,
-                y: WORLD_CENTER_Y - reference.height / 2,
-                width: reference.width,
-                height: reference.height,
-                opacity: reference.opacity,
-                preserveAspectRatio: "xMidYMid meet",
-                class: "creator-reference-image"
-            }));
-        }
 
         // Filled geometry sits behind segment geometry.
         drawPolyfills();
@@ -1087,13 +839,6 @@
         applySegmentColor(e.target.value);
     });
 
-    segmentWidthInput.addEventListener("input", e => {
-        if (segmentWidthValue) {
-            segmentWidthValue.textContent =
-                String(Number(e.target.value) || 18);
-        }
-    });
-
     segmentWidthInput.addEventListener("change", e => {
         const segment = selectedSegment();
         if (!segment) return;
@@ -1103,11 +848,6 @@
 
         segment.style = segment.style || {};
         segment.style.width = defaultWidth;
-
-        if (segmentWidthValue) {
-            segmentWidthValue.textContent =
-                String(defaultWidth);
-        }
 
         commit(before);
         render();
@@ -1294,428 +1034,75 @@
     });
 
     // -------------------------------------------------------------
-    // FINITE 4K construction-world navigation
-    // - drag empty space = pan
-    // - pinch anywhere = zoom
-    // - 4096 × 4096 hard boundary
-    // - grid zooms with the world
+    // Zoom + two-finger pan/pinch
     // -------------------------------------------------------------
-
     zoomInBtn.addEventListener("click", () => {
-        setZoom(camera.zoom * 1.22);
+        setZoom(camera.zoom * 1.2);
         render();
     });
 
     zoomOutBtn.addEventListener("click", () => {
-        setZoom(camera.zoom / 1.22);
+        setZoom(camera.zoom / 1.2);
         render();
     });
 
-    function pointerIsInteractiveTarget(target) {
-        return !!target?.closest?.(
-            ".creator-node-touch, .creator-segment-shape"
-        );
-    }
+    stageWrap.addEventListener("pointerdown", e => {
+        if (e.pointerType !== "touch") return;
 
-    function beginPinch() {
-        if (pointerMap.size !== 2) return;
+        pointerMap.set(e.pointerId, {
+            x: e.clientX,
+            y: e.clientY
+        });
 
-        const rect =
-            stageWrap.getBoundingClientRect();
+        if (pointerMap.size === 2) {
+            const pts = [...pointerMap.values()];
+            pinchStartDistance = Math.hypot(
+                pts[1].x - pts[0].x,
+                pts[1].y - pts[0].y
+            );
+            pinchStartZoom = camera.zoom;
+            cancelInteraction();
+        }
+    }, true);
 
-        const points =
-            [...pointerMap.values()].slice(0, 2);
+    stageWrap.addEventListener("pointermove", e => {
+        if (!pointerMap.has(e.pointerId)) return;
 
-        const midpoint = {
-            x:
-                (
-                    points[0].x +
-                    points[1].x
-                ) / 2,
-            y:
-                (
-                    points[0].y +
-                    points[1].y
-                ) / 2
-        };
+        pointerMap.set(e.pointerId, {
+            x: e.clientX,
+            y: e.clientY
+        });
 
-        const anchorWorld =
-            screenToStage(
-                midpoint.x,
-                midpoint.y
+        if (pointerMap.size === 2) {
+            const pts = [...pointerMap.values()];
+            const distance = Math.hypot(
+                pts[1].x - pts[0].x,
+                pts[1].y - pts[0].y
             );
 
-        pinchState.active = true;
-
-        pinchState.startDistance =
-            Math.max(
-                1,
-                Math.hypot(
-                    points[1].x -
-                    points[0].x,
-                    points[1].y -
-                    points[0].y
-                )
-            );
-
-        pinchState.startZoom =
-            camera.zoom;
-
-        pinchState.startCenterX =
-            camera.centerX;
-
-        pinchState.startCenterY =
-            camera.centerY;
-
-        pinchState.anchorWorldX =
-            anchorWorld.x;
-
-        pinchState.anchorWorldY =
-            anchorWorld.y;
-
-        panState.active = false;
-        panState.pointerId = null;
-
-        cancelInteraction();
-    }
-
-    stageWrap.addEventListener(
-        "pointerdown",
-        e => {
-            pointerMap.set(
-                e.pointerId,
-                {
-                    x: e.clientX,
-                    y: e.clientY
-                }
-            );
-
-            if (pointerMap.size === 2) {
-                beginPinch();
-                return;
-            }
-
-            if (
-                pointerMap.size === 1 &&
-                !pointerIsInteractiveTarget(e.target)
-            ) {
-                panState.active = true;
-                panState.pointerId =
-                    e.pointerId;
-
-                panState.startX =
-                    e.clientX;
-
-                panState.startY =
-                    e.clientY;
-
-                panState.cameraCenterX =
-                    camera.centerX;
-
-                panState.cameraCenterY =
-                    camera.centerY;
-
-                try {
-                    stageWrap.setPointerCapture(
-                        e.pointerId
-                    );
-                } catch (_) {}
-            }
-        },
-        true
-    );
-
-    stageWrap.addEventListener(
-        "pointermove",
-        e => {
-            if (!pointerMap.has(e.pointerId)) {
-                return;
-            }
-
-            pointerMap.set(
-                e.pointerId,
-                {
-                    x: e.clientX,
-                    y: e.clientY
-                }
-            );
-
-            if (
-                pinchState.active &&
-                pointerMap.size >= 2
-            ) {
-                const rect =
-                    stageWrap.getBoundingClientRect();
-
-                const points =
-                    [...pointerMap.values()]
-                        .slice(0, 2);
-
-                const distance =
-                    Math.max(
-                        1,
-                        Math.hypot(
-                            points[1].x -
-                            points[0].x,
-                            points[1].y -
-                            points[0].y
-                        )
-                    );
-
-                const midpoint = {
-                    x:
-                        (
-                            points[0].x +
-                            points[1].x
-                        ) / 2 -
-                        rect.left,
-                    y:
-                        (
-                            points[0].y +
-                            points[1].y
-                        ) / 2 -
-                        rect.top
-                };
-
-                const minimum =
-                    minZoomForViewport();
-
-                const nextZoom =
-                    Math.max(
-                        minimum,
-                        Math.min(
-                            12,
-                            pinchState.startZoom *
-                            (
-                                distance /
-                                pinchState.startDistance
-                            )
-                        )
-                    );
-
-                const nextViewWidth =
-                    Math.min(
-                        WORLD_WIDTH,
-                        rect.width / nextZoom
-                    );
-
-                const nextViewHeight =
-                    Math.min(
-                        WORLD_HEIGHT,
-                        rect.height / nextZoom
-                    );
-
-                camera.zoom =
-                    nextZoom;
-
-                camera.centerX =
-                    pinchState.anchorWorldX -
-                    (
-                        midpoint.x /
-                        Math.max(1, rect.width) -
-                        0.5
-                    ) * nextViewWidth;
-
-                camera.centerY =
-                    pinchState.anchorWorldY -
-                    (
-                        midpoint.y /
-                        Math.max(1, rect.height) -
-                        0.5
-                    ) * nextViewHeight;
-
-                updateCamera();
+            if (pinchStartDistance > 0) {
+                setZoom(pinchStartZoom * (distance / pinchStartDistance));
                 render();
-
-                e.preventDefault();
-                return;
             }
 
-            if (
-                panState.active &&
-                e.pointerId ===
-                    panState.pointerId
-            ) {
-                const dx =
-                    e.clientX -
-                    panState.startX;
+            e.preventDefault();
+        }
+    }, true);
 
-                const dy =
-                    e.clientY -
-                    panState.startY;
-
-                camera.centerX =
-                    panState.cameraCenterX -
-                    dx / camera.zoom;
-
-                camera.centerY =
-                    panState.cameraCenterY -
-                    dy / camera.zoom;
-
-                updateCamera();
-                e.preventDefault();
-            }
-        },
-        true
-    );
-
-    function finishNavigationPointer(e) {
+    function removePointer(e) {
         pointerMap.delete(e.pointerId);
 
-        if (
-            e.pointerId ===
-            panState.pointerId
-        ) {
-            panState.active = false;
-            panState.pointerId = null;
-        }
-
         if (pointerMap.size < 2) {
-            pinchState.active = false;
+            pinchStartDistance = null;
         }
     }
 
-    stageWrap.addEventListener(
-        "pointerup",
-        finishNavigationPointer,
-        true
-    );
+    stageWrap.addEventListener("pointerup", removePointer, true);
+    stageWrap.addEventListener("pointercancel", removePointer, true);
 
-    stageWrap.addEventListener(
-        "pointercancel",
-        finishNavigationPointer,
-        true
-    );
-
-    stage.addEventListener(
-        "pointermove",
-        moveInteraction
-    );
-
-    stage.addEventListener(
-        "pointerup",
-        finishInteraction
-    );
-
-    stage.addEventListener(
-        "pointercancel",
-        cancelInteraction
-    );
-
-    // -------------------------------------------------------------
-    // Reference image — temporary construction aid, not saved in .dxf
-    // -------------------------------------------------------------
-
-    function syncReferenceControls() {
-        const hasReference = !!reference.dataUrl;
-
-        if (referenceHideBtn) {
-            referenceHideBtn.disabled = !hasReference;
-            referenceHideBtn.textContent =
-                reference.visible ? "Hide" : "Show";
-        }
-
-        if (referenceRemoveBtn) {
-            referenceRemoveBtn.disabled = !hasReference;
-        }
-
-        if (referenceOpacityInput) {
-            referenceOpacityInput.disabled = !hasReference;
-            referenceOpacityInput.value =
-                String(reference.opacity);
-        }
-
-        if (referenceOpacityValue) {
-            referenceOpacityValue.textContent =
-                `${Math.round(
-                    reference.opacity * 100
-                )}%`;
-        }
-    }
-
-    referenceImportBtn?.addEventListener("click", () => {
-        referenceFileInput?.click();
-    });
-
-    referenceFileInput?.addEventListener("change", event => {
-        const file = event.target.files?.[0];
-
-        if (!file) return;
-
-        const reader = new FileReader();
-
-        reader.onload = () => {
-            const url = String(reader.result || "");
-            const image = new Image();
-
-            image.onload = () => {
-                const maxWidth = 650;
-                const maxHeight = 520;
-                const scale = Math.min(
-                    maxWidth / Math.max(1, image.naturalWidth),
-                    maxHeight / Math.max(1, image.naturalHeight),
-                    1
-                );
-
-                reference.dataUrl = url;
-                reference.width =
-                    Math.max(80, image.naturalWidth * scale);
-                reference.height =
-                    Math.max(80, image.naturalHeight * scale);
-                reference.visible = true;
-
-                syncReferenceControls();
-                render();
-                showToast("Reference image loaded ✓");
-            };
-
-            image.src = url;
-        };
-
-        reader.readAsDataURL(file);
-        event.target.value = "";
-    });
-
-    referenceOpacityInput?.addEventListener("input", event => {
-        reference.opacity = Math.max(
-            0.08,
-            Math.min(1, Number(event.target.value) || 0.45)
-        );
-
-        if (referenceOpacityValue) {
-            referenceOpacityValue.textContent =
-                `${Math.round(
-                    reference.opacity * 100
-                )}%`;
-        }
-
-        render();
-    });
-
-    referenceHideBtn?.addEventListener("click", () => {
-        if (!reference.dataUrl) return;
-
-        reference.visible = !reference.visible;
-        syncReferenceControls();
-        render();
-    });
-
-    referenceRemoveBtn?.addEventListener("click", () => {
-        reference.dataUrl = null;
-        reference.visible = true;
-
-        syncReferenceControls();
-        render();
-    });
-
-    syncReferenceControls();
-
-    window.addEventListener("resize", () => {
-        requestAnimationFrame(() => {
-            updateCamera();
-            render();
-        });
-    });
+    stage.addEventListener("pointermove", moveInteraction);
+    stage.addEventListener("pointerup", finishInteraction);
+    stage.addEventListener("pointercancel", cancelInteraction);
 
     function buildDefinition() {
         const name = nameInput.value.trim() || "Untitled Figure";
@@ -1733,9 +1120,9 @@
         return {
             format: "denx-figure",
             version: 2,
-            id: DenXFigureLibrary.uid("dxf"),
+            id: editHandoff?.definition?.id || DenXFigureLibrary.uid("dxf"),
             name,
-            rootNodeId: "node-1",
+            rootNodeId: editHandoff?.definition?.rootNodeId || nodes.find(node => node.parentId == null)?.id || nodes[0]?.id,
             style: {
                 color: figureColor,
                 thickness: figureThickness
@@ -1751,15 +1138,22 @@
         if (segments.length < 1 || nodes.length < 2) return;
 
         try {
-            const saved = DenXFigureLibrary.saveToLibrary(buildDefinition());
-
-            const persisted = DenXFigureLibrary.getLibrary()
-                .some(figure => figure.id === saved.id);
-
-            if (!persisted) {
-                throw new Error("Figure did not persist. Save cancelled.");
+            const definition = buildDefinition();
+            if (editHandoff?.figureId && editHandoff?.timelineSession) {
+                sessionStorage.setItem("denx.figureEditReturn", JSON.stringify({
+                    figureId: editHandoff.figureId,
+                    definition,
+                    timelineSession: editHandoff.timelineSession
+                }));
+                sessionStorage.removeItem("denx.figureEditPayload");
+                window.location.href = "workspace.html";
+                return;
             }
 
+            const saved = DenXFigureLibrary.saveToLibrary(definition);
+            const persisted = DenXFigureLibrary.getLibrary()
+                .some(figure => figure.id === saved.id);
+            if (!persisted) throw new Error("Figure did not persist. Save cancelled.");
             sessionStorage.setItem("denx.figureCreatedNotice", saved.name);
             window.location.href = "workspace.html";
         } catch (error) {
@@ -1767,19 +1161,13 @@
         }
     });
 
-    cancelBtn?.addEventListener("click", () => {
-        const hasWork =
-            history.undo.length > 0 ||
-            polyfills.length > 0 ||
-            segments.length > 1;
-
-        if (
-            hasWork &&
-            !window.confirm("Leave Figure Creator without saving?")
-        ) {
-            return;
+    cancelBtn.addEventListener("click", () => {
+        if (editHandoff?.timelineSession) {
+            sessionStorage.setItem("denx.figureEditReturn", JSON.stringify({
+                timelineSession: editHandoff.timelineSession
+            }));
+            sessionStorage.removeItem("denx.figureEditPayload");
         }
-
         window.location.href = "workspace.html";
     });
 
@@ -1800,9 +1188,6 @@
     updateHistoryButtons();
     syncPolyfillButtons();
     syncQuickFromScroll();
-
-    requestAnimationFrame(() => {
-        updateCamera();
-        render();
-    });
+    updateCamera();
+    render();
 })();
