@@ -1,8 +1,7 @@
 console.log("DenX Animator has started.");
 
-// v0.3.3 visual patch loader. Keeping this here avoids touching the large
-// workspace document while still applying the same DenX polish everywhere.
-(function loadDenx033Polish(){
+// v0.3.3+ Quick Deck visual patch loader.
+(function loadDenxQuickDeckPolish(){
     if (!document.querySelector('link[data-denx-v033]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -28,12 +27,11 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.3.3 Quick Deck';
+    if (footer) footer.textContent = 'Version 0.3.5 Stability';
 })();
 
 // HOME SCREEN
 const newBtn = document.getElementById("newProject");
-
 if (newBtn) {
     newBtn.onclick = () => {
         window.location.href = "project.html";
@@ -42,7 +40,6 @@ if (newBtn) {
 
 // PROJECT SCREEN
 const backBtn = document.getElementById("backBtn");
-
 if (backBtn) {
     backBtn.onclick = () => {
         window.location.href = "index.html";
@@ -50,7 +47,6 @@ if (backBtn) {
 }
 
 const createBtn = document.getElementById("createBtn");
-
 if (createBtn) {
     createBtn.onclick = () => {
         window.location.href = "workspace.html";
@@ -59,7 +55,6 @@ if (createBtn) {
 
 // WORKSPACE
 const workspaceBack = document.getElementById("workspaceBack");
-
 if (workspaceBack) {
     workspaceBack.onclick = () => {
         window.location.href = "index.html";

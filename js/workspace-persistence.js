@@ -8,6 +8,7 @@
   let reminderShownAt = 0;
   let restoreComplete = false;
   let savedSnapshotSignature = "";
+  let workspaceDirty = false;
 
   const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -183,6 +184,12 @@
     syncProjectStateLabel();
   }
 
+  function markWorkspaceDirty() {
+    if (!restoreComplete) return;
+    workspaceDirty = true;
+    syncProjectStateLabel("Unsaved");
+  }
+
   function syncProjectStateLabel(forced = null) {
     const topState = document.getElementById("workspaceSaveState");
     const sidebarState =
@@ -252,6 +259,7 @@
     if (!store) return null;
     if (!activeProject) ensureActiveProject();
 
+    syncProjectStateLabel("Saving");
     const snapshot = captureWorkspaceSnapshot();
 
     activeProject = store.saveProject({
@@ -265,6 +273,7 @@
     });
 
     savedSnapshotSignature = snapshotSignature(snapshot);
+    workspaceDirty = false;
     lastSaveAt = Date.now();
     reminderShownAt = 0;
     syncProjectStateLabel("Saved");
@@ -340,6 +349,7 @@
 
     savedSnapshotSignature =
       snapshotSignature(activeProject?.snapshot || null);
+    workspaceDirty = false;
 
     syncProjectStateLabel(
       activeProject?.snapshot ? "Saved" : "New"
@@ -383,6 +393,7 @@
   }
 
   function currentWorkspaceIsDirty() {
+    if (workspaceDirty) return true;
     if (!activeProject?.snapshot) return true;
 
     try {
@@ -525,7 +536,63 @@
     true
   );
 
-  window.denxCaptureWorkspaceSnapshot = captureWorkspaceSnapshot;
+  
+  // v0.3.5 — live Saved/Unsaved status.
+  const dirtyControlIds = new Set([
+    "addFrame",
+    "removeFrameBtn",
+    "backgroundColorControl",
+    "drawColorControl",
+    "animationFpsInput",
+    "animationLoopToggle",
+    "onionPrevToggle",
+    "onionNextToggle",
+    "onionOpacityInput",
+    "figureScaleDownBtn",
+    "figureScaleUpBtn",
+    "figureFlipXBtn",
+    "figureFlipYBtn",
+    "figureFlipZBtn",
+    "figureRotateLeftBtn",
+    "figureRotateRightBtn",
+    "figureMoveFrontBtn",
+    "figureMoveBackBtn",
+    "figureDeleteBtn",
+    "textContentInput",
+    "textFontSelect",
+    "textColorInput",
+    "textScaleDownBtn",
+    "textScaleUpBtn",
+    "textDeleteBtn"
+  ]);
+
+  document.addEventListener("change", event => {
+    if (dirtyControlIds.has(event.target?.id)) markWorkspaceDirty();
+  }, true);
+
+  document.addEventListener("input", event => {
+    if (dirtyControlIds.has(event.target?.id)) markWorkspaceDirty();
+  }, true);
+
+  document.addEventListener("click", event => {
+    const button = event.target?.closest?.("button");
+    if (button && dirtyControlIds.has(button.id)) markWorkspaceDirty();
+  }, true);
+
+  document.addEventListener("pointerup", event => {
+    const target = event.target;
+    if (
+      target?.closest?.("#drawingCanvas") ||
+      target?.closest?.("#figureLayer") ||
+      target?.closest?.("#textLayer")
+    ) {
+      markWorkspaceDirty();
+    }
+  }, true);
+
+  window.denxMarkProjectDirty = markWorkspaceDirty;
+
+window.denxCaptureWorkspaceSnapshot = captureWorkspaceSnapshot;
   window.denxRestoreWorkspaceSnapshot = restoreWorkspaceSnapshot;
   window.denxSaveCurrentProject = saveProject;
   window.denxSaveWorkspaceHandoff = saveWorkspaceHandoff;
