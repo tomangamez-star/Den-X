@@ -367,6 +367,15 @@ function startPan(e) {
     if (!viewport) return;
     if (cameraFrameEl && cameraFrameEl.contains(e.target)) return;
 
+    // Select-mode object gestures own pointers that begin on text. Do this
+    // BEFORE addTouch so the workspace pinch recognizer never counts a text
+    // drag as one half of a two-finger camera gesture. A second finger also
+    // stays out of camera navigation while a text drag is in progress.
+    const textObjectTarget = e.target.closest?.(".denx-text-object");
+    if (currentTool === "select" && (textObjectTarget || window.denxTextDragActive?.())) {
+        return;
+    }
+
     addTouch(e);
 
     // Bone editing owns pointer gestures that begin on figure nodes.

@@ -13,6 +13,14 @@
     let nextId = 1;
     let selectedId = null;
     let drag = null;
+    let activeTool = "select";
+
+    window.addEventListener("denx:toolchange", event => {
+        activeTool = event.detail?.tool || activeTool;
+        if (activeTool !== "select" && drag) {
+            drag = null;
+        }
+    });
 
     function clone(value) {
         return JSON.parse(JSON.stringify(value));
@@ -166,6 +174,10 @@
     }
 
     layer.addEventListener("pointerdown", event => {
+        // Text is manipulated only through Select. This keeps one-finger object
+        // movement separate from the workspace camera gesture recognizer.
+        if (activeTool !== "select" || !event.isPrimary) return;
+
         const group = event.target.closest?.(".denx-text-object");
         if (!group) return;
         const item = getObject(group.dataset.textId);
@@ -232,6 +244,7 @@
     });
 
     window.denxTextObjects = objects;
+    window.denxTextDragActive = () => Boolean(drag);
     window.denxCreateTextObject = createText;
     window.denxSelectTextObject = selectText;
     window.denxGetSelectedTextObject = () => clone(getObject(selectedId));

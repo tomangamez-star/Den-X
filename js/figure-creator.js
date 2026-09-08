@@ -94,6 +94,17 @@
         width: 1000,
         height: 700
     };
+
+    // A large but finite construction world. The nested graph can reveal finer
+    // cells indefinitely as you zoom inward, but zooming all the way out now
+    // reaches this visible border so a figure can never be lost in empty space.
+    // The default 1000×700 build room is centered inside this world.
+    const CREATOR_WORLD = {
+        x: -2000,
+        y: -1400,
+        width: 5000,
+        height: 3500
+    };
     let editViewNeedsFit = false;
 
     const pointerMap = new Map();
@@ -236,6 +247,7 @@
     }
 
     function updateStageViewBox() {
+        clampStageViewToWorld();
         stage.setAttribute(
             "viewBox",
             `${stageView.x} ${stageView.y} ${stageView.width} ${stageView.height}`
@@ -257,6 +269,45 @@
     function positiveModulo(value, divisor) {
         if (!Number.isFinite(value) || !Number.isFinite(divisor) || divisor === 0) return 0;
         return ((value % divisor) + divisor) % divisor;
+    }
+
+    function syncCameraZoomFromView() {
+        camera.zoom = Math.max(0.0001, 1000 / Math.max(0.0001, stageView.width));
+    }
+
+    function clampStageViewToWorld() {
+        // Preserve the current view aspect while preventing it from becoming
+        // larger than the creator world.
+        if (stageView.width > CREATOR_WORLD.width || stageView.height > CREATOR_WORLD.height) {
+            const scale = Math.min(
+                CREATOR_WORLD.width / Math.max(0.0001, stageView.width),
+                CREATOR_WORLD.height / Math.max(0.0001, stageView.height)
+            );
+            stageView.width *= scale;
+            stageView.height *= scale;
+        }
+
+        const maxX = CREATOR_WORLD.x + CREATOR_WORLD.width - stageView.width;
+        const maxY = CREATOR_WORLD.y + CREATOR_WORLD.height - stageView.height;
+        stageView.x = Math.min(Math.max(stageView.x, CREATOR_WORLD.x), Math.max(CREATOR_WORLD.x, maxX));
+        stageView.y = Math.min(Math.max(stageView.y, CREATOR_WORLD.y), Math.max(CREATOR_WORLD.y, maxY));
+        syncCameraZoomFromView();
+    }
+
+    function drawCreatorWorldBoundary() {
+        const boundary = svg("rect", {
+            x: CREATOR_WORLD.x,
+            y: CREATOR_WORLD.y,
+            width: CREATOR_WORLD.width,
+            height: CREATOR_WORLD.height,
+            fill: "none",
+            stroke: "rgba(0,200,255,.9)",
+            "stroke-width": "3",
+            "vector-effect": "non-scaling-stroke",
+            "pointer-events": "none"
+        });
+        boundary.setAttribute("class", "creator-world-boundary");
+        stage.appendChild(boundary);
     }
 
     function updateAdaptiveGrid() {
@@ -368,10 +419,22 @@
     }
 
     function screenToStage(clientX, clientY) {
+        // Use the SVG's real screen matrix so coordinate mapping stays exact
+        // even when preserveAspectRatio introduces letterboxing.
+        try {
+            const point = stage.createSVGPoint();
+            point.x = clientX;
+            point.y = clientY;
+            const matrix = stage.getScreenCTM();
+            if (matrix) {
+                const mapped = point.matrixTransform(matrix.inverse());
+                return { x: mapped.x, y: mapped.y };
+            }
+        } catch (_) {}
+
         const rect = stageWrap.getBoundingClientRect();
         const normalizedX = (clientX - rect.left) / Math.max(1, rect.width);
         const normalizedY = (clientY - rect.top) / Math.max(1, rect.height);
-
         return {
             x: stageView.x + normalizedX * stageView.width,
             y: stageView.y + normalizedY * stageView.height
@@ -384,7 +447,7 @@
 
     function setZoom(nextZoom, clientX = null, clientY = null) {
         const rect = stageWrap.getBoundingClientRect();
-        const next = Math.max(0.35, Math.min(10, Number(nextZoom) || 1));
+        const next = Math.max(0.05, Math.min(32, Number(nextZoom) || 1));
         const oldZoom = Math.max(0.0001, camera.zoom || 1);
         if (Math.abs(next - oldZoom) < 0.0001) return;
 
@@ -627,6 +690,7 @@
 
     function render() {
         stage.innerHTML = "";
+        drawCreatorWorldBoundary();
 
         // Filled geometry sits behind segment geometry.
         drawPolyfills();
@@ -1277,8 +1341,8 @@
             if (pinchStartDistance > 0 && pinchStartCenter && pinchStartView) {
                 const rect = stageWrap.getBoundingClientRect();
                 const nextZoom = Math.max(
-                    0.35,
-                    Math.min(10, pinchStartZoom * (distance / pinchStartDistance))
+                    0.05,
+                    Math.min(32, pinchStartZoom * (distance / pinchStartDistance))
                 );
                 const ratio = pinchStartZoom / nextZoom;
 
@@ -1305,12 +1369,11 @@
         }
 
         if (pointerMap.size === 1 && panPointerId === e.pointerId && panLast) {
-            const rect = stageWrap.getBoundingClientRect();
-            const dx = e.clientX - panLast.x;
-            const dy = e.clientY - panLast.y;
+            const previousWorld = screenToStage(panLast.x, panLast.y);
+            const currentWorld = screenToStage(e.clientX, e.clientY);
 
-            stageView.x -= (dx / Math.max(1, rect.width)) * stageView.width;
-            stageView.y -= (dy / Math.max(1, rect.height)) * stageView.height;
+            stageView.x += previousWorld.x - currentWorld.x;
+            stageView.y += previousWorld.y - currentWorld.y;
             panLast = { x: e.clientX, y: e.clientY };
             updateStageViewBox();
             e.preventDefault();
