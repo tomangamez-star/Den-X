@@ -1,0 +1,8 @@
+DenX Animator v0.3.2 — Icon Pass + Landscape Polish + Quick Cluster Correction
+
+Included focus areas:
+- Six-button quick cluster restored (Duplicate, Add Frame, Delete Frame, Clipboard, Play, Settings).
+- Left PROJECT section no longer contains Settings.
+- SVG icon family added for quick controls + project controls.
+- Landscape Home/Create/Open areas prepared for fixed shell + contained scroll regions.
+- Current-frame PNG export kept camera-based and strips more editor-only artifacts.

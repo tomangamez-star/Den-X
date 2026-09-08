@@ -33,12 +33,12 @@
     </div>
 
     <div class="topbar-cluster" aria-label="Frame and app controls">
-      <button id="copyFrameBtn" class="cluster-btn" title="Copy current frame" aria-label="Copy current frame">⧉</button>
-      <button id="addFrame" class="cluster-btn" title="Add frame" aria-label="Add frame">＋</button>
-      <button id="removeFrameBtn" class="cluster-btn" title="Remove current frame" aria-label="Remove current frame">−</button>
-
-      <button id="pasteFrameBtn" class="cluster-btn" title="Paste copied frame" aria-label="Paste copied frame">📋</button>
-      <button id="playBtn" class="cluster-btn" title="Play" aria-label="Play">▶</button>
+      <button id="copyFrameBtn" class="cluster-btn" title="Duplicate frame" aria-label="Duplicate frame"><img src="icons/ui/duplicate.svg" alt=""></button>
+      <button id="addFrame" class="cluster-btn is-primary" title="Add frame" aria-label="Add frame"><img src="icons/ui/add-frame.svg" alt=""></button>
+      <button id="removeFrameBtn" class="cluster-btn" title="Delete frame" aria-label="Delete frame"><img src="icons/ui/delete-frame.svg" alt=""></button>
+      <button id="pasteFrameBtn" class="cluster-btn" title="Clipboard" aria-label="Clipboard"><img src="icons/ui/clipboard.svg" alt=""></button>
+      <button id="playBtn" class="cluster-btn" title="Play" aria-label="Play"><img src="icons/ui/play.svg" alt=""></button>
+      <button id="quickSettingsBtn" class="cluster-btn" title="Settings" aria-label="Settings"><img src="icons/ui/settings.svg" alt=""></button>
     </div>
   </header>
 
@@ -47,21 +47,18 @@
 
       <section class="tool-section" id="tool-project" data-tool-section="project">
         <div class="tool-section-title">Project</div>
+        <!-- Settings moved back to the 6-button quick cluster in v0.3.2 -->
 
         <button id="workspaceSaveBtn" class="tool-row tool-action" title="Save project" aria-label="Save project">
-          <span class="tool-icon">S</span><span class="tool-label">Save</span>
+          <span class="tool-icon"><img src="icons/ui/save.svg" alt=""></span><span class="tool-label">Save</span>
         </button>
 
         <button id="workspaceExportBtn" class="tool-row tool-action" title="Export animation" aria-label="Export animation">
-          <span class="tool-icon">⇩</span><span class="tool-label">Export</span>
-        </button>
-
-        <button id="workspaceSettingsBtn" class="tool-row tool-action" title="Project settings" aria-label="Project settings">
-          <span class="tool-icon">⚙</span><span class="tool-label">Settings</span>
+          <span class="tool-icon"><img src="icons/ui/export.svg" alt=""></span><span class="tool-label">Export</span>
         </button>
 
         <button id="workspaceHomeBtn" class="tool-row tool-action" title="Back to projects" aria-label="Back to projects">
-          <span class="tool-icon">⌂</span><span class="tool-label">Projects</span>
+          <span class="tool-icon"><img src="icons/ui/projects.svg" alt=""></span><span class="tool-label">Projects</span>
         </button>
       </section>
 
