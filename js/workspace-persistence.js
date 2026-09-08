@@ -235,3 +235,36 @@
   restoreInitialState();
   startSaveClock();
 })();
+
+// Workspace Project Settings panel — project controls live in the left toolbox,
+// keeping the frame/playback cluster focused only on animation controls.
+(() => {
+  const btn = document.getElementById("workspaceSettingsBtn");
+  const dialog = document.getElementById("workspaceProjectSettingsDialog");
+  const close = document.getElementById("closeWorkspaceProjectSettingsBtn");
+  const auto = document.getElementById("workspaceAutoSaveToggle");
+  const reminder = document.getElementById("workspaceSaveReminderToggle");
+  const interval = document.getElementById("workspaceSaveIntervalSelect");
+  if (!btn || !dialog || !window.DenXProjectStore) return;
+
+  const hydrate = () => {
+    const settings = DenXProjectStore.getSettings();
+    if (auto) auto.checked = !!settings.autoSave;
+    if (reminder) reminder.checked = !!settings.saveReminder;
+    if (interval) interval.value = String(settings.intervalMinutes || 10);
+  };
+  const persist = () => DenXProjectStore.saveSettings({
+    autoSave: !!auto?.checked,
+    saveReminder: !!reminder?.checked,
+    intervalMinutes: Number(interval?.value || 10)
+  });
+  btn.addEventListener("click", () => {
+    hydrate();
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+  });
+  close?.addEventListener("click", () => dialog.close?.());
+  auto?.addEventListener("change", persist);
+  reminder?.addEventListener("change", persist);
+  interval?.addEventListener("change", persist);
+})();
