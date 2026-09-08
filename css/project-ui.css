@@ -47,3 +47,28 @@
 @media (orientation:portrait){
   #homeScreen.home-card,.denx-project-setup.home-card{max-width:520px;width:calc(100% - 32px);box-sizing:border-box}
 }
+
+/* ==== DenX v0.3.2 icon/style pass + landscape polish ==== */
+.topbar-cluster{display:grid;grid-template-columns:repeat(6,minmax(48px,1fr));gap:10px;align-items:center}
+.cluster-btn{display:grid;place-items:center;min-width:48px;min-height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:#121416;color:#f5f7f8;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.cluster-btn img,.tool-icon img{width:22px;height:22px;display:block;object-fit:contain;filter:none}
+.cluster-btn.is-primary{background:linear-gradient(180deg,#1fd4ff 0%, #11c9f4 100%);border-color:rgba(0,200,255,.6);box-shadow:0 0 22px rgba(0,200,255,.18)}
+.cluster-btn.is-primary img{filter:brightness(.08)}
+.tool-icon{display:inline-grid;place-items:center;min-width:22px;min-height:22px}
+.tool-row .tool-icon img{width:18px;height:18px}
+
+/* Prevent vertical text clipping in toolbar rows */
+.tool-row,.tool-action,.tool-control{min-height:62px;overflow:visible}
+.tool-label,.tool-control-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Home landscape: fixed shell, scroll recent projects only */
+@media (orientation:landscape){
+  #homeScreen.home-card{height:100dvh;overflow:hidden;grid-template-rows:auto minmax(0,1fr)}
+  #homeScreen .denx-recent-block{align-self:stretch;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr)}
+  #homeScreen .denx-recent-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;overflow:auto;max-height:100%;padding-right:6px}
+  #homeScreen .denx-project-card{max-width:none;min-width:0}
+
+  .denx-project-setup.home-card{height:100dvh;overflow:hidden;grid-template-rows:auto minmax(0,1fr)}
+  .denx-project-setup .denx-project-form{grid-column:2;grid-row:2;overflow:auto;max-height:100%;padding-right:8px;padding-bottom:24px}
+  .denx-project-setup h2,.denx-project-setup > p{position:relative;z-index:1}
+}
