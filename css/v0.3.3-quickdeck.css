@@ -1,0 +1,183 @@
+/* ============================================================
+   DENX v0.3.3 — QUICK DECK + ICON ACCURACY + HOME SPACE PASS
+   Six controls read as one 2x3 cyber control module.
+   ============================================================ */
+
+/* ----- Quick Deck geometry ----- */
+.topbar-cluster {
+  --deck-gap: 4px;
+  --deck-wide: 52px;
+  --deck-square: 38px;
+  --deck-row: 30px;
+
+  display: grid !important;
+  grid-template-columns: var(--deck-wide) var(--deck-square) var(--deck-square) !important;
+  grid-template-rows: repeat(2, var(--deck-row)) !important;
+  gap: var(--deck-gap) !important;
+  width: auto !important;
+  min-width: 0 !important;
+  align-content: center;
+  justify-content: end;
+  padding: 0;
+}
+
+.topbar-cluster .cluster-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: var(--deck-row) !important;
+  min-height: var(--deck-row) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid #30363a !important;
+  border-radius: 5px !important;
+  background: linear-gradient(180deg,#1a1d1f 0%,#111315 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    0 1px 4px rgba(0,0,0,.22) !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden;
+}
+
+.topbar-cluster .cluster-btn img {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Exact arrangement requested:
+   Add Frame | Copy  | Play
+   Delete    | Paste | Settings */
+#addFrame       { grid-column: 1; grid-row: 1; }
+#copyFrameBtn   { grid-column: 2; grid-row: 1; }
+#playBtn        { grid-column: 3; grid-row: 1; }
+#removeFrameBtn { grid-column: 1; grid-row: 2; }
+#pasteFrameBtn  { grid-column: 2; grid-row: 2; }
+#quickSettingsBtn { grid-column: 3; grid-row: 2; }
+
+/* Outer corners describe one large rounded box. Internal corners stay tight. */
+#addFrame {
+  border-radius: 11px 5px 5px 5px !important;
+  background: linear-gradient(180deg,#28d9ff 0%,#08bde9 100%) !important;
+  border-color: #41ddff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.34),
+    0 0 15px rgba(0,200,255,.22) !important;
+}
+#removeFrameBtn { border-radius: 5px 5px 5px 11px !important; }
+#playBtn        { border-radius: 5px 11px 5px 5px !important; }
+#quickSettingsBtn { border-radius: 5px 5px 11px 5px !important; }
+
+.topbar-cluster .cluster-btn:active {
+  transform: scale(.95);
+  filter: brightness(1.12);
+}
+
+.topbar-cluster .cluster-btn:disabled {
+  opacity: .36;
+  filter: saturate(.55);
+}
+
+/* Keep the play glyph vector-based even though timeline.js changes textContent. */
+#playBtn {
+  font-size: 0 !important;
+  color: transparent !important;
+}
+#playBtn::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  background: url('../icons/ui/play.svg') center/contain no-repeat;
+}
+#playBtn.playing::before {
+  background-image: url('../icons/ui/pause.svg');
+}
+#playBtn.playing {
+  border-color: rgba(0,200,255,.58) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    0 0 12px rgba(0,200,255,.25) !important;
+}
+
+/* ----- Home screen space recovery ----- */
+@media (orientation:landscape) and (min-width:640px) {
+  #homeScreen.home-card {
+    padding: clamp(18px,4vh,34px) clamp(38px,6vw,88px) !important;
+    grid-template-rows: auto minmax(0,1fr) !important;
+    row-gap: 10px;
+  }
+
+  #homeScreen .menu {
+    gap: 8px !important;
+    align-self: center;
+  }
+
+  #homeScreen .menu button {
+    min-height: 48px !important;
+    height: 48px;
+    padding: 0 20px !important;
+    border-radius: 12px !important;
+    font-size: clamp(.92rem,1.35vw,1.08rem) !important;
+  }
+
+  #homeScreen .menu button::after {
+    right: 18px !important;
+    font-size: 1.35em !important;
+  }
+
+  #homeScreen > header p {
+    margin-top: 14px !important;
+    margin-bottom: 0 !important;
+  }
+
+  #homeScreen .denx-recent-block {
+    min-height: 0 !important;
+    margin-top: 2px !important;
+    align-self: stretch !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0,1fr) !important;
+  }
+
+  #homeScreen .denx-recent-title {
+    margin-bottom: 7px !important;
+  }
+
+  #homeScreen .denx-recent-list {
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    padding-right: 5px;
+    padding-bottom: 8px;
+    grid-auto-rows: min-content;
+  }
+
+  #homeScreen .denx-project-card {
+    padding: 9px 10px !important;
+    border-radius: 11px !important;
+  }
+
+  #homeScreen .denx-project-thumb {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 9px !important;
+  }
+}
+
+/* Compact phones in landscape: keep the deck useful without stealing timeline. */
+@media (orientation:landscape) and (max-height:430px) {
+  .topbar-cluster {
+    --deck-wide: 50px;
+    --deck-square: 36px;
+    --deck-row: 28px;
+  }
+
+  .topbar-cluster .cluster-btn img,
+  #playBtn::before {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
