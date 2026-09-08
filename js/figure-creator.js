@@ -101,6 +101,7 @@
     let pinchStartZoom = 1;
     let pinchStartCenter = null;
     let pinchStartCamera = null;
+    let pinchStartView = null;
     let panPointerId = null;
     let panLast = null;
 
@@ -290,30 +291,24 @@
     }
 
     function updateCamera() {
-        cameraEl.style.transform =
-            `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
+        // v0.2.5: the SVG viewBox is the creator camera. This is more reliable
+        // on Android/PWA than CSS-transforming the creator wrapper and keeps
+        // pan/zoom independent from node-handle sizing.
+        if (cameraEl) {
+            cameraEl.style.transform = "";
+            cameraEl.style.transformOrigin = "";
+        }
+        updateStageViewBox();
     }
 
     function screenToStage(clientX, clientY) {
         const rect = stageWrap.getBoundingClientRect();
-
-        const screenX = clientX - rect.left;
-        const screenY = clientY - rect.top;
-
-        const cameraX = (screenX - camera.x) / camera.zoom;
-        const cameraY = (screenY - camera.y) / camera.zoom;
-        const normalizedX = cameraX / Math.max(1, rect.width);
-        const normalizedY = cameraY / Math.max(1, rect.height);
+        const normalizedX = (clientX - rect.left) / Math.max(1, rect.width);
+        const normalizedY = (clientY - rect.top) / Math.max(1, rect.height);
 
         return {
-            x: Math.max(stageView.x, Math.min(
-                stageView.x + stageView.width,
-                stageView.x + normalizedX * stageView.width
-            )),
-            y: Math.max(stageView.y, Math.min(
-                stageView.y + stageView.height,
-                stageView.y + normalizedY * stageView.height
-            ))
+            x: stageView.x + normalizedX * stageView.width,
+            y: stageView.y + normalizedY * stageView.height
         };
     }
 
@@ -323,15 +318,27 @@
 
     function setZoom(nextZoom, clientX = null, clientY = null) {
         const rect = stageWrap.getBoundingClientRect();
-        const next = Math.max(0.5, Math.min(8, nextZoom));
-        const anchorX = clientX == null ? rect.width / 2 : clientX - rect.left;
-        const anchorY = clientY == null ? rect.height / 2 : clientY - rect.top;
-        const worldScreenX = (anchorX - camera.x) / camera.zoom;
-        const worldScreenY = (anchorY - camera.y) / camera.zoom;
-        camera.x = anchorX - worldScreenX * next;
-        camera.y = anchorY - worldScreenY * next;
+        const next = Math.max(0.35, Math.min(10, Number(nextZoom) || 1));
+        const oldZoom = Math.max(0.0001, camera.zoom || 1);
+        if (Math.abs(next - oldZoom) < 0.0001) return;
+
+        const anchorScreenX = clientX == null ? rect.width / 2 : clientX - rect.left;
+        const anchorScreenY = clientY == null ? rect.height / 2 : clientY - rect.top;
+        const nx = anchorScreenX / Math.max(1, rect.width);
+        const ny = anchorScreenY / Math.max(1, rect.height);
+
+        const anchorWorldX = stageView.x + nx * stageView.width;
+        const anchorWorldY = stageView.y + ny * stageView.height;
+        const ratio = oldZoom / next;
+        const nextWidth = stageView.width * ratio;
+        const nextHeight = stageView.height * ratio;
+
+        stageView.x = anchorWorldX - nx * nextWidth;
+        stageView.y = anchorWorldY - ny * nextHeight;
+        stageView.width = nextWidth;
+        stageView.height = nextHeight;
         camera.zoom = next;
-        updateCamera();
+        updateStageViewBox();
     }
 
     function childrenOf(nodeId) {
@@ -1115,52 +1122,67 @@
     // -------------------------------------------------------------
     // Zoom + direct canvas pan + two-finger pan/pinch
     // -------------------------------------------------------------
-    zoomInBtn.addEventListener("click", () => {
+    zoomInBtn.addEventListener("click", event => {
+        event.preventDefault();
         setZoom(camera.zoom * 1.2);
-        render();
     });
 
-    zoomOutBtn.addEventListener("click", () => {
+    zoomOutBtn.addEventListener("click", event => {
+        event.preventDefault();
         setZoom(camera.zoom / 1.2);
-        render();
     });
+
+    stageWrap.style.touchAction = "none";
 
     stageWrap.addEventListener("wheel", event => {
         event.preventDefault();
-        setZoom(camera.zoom * (event.deltaY < 0 ? 1.12 : 0.89), event.clientX, event.clientY);
-        render();
+        setZoom(
+            camera.zoom * (event.deltaY < 0 ? 1.12 : 0.89),
+            event.clientX,
+            event.clientY
+        );
     }, { passive: false });
 
+    function isCreatorInteractiveTarget(target) {
+        return !!target?.closest?.(
+            ".creator-node-touch, .creator-node, .creator-segment, [data-node-id], [data-segment-id], button, input, select, textarea"
+        );
+    }
+
     stageWrap.addEventListener("pointerdown", e => {
-        if (e.pointerType !== "touch") return;
+        if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
 
         pointerMap.set(e.pointerId, {
             x: e.clientX,
             y: e.clientY
         });
 
-        // A one-finger drag on empty creator canvas pans the room. Node/segment
-        // interactions still own their own pointer gestures.
-        if (pointerMap.size === 1 && e.target === stage) {
+        // One finger on genuinely empty creator space pans the view. We no
+        // longer require e.target === stage because the grid/background can
+        // legitimately be the event target on mobile.
+        if (pointerMap.size === 1 && !isCreatorInteractiveTarget(e.target)) {
             panPointerId = e.pointerId;
             panLast = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
         }
 
         if (pointerMap.size === 2) {
             const pts = [...pointerMap.values()];
-            pinchStartDistance = Math.hypot(
+            pinchStartDistance = Math.max(1, Math.hypot(
                 pts[1].x - pts[0].x,
                 pts[1].y - pts[0].y
-            );
+            ));
             pinchStartZoom = camera.zoom;
             pinchStartCenter = {
                 x: (pts[0].x + pts[1].x) / 2,
                 y: (pts[0].y + pts[1].y) / 2
             };
+            pinchStartView = { ...stageView };
             pinchStartCamera = { x: camera.x, y: camera.y };
             panPointerId = null;
             panLast = null;
             cancelInteraction();
+            e.preventDefault();
         }
     }, true);
 
@@ -1174,31 +1196,39 @@
 
         if (pointerMap.size === 2) {
             const pts = [...pointerMap.values()];
-            const distance = Math.hypot(
+            const distance = Math.max(1, Math.hypot(
                 pts[1].x - pts[0].x,
                 pts[1].y - pts[0].y
-            );
+            ));
             const center = {
                 x: (pts[0].x + pts[1].x) / 2,
                 y: (pts[0].y + pts[1].y) / 2
             };
 
-            if (pinchStartDistance > 0 && pinchStartCenter && pinchStartCamera) {
-                const nextZoom = Math.max(0.5, Math.min(8,
-                    pinchStartZoom * (distance / pinchStartDistance)
-                ));
+            if (pinchStartDistance > 0 && pinchStartCenter && pinchStartView) {
                 const rect = stageWrap.getBoundingClientRect();
-                const startX = pinchStartCenter.x - rect.left;
-                const startY = pinchStartCenter.y - rect.top;
-                const nowX = center.x - rect.left;
-                const nowY = center.y - rect.top;
-                const ratio = nextZoom / pinchStartZoom;
+                const nextZoom = Math.max(
+                    0.35,
+                    Math.min(10, pinchStartZoom * (distance / pinchStartDistance))
+                );
+                const ratio = pinchStartZoom / nextZoom;
 
-                camera.x = nowX - (startX - pinchStartCamera.x) * ratio;
-                camera.y = nowY - (startY - pinchStartCamera.y) * ratio;
+                const startNX = (pinchStartCenter.x - rect.left) / Math.max(1, rect.width);
+                const startNY = (pinchStartCenter.y - rect.top) / Math.max(1, rect.height);
+                const nowNX = (center.x - rect.left) / Math.max(1, rect.width);
+                const nowNY = (center.y - rect.top) / Math.max(1, rect.height);
+
+                const anchorWorldX = pinchStartView.x + startNX * pinchStartView.width;
+                const anchorWorldY = pinchStartView.y + startNY * pinchStartView.height;
+                const nextWidth = pinchStartView.width * ratio;
+                const nextHeight = pinchStartView.height * ratio;
+
+                stageView.x = anchorWorldX - nowNX * nextWidth;
+                stageView.y = anchorWorldY - nowNY * nextHeight;
+                stageView.width = nextWidth;
+                stageView.height = nextHeight;
                 camera.zoom = nextZoom;
-                updateCamera();
-                render();
+                updateStageViewBox();
             }
 
             e.preventDefault();
@@ -1206,10 +1236,14 @@
         }
 
         if (pointerMap.size === 1 && panPointerId === e.pointerId && panLast) {
-            camera.x += e.clientX - panLast.x;
-            camera.y += e.clientY - panLast.y;
+            const rect = stageWrap.getBoundingClientRect();
+            const dx = e.clientX - panLast.x;
+            const dy = e.clientY - panLast.y;
+
+            stageView.x -= (dx / Math.max(1, rect.width)) * stageView.width;
+            stageView.y -= (dy / Math.max(1, rect.height)) * stageView.height;
             panLast = { x: e.clientX, y: e.clientY };
-            updateCamera();
+            updateStageViewBox();
             e.preventDefault();
         }
     }, true);
@@ -1226,6 +1260,13 @@
             pinchStartDistance = null;
             pinchStartCenter = null;
             pinchStartCamera = null;
+            pinchStartView = null;
+        }
+
+        // If one finger remains after a pinch, require a fresh touch for pan.
+        if (pointerMap.size === 1) {
+            panPointerId = null;
+            panLast = null;
         }
     }
 

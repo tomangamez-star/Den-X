@@ -34,7 +34,18 @@
     const figureMoveBackBtn = document.getElementById("figureMoveBackBtn");
     const figureEditBtn = document.getElementById("figureEditBtn");
     const figureDeleteBtn = document.getElementById("figureDeleteBtn");
+
+    const textActionsRail = document.getElementById("textActionsRail");
+    const textContentInput = document.getElementById("textContentInput");
+    const textFontSelect = document.getElementById("textFontSelect");
+    const textColorInput = document.getElementById("textColorInput");
+    const textScaleDownBtn = document.getElementById("textScaleDownBtn");
+    const textScaleUpBtn = document.getElementById("textScaleUpBtn");
+    const textScaleDisplay = document.getElementById("textScaleDisplay");
+    const textDeleteBtn = document.getElementById("textDeleteBtn");
+
     let contextualFigureId = null;
+    let contextualTextId = null;
 
     let toastTimer = null;
 
@@ -705,6 +716,11 @@
         const visible = !!contextualFigureId;
         figureActionsRail?.classList.toggle("hidden", !visible);
         figureActionsRail?.setAttribute("aria-hidden", visible ? "false" : "true");
+        if (visible) {
+            textActionsRail?.classList.add("hidden");
+            textActionsRail?.setAttribute("aria-hidden", "true");
+            contextualTextId = null;
+        }
         if (!visible) return;
         if (changedFigure) {
             contextualFigureScalePercent = 100;
@@ -797,16 +813,57 @@
     figureFlipYBtn?.addEventListener("click", () => applyFigureFlip("y"));
     figureFlipZBtn?.addEventListener("click", () => applyFigureFlip("z"));
 
-    function rotateContextualFigure(degrees) {
-        if (!contextualFigureId) return;
-        if (!window.denxRotateFigure?.(contextualFigureId, degrees)) return;
+    function rotateContextualFigure(degrees, live = false) {
+        if (!contextualFigureId) return false;
+        const worked = live
+            ? window.denxRotateFigureLive?.(contextualFigureId, degrees)
+            : window.denxRotateFigure?.(contextualFigureId, degrees);
+        if (!worked) return false;
         contextualFigureRotation += degrees;
         contextualFigureRotation = ((contextualFigureRotation + 540) % 360) - 180;
         if (figureRotateDisplay) figureRotateDisplay.textContent = `${contextualFigureRotation}°`;
+        return true;
     }
 
-    figureRotateLeftBtn?.addEventListener("click", () => rotateContextualFigure(-5));
-    figureRotateRightBtn?.addEventListener("click", () => rotateContextualFigure(5));
+    function bindRotateHold(button, degrees) {
+        if (!button) return;
+        let holdTimer = null;
+        let repeatTimer = null;
+        let activePointerId = null;
+
+        const clear = () => {
+            clearTimeout(holdTimer);
+            clearInterval(repeatTimer);
+            holdTimer = null;
+            repeatTimer = null;
+            if (activePointerId !== null && contextualFigureId) {
+                window.denxEndFigureTransform?.(contextualFigureId);
+            }
+            activePointerId = null;
+        };
+
+        button.addEventListener("contextmenu", event => event.preventDefault());
+        button.addEventListener("pointerdown", event => {
+            if (!contextualFigureId || activePointerId !== null) return;
+            activePointerId = event.pointerId;
+            button.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+            window.denxBeginFigureTransform?.(contextualFigureId);
+            rotateContextualFigure(degrees, true);
+
+            holdTimer = setTimeout(() => {
+                repeatTimer = setInterval(() => {
+                    rotateContextualFigure(degrees, true);
+                }, 75);
+            }, 320);
+        });
+        button.addEventListener("pointerup", clear);
+        button.addEventListener("pointercancel", clear);
+        button.addEventListener("lostpointercapture", clear);
+    }
+
+    bindRotateHold(figureRotateLeftBtn, -5);
+    bindRotateHold(figureRotateRightBtn, 5);
 
     figureMoveFrontBtn?.addEventListener("click", () => {
         if (!contextualFigureId) return;
@@ -843,6 +900,112 @@
             timelineSession
         }));
         window.location.href = "figure-creator.html";
+    });
+
+    // --------------------------------------------------------
+    // Text object contextual toolbar
+    // --------------------------------------------------------
+
+    function syncTextRail(detail) {
+        const visible = !!detail?.id;
+        contextualTextId = visible ? detail.id : null;
+        textActionsRail?.classList.toggle("hidden", !visible);
+        textActionsRail?.setAttribute("aria-hidden", visible ? "false" : "true");
+
+        if (!visible) return;
+
+        figureActionsRail?.classList.add("hidden");
+        figureActionsRail?.setAttribute("aria-hidden", "true");
+        contextualFigureId = null;
+
+        if (textContentInput && textContentInput.value !== String(detail.text ?? "")) {
+            textContentInput.value = String(detail.text ?? "");
+        }
+        if (textFontSelect) textFontSelect.value = detail.font || "system-ui, sans-serif";
+        if (textColorInput && /^#[0-9a-f]{6}$/i.test(detail.color || "")) {
+            textColorInput.value = detail.color;
+        }
+        if (textScaleDisplay) {
+            textScaleDisplay.textContent = `${Math.round((Number(detail.scale) || 1) * 100)}%`;
+        }
+    }
+
+    window.addEventListener("denx:textselectionchange", event => {
+        syncTextRail(event.detail);
+    });
+
+    textContentInput?.addEventListener("input", event => {
+        if (!contextualTextId) return;
+        window.denxPatchSelectedText?.({ text: event.target.value });
+    });
+
+    textFontSelect?.addEventListener("change", event => {
+        if (!contextualTextId) return;
+        window.denxPatchSelectedText?.({ font: event.target.value });
+    });
+
+    textColorInput?.addEventListener("input", event => {
+        if (!contextualTextId) return;
+        window.denxPatchSelectedText?.({ color: event.target.value });
+    });
+
+    function bindTextScaleHold(button, factor) {
+        if (!button) return;
+        let holdTimer = null;
+        let repeatTimer = null;
+        let activePointerId = null;
+
+        const apply = () => {
+            if (!contextualTextId) return;
+            window.denxScaleSelectedText?.(factor);
+        };
+
+        const clear = () => {
+            clearTimeout(holdTimer);
+            clearInterval(repeatTimer);
+            holdTimer = null;
+            repeatTimer = null;
+            activePointerId = null;
+        };
+
+        button.addEventListener("contextmenu", event => event.preventDefault());
+        button.addEventListener("pointerdown", event => {
+            if (!contextualTextId || activePointerId !== null) return;
+            activePointerId = event.pointerId;
+            button.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+            apply();
+            holdTimer = setTimeout(() => {
+                repeatTimer = setInterval(apply, 85);
+            }, 330);
+        });
+        button.addEventListener("pointerup", clear);
+        button.addEventListener("pointercancel", clear);
+        button.addEventListener("lostpointercapture", clear);
+    }
+
+    bindTextScaleHold(textScaleDownBtn, 0.90);
+    bindTextScaleHold(textScaleUpBtn, 1.10);
+
+    textDeleteBtn?.addEventListener("click", () => {
+        if (window.denxDeleteSelectedText?.()) {
+            showToast("Text deleted.");
+        }
+    });
+
+    // Playback should reveal the animation controls automatically.
+    const playBtn = document.getElementById("playBtn");
+    const animationSection = document.getElementById("tool-animation");
+
+    playBtn?.addEventListener("click", () => {
+        if (!toolbox || !animationSection) return;
+        requestAnimationFrame(() => {
+            toolbox.scrollTo({
+                top: Math.max(0, animationSection.offsetTop - 6),
+                behavior: "smooth"
+            });
+            setActiveQuickLink("animation");
+        });
     });
 
     // Figure Creator returns through sessionStorage so the animation timeline is

@@ -188,11 +188,12 @@ function scaleFigure(figureId, factor, options = {}) {
     return true;
 }
 
-function rotateFigure(figureId, degrees) {
+function rotateFigure(figureId, degrees, options = {}) {
     const figure = getFigure(figureId);
     degrees = Number(degrees);
     if (!figure || !Number.isFinite(degrees) || Math.abs(degrees) < 0.0001) return false;
-    const beforeState = captureBoneProjectState();
+    const record = options.record !== false;
+    const beforeState = record ? captureBoneProjectState() : null;
     const radians = degrees * Math.PI / 180;
     const cos = Math.cos(radians);
     const sin = Math.sin(radians);
@@ -215,7 +216,8 @@ function rotateFigure(figureId, degrees) {
     });
 
     if (!changed) return false;
-    recordBoneOperation(beforeState);
+    if (record) recordBoneOperation(beforeState);
+    else markFigureTransformChanged(figureId);
     refreshFigureTransformVisuals();
     return true;
 }
@@ -2168,6 +2170,8 @@ window.denxBeginFigureTransform = figureId => beginFigureTransform(figureId);
 window.denxEndFigureTransform = figureId => endFigureTransform(figureId);
 window.denxFlipFigure = (figureId, axis) => flipFigure(figureId, axis);
 window.denxRotateFigure = (figureId, degrees) => rotateFigure(figureId, degrees);
+window.denxRotateFigureLive = (figureId, degrees) => rotateFigure(figureId, degrees, { record: false });
+window.denxClearFigureSelection = () => setSelectedFigure(null, null);
 window.denxMoveFigureLayer = (figureId, direction) => moveFigureLayer(figureId, direction);
 window.denxDeleteFigure = figureId => deleteFigure(figureId);
 window.denxApplyEditedFigureDefinition = (figureId, definition) => applyEditedFigureDefinition(figureId, definition);
