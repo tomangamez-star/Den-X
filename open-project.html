@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Project · DenX</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/project-ui.css">
+<link rel="stylesheet" href="css/v0.3.4-stability.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111111">
+</head>
+<body>
+<div id="app">
+  <section class="home-card denx-native-page denx-open-page">
+    <button id="openBackBtn" class="denx-back-link" type="button">← Back</button>
+
+    <div class="denx-native-copy">
+      <h2>Open<br>Project</h2>
+      <p>Continue an animation exactly where you left it.</p>
+    </div>
+
+    <section class="denx-native-panel" aria-label="Saved projects">
+      <div class="denx-native-panel-head">
+        <div>
+          <span class="denx-native-kicker">YOUR WORK</span>
+          <strong>Projects</strong>
+        </div>
+        <span id="openProjectCount" class="denx-native-count">0</span>
+      </div>
+      <div id="nativeOpenProjectList" class="denx-native-project-list"></div>
+    </section>
+  </section>
+</div>
+<script src="js/project-store.js"></script>
+<script src="js/open-projects.js"></script>
+</body>
+</html>

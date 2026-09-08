@@ -6,6 +6,7 @@
 <title>Create Project · DenX</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/project-ui.css">
+<link rel="stylesheet" href="css/v0.3.4-stability.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111111">
 </head>
@@ -13,36 +14,41 @@
 <div id="app">
   <section class="home-card denx-project-setup">
     <button id="backBtn" class="denx-back-link" type="button">← Back</button>
-    <h2>Create Project</h2>
-    <p>Set up the animation. You can change export options later.</p>
 
-    <label class="denx-form-field">
-      <span>Project name</span>
-      <input id="projectNameInput" type="text" maxlength="60" placeholder="My Animation" autocomplete="off">
-    </label>
+    <div class="denx-native-copy">
+      <h2>Create Project</h2>
+      <p>Set up the animation. You can change export options later.</p>
+    </div>
 
-    <label class="denx-form-field">
-      <span>Canvas</span>
-      <select id="projectCanvasPreset">
-        <option value="1920x1080">16:9 · 1920 × 1080</option>
-        <option value="1080x1920">9:16 · 1080 × 1920</option>
-        <option value="1080x1080">1:1 · 1080 × 1080</option>
-        <option value="2048x1152">DenX Wide · 2048 × 1152</option>
-      </select>
-    </label>
+    <div class="denx-project-form" aria-label="Create project form">
+      <label class="denx-form-field">
+        <span>Project name</span>
+        <input id="projectNameInput" type="text" maxlength="60" placeholder="My Animation" autocomplete="off">
+      </label>
 
-    <label class="denx-form-field">
-      <span>FPS</span>
-      <select id="projectFpsInput">
-        <option value="12">12 FPS</option>
-        <option value="24" selected>24 FPS</option>
-        <option value="30">30 FPS</option>
-        <option value="60">60 FPS</option>
-      </select>
-    </label>
+      <label class="denx-form-field">
+        <span>Canvas</span>
+        <select id="projectCanvasPreset">
+          <option value="1920x1080">16:9 · 1920 × 1080</option>
+          <option value="1080x1920">9:16 · 1080 × 1920</option>
+          <option value="1080x1080">1:1 · 1080 × 1080</option>
+          <option value="2048x1152">DenX Wide · 2048 × 1152</option>
+        </select>
+      </label>
 
-    <button id="createBtn" class="denx-primary-action" type="button">Create Project</button>
-    <div id="projectSetupError" class="denx-inline-error" aria-live="polite"></div>
+      <label class="denx-form-field">
+        <span>FPS</span>
+        <select id="projectFpsInput">
+          <option value="12">12 FPS</option>
+          <option value="24" selected>24 FPS</option>
+          <option value="30">30 FPS</option>
+          <option value="60">60 FPS</option>
+        </select>
+      </label>
+
+      <button id="createBtn" class="denx-primary-action" type="button">Create Project</button>
+      <div id="projectSetupError" class="denx-inline-error" aria-live="polite"></div>
+    </div>
   </section>
 </div>
 <script src="js/project-store.js"></script>

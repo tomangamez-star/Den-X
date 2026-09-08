@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings · DenX</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/project-ui.css">
+<link rel="stylesheet" href="css/v0.3.4-stability.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111111">
+</head>
+<body>
+<div id="app">
+  <section class="home-card denx-native-page denx-settings-page">
+    <button id="settingsBackBtn" class="denx-back-link" type="button">← Back</button>
+
+    <div class="denx-native-copy">
+      <h2>DenX<br>Settings</h2>
+      <p>Animation preferences that stay with this device.</p>
+    </div>
+
+    <section class="denx-native-panel denx-settings-panel">
+      <div class="denx-native-panel-head">
+        <div>
+          <span class="denx-native-kicker">WORKFLOW</span>
+          <strong>Project Saving</strong>
+        </div>
+      </div>
+
+      <label class="denx-native-setting-row">
+        <span>
+          <strong>Auto save</strong>
+          <small>Periodically save the active project.</small>
+        </span>
+        <input id="nativeAutoSaveToggle" type="checkbox">
+      </label>
+
+      <label class="denx-native-setting-row">
+        <span>
+          <strong>Save reminder</strong>
+          <small>Remind me when auto save is disabled.</small>
+        </span>
+        <input id="nativeSaveReminderToggle" type="checkbox">
+      </label>
+
+      <label class="denx-native-setting-select">
+        <span>
+          <strong>Save interval</strong>
+          <small>How often DenX checks your project.</small>
+        </span>
+        <select id="nativeSaveIntervalSelect">
+          <option value="5">5 minutes</option>
+          <option value="10">10 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+        </select>
+      </label>
+
+      <div class="denx-settings-foot">DENX · Stability Pass 0.3.4</div>
+    </section>
+  </section>
+</div>
+<script src="js/project-store.js"></script>
+<script src="js/settings.js"></script>
+</body>
+</html>

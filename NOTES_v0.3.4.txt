@@ -1,0 +1,44 @@
+DenX Animator v0.3.4 — Stability / Bugfix Patch
+
+Scope intentionally frozen:
+- NO remaining-toolbar icon redesign in this patch.
+- NO MP4 implementation yet.
+- v0.3.3 Quick Deck is preserved.
+
+Fixes:
+1. Create Project landscape layout
+   - Adds a real contained/scrollable form region.
+   - Create button no longer hangs below the usable viewport.
+
+2. Open Project
+   - Replaced popup behavior with a native DenX full-screen page.
+   - Project list scrolls independently.
+
+3. Settings
+   - Replaced popup behavior with a native DenX screen.
+   - Same black/cyan/silver Studio language as Home/Create/Open.
+
+4. Workspace leave protection
+   - Projects, Settings, and Create Figure no longer throw the user out instantly.
+   - Saved project: Stay / Leave.
+   - Unsaved project: Stay / Leave Without Saving / Save & Leave.
+   - Figure Creator / Settings preserve a temporary workspace handoff when leaving.
+
+5. Project title / save state
+   - Removed from prime timeline width.
+   - Added as a small informational identity block inside the PROJECT toolbar section.
+   - Long names ellipsize instead of shrinking the timeline.
+
+6. PNG export quality
+   - Removes the low-resolution vector intermediate.
+   - Figure/text SVG layers are transformed by the camera and rasterized at FINAL export resolution.
+   - Drawing canvas is transformed directly into final output once.
+   - Output dimensions still follow the project resolution.
+
+7. Export dialog
+   - Properly centered like Figure Browser.
+   - Cyan accent applied to the available export action.
+   - Disabled future formats stay muted.
+
+8. PWA cache
+   - Cache version bumped so stale layouts/export scripts are replaced.

@@ -1,8 +1,10 @@
-const CACHE_NAME = "denx-animator-v033-quickdeck-icon-accuracy";
+const CACHE_NAME = "denx-animator-v034-stability-bugfix";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./project.html",
+  "./open-project.html",
+  "./settings.html",
   "./workspace.html",
   "./figure-creator.html",
   "./css/style.css",
@@ -10,9 +12,12 @@ const APP_SHELL = [
   "./css/project-ui.css",
   "./css/figure-creator.css",
   "./css/v0.3.3-quickdeck.css",
+  "./css/v0.3.4-stability.css",
   "./js/project-store.js",
   "./js/app.js",
   "./js/home-projects.js",
+  "./js/open-projects.js",
+  "./js/settings.js",
   "./js/project-setup.js",
   "./js/history.js",
   "./js/figure-library.js",
@@ -50,7 +55,11 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(keys => Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      ))
       .then(() => self.clients.claim())
   );
 });
@@ -62,9 +71,15 @@ self.addEventListener("fetch", event => {
     fetch(event.request)
       .then(response => {
         const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(event.request, copy));
         return response;
       })
-      .catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html")))
+      .catch(() =>
+        caches.match(event.request)
+          .then(cached =>
+            cached || caches.match("./index.html")
+          )
+      )
   );
 });
