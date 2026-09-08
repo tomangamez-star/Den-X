@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v19-velocity-0-2-4-figure-transforms";
+const CACHE_NAME = "denx-animator-v20-velocity-0-2-5-text-polish";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -13,6 +13,7 @@ const APP_SHELL = [
   "./js/figure-library.js",
   "./js/tools.js",
   "./js/workspace-ui.js",
+  "./js/text-objects.js",
   "./js/drawing.js",
   "./js/camera.js",
   "./js/bones.js",

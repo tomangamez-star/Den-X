@@ -66,6 +66,10 @@
           <span class="tool-icon">✎</span><span class="tool-label">Pencil</span>
         </button>
 
+        <button id="textTool" class="tool-row" title="Add text box" aria-label="Add text box">
+          <span class="tool-icon">T</span><span class="tool-label">Text</span>
+        </button>
+
         <label class="tool-control" title="Drawing color">
           <span class="tool-control-icon">●</span>
           <span class="tool-control-name">Color</span>
@@ -263,19 +267,63 @@
           </div>
         </div>
 
-        <button id="figureMoveFrontBtn" class="tool-row tool-action" type="button" title="Move this figure one layer forward" aria-label="Move selected figure forward">
-          <span class="tool-icon">⇧</span><span class="tool-label">Front</span>
-        </button>
-
-        <button id="figureMoveBackBtn" class="tool-row tool-action" type="button" title="Move this figure one layer backward" aria-label="Move selected figure backward">
-          <span class="tool-icon">⇩</span><span class="tool-label">Back</span>
-        </button>
+        <div class="figure-layer-row" aria-label="Figure layer order">
+          <button id="figureMoveFrontBtn" class="tool-row tool-action" type="button" title="Move this figure one layer forward" aria-label="Move selected figure forward">
+            <span class="tool-icon">⇧</span><span class="tool-label">Front</span>
+          </button>
+          <button id="figureMoveBackBtn" class="tool-row tool-action" type="button" title="Move this figure one layer backward" aria-label="Move selected figure backward">
+            <span class="tool-icon">⇩</span><span class="tool-label">Back</span>
+          </button>
+        </div>
 
         <button id="figureEditBtn" class="tool-row tool-action" type="button" title="Edit this figure in Figure Creator" aria-label="Edit selected figure">
           <span class="tool-icon">✎</span><span class="tool-label">Edit</span>
         </button>
 
         <button id="figureDeleteBtn" class="tool-row tool-action figure-delete-action" type="button" title="Delete this figure from the animation" aria-label="Delete selected figure">
+          <span class="tool-icon">⌫</span><span class="tool-label">Delete</span>
+        </button>
+      </section>
+    </aside>
+
+    <aside id="textActionsRail" class="toolbar expanded-toolbar figure-context-toolbar text-context-toolbar hidden" aria-hidden="true" aria-label="Selected text tools">
+      <section class="tool-section figure-context-section">
+        <div class="tool-section-title">Selected Text</div>
+
+        <label class="text-context-field">
+          <span>Text</span>
+          <textarea id="textContentInput" rows="3" maxlength="240" aria-label="Text content"></textarea>
+        </label>
+
+        <label class="text-context-field">
+          <span>Font</span>
+          <select id="textFontSelect" aria-label="Text font">
+            <option value="system-ui, sans-serif">System</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Times New Roman', serif">Times</option>
+            <option value="'Courier New', monospace">Courier</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+            <option value="Impact, sans-serif">Impact</option>
+          </select>
+        </label>
+
+        <label class="tool-control figure-context-color" title="Text color">
+          <span class="tool-control-icon">●</span>
+          <span class="tool-control-name">Color</span>
+          <input id="textColorInput" type="color" value="#111111" aria-label="Text color">
+        </label>
+
+        <div class="animation-stepper-control figure-scale-control" aria-label="Scale selected text">
+          <span class="animation-stepper-label">Scale</span>
+          <div class="denx-number-stepper figure-scale-stepper">
+            <button id="textScaleDownBtn" type="button" aria-label="Scale text down">−</button>
+            <span id="textScaleDisplay" class="denx-number-display">100%</span>
+            <button id="textScaleUpBtn" type="button" aria-label="Scale text up">＋</button>
+          </div>
+        </div>
+
+        <button id="textDeleteBtn" class="tool-row tool-action figure-delete-action" type="button" title="Delete selected text" aria-label="Delete selected text">
           <span class="tool-icon">⌫</span><span class="tool-label">Delete</span>
         </button>
       </section>
@@ -300,6 +348,13 @@
             viewBox="0 0 2048 1152"
             preserveAspectRatio="none"
             aria-label="DenX figure layer"
+          ></svg>
+
+          <svg
+            id="textLayer"
+            viewBox="0 0 2048 1152"
+            preserveAspectRatio="none"
+            aria-label="DenX text layer"
           ></svg>
         </div>
 
@@ -375,6 +430,7 @@
 <script src="js/figure-library.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/workspace-ui.js"></script>
+<script src="js/text-objects.js"></script>
 <script src="js/drawing.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/bones.js"></script>
