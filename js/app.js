@@ -1,5 +1,36 @@
 console.log("DenX Animator has started.");
 
+// v0.3.3 visual patch loader. Keeping this here avoids touching the large
+// workspace document while still applying the same DenX polish everywhere.
+(function loadDenx033Polish(){
+    if (!document.querySelector('link[data-denx-v033]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/v0.3.3-quickdeck.css';
+        link.dataset.denxV033 = 'true';
+        document.head.appendChild(link);
+    }
+
+    const copyBtn = document.getElementById('copyFrameBtn');
+    if (copyBtn) {
+        copyBtn.title = 'Copy frame';
+        copyBtn.setAttribute('aria-label', 'Copy frame');
+        const img = copyBtn.querySelector('img');
+        if (img) img.src = 'icons/ui/copy.svg';
+    }
+
+    const pasteBtn = document.getElementById('pasteFrameBtn');
+    if (pasteBtn) {
+        pasteBtn.title = 'Paste frame';
+        pasteBtn.setAttribute('aria-label', 'Paste frame');
+        const img = pasteBtn.querySelector('img');
+        if (img) img.src = 'icons/ui/paste.svg';
+    }
+
+    const footer = document.querySelector('#appFooter p');
+    if (footer) footer.textContent = 'Version 0.3.3 Quick Deck';
+})();
+
 // HOME SCREEN
 const newBtn = document.getElementById("newProject");
 
@@ -34,10 +65,3 @@ if (workspaceBack) {
         window.location.href = "index.html";
     };
 }
-
-
-
-
-
-
-
