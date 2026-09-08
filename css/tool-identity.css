@@ -1,0 +1,351 @@
+
+/* ============================================================
+   DENX v0.3.6 — TOOL IDENTITY + COLOR STUDIO
+   ============================================================ */
+
+.denx-tool-svg {
+  width:19px;
+  height:19px;
+  display:block;
+  object-fit:contain;
+  pointer-events:none;
+}
+
+.tool-control-icon .denx-tool-svg {
+  width:18px;
+  height:18px;
+}
+
+.denx-color-launcher {
+  cursor:pointer;
+}
+
+.denx-color-launcher input[type="color"] {
+  width:24px !important;
+  height:24px !important;
+  border:1px solid rgba(255,255,255,.20) !important;
+  border-radius:7px !important;
+  padding:2px !important;
+  background:#0c0e0f !important;
+  pointer-events:none;
+}
+
+.denx-color-dialog {
+  width:min(760px,calc(100vw - 24px));
+  max-width:760px;
+  max-height:calc(100dvh - 20px);
+  margin:auto;
+  padding:0;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:18px;
+  background:#101214;
+  color:#f2f5f6;
+  overflow:hidden;
+  box-shadow:0 28px 90px rgba(0,0,0,.56);
+}
+
+.denx-color-dialog::backdrop {
+  background:rgba(0,0,0,.76);
+  backdrop-filter:blur(7px);
+}
+
+.denx-color-shell {
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  max-height:calc(100dvh - 20px);
+}
+
+.denx-color-head {
+  min-height:54px;
+  padding:10px 13px;
+  border-bottom:1px solid rgba(255,255,255,.075);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.denx-color-head-copy {
+  display:grid;
+  gap:2px;
+}
+
+.denx-color-kicker {
+  color:#12c8f4;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:1.15px;
+}
+
+.denx-color-head strong {
+  font-size:16px;
+}
+
+.denx-color-close {
+  width:34px;
+  height:34px;
+  border:1px solid #303538;
+  border-radius:10px;
+  background:#191c1e;
+  color:#fff;
+  font-size:18px;
+}
+
+.denx-color-body {
+  min-height:0;
+  padding:12px;
+  display:grid;
+  grid-template-columns:minmax(280px,1.5fr) minmax(210px,.8fr);
+  gap:12px;
+  overflow:auto;
+}
+
+.denx-color-field-wrap {
+  display:grid;
+  gap:8px;
+  min-width:0;
+}
+
+.denx-color-field {
+  position:relative;
+  width:100%;
+  aspect-ratio:1.65/1;
+  min-height:190px;
+  max-height:360px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:13px;
+  cursor:crosshair;
+  touch-action:none;
+  background:
+    linear-gradient(to bottom,rgba(0,0,0,0) 0%,#000 100%),
+    linear-gradient(to right,
+      #ff0000 0%,
+      #ffff00 16.666%,
+      #00ff00 33.333%,
+      #00ffff 50%,
+      #0000ff 66.666%,
+      #ff00ff 83.333%,
+      #ff0000 100%);
+}
+
+.denx-color-field::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:rgba(255,255,255,var(--denx-desaturate,0));
+  mix-blend-mode:screen;
+}
+
+.denx-color-cursor {
+  position:absolute;
+  width:18px;
+  height:18px;
+  border:2px solid #fff;
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 0 2px rgba(0,0,0,.66),0 2px 8px rgba(0,0,0,.55);
+  pointer-events:none;
+  z-index:2;
+}
+
+.denx-color-preview-row {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.denx-color-preview {
+  min-height:46px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:10px;
+  background:#17191b;
+  padding:6px;
+  display:grid;
+  grid-template-columns:32px 1fr;
+  gap:8px;
+  align-items:center;
+}
+
+.denx-color-chip {
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.22);
+  background:#000;
+}
+
+.denx-color-preview span {
+  display:grid;
+  gap:2px;
+}
+
+.denx-color-preview small {
+  color:#81898d;
+  font-size:7px;
+  font-weight:850;
+  letter-spacing:.65px;
+  text-transform:uppercase;
+}
+
+.denx-color-preview code {
+  color:#dce3e6;
+  font-size:9px;
+}
+
+.denx-color-values {
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:13px;
+  background:#151719;
+  padding:10px;
+  display:grid;
+  gap:9px;
+  align-content:start;
+}
+
+.denx-color-section-title {
+  color:#12c8f4;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding-bottom:3px;
+}
+
+.denx-color-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+}
+
+.denx-color-value {
+  display:grid;
+  gap:3px;
+  color:#8e969a;
+  font-size:7px;
+  font-weight:850;
+}
+
+.denx-color-value input {
+  width:100%;
+  min-width:0;
+  height:34px;
+  margin:0;
+  padding:0 7px;
+  border:1px solid #303538;
+  border-radius:8px;
+  background:#0e1012;
+  color:#f1f4f5;
+  font-size:10px;
+  text-align:center;
+}
+
+.denx-color-hex {
+  display:grid;
+  grid-template-columns:36px 1fr;
+  gap:6px;
+  align-items:center;
+}
+
+.denx-color-hex span {
+  color:#8e969a;
+  font-size:8px;
+  font-weight:900;
+}
+
+.denx-color-hex input {
+  width:100%;
+  height:36px;
+  margin:0;
+  border:1px solid rgba(0,200,255,.27);
+  border-radius:8px;
+  background:#0e1012;
+  color:#8de5ff;
+  font-family:monospace;
+  font-size:11px;
+  text-transform:uppercase;
+}
+
+.denx-color-swatches {
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:5px;
+}
+
+.denx-swatch {
+  aspect-ratio:1;
+  min-height:26px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:7px;
+  background:var(--swatch,#000);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);
+}
+
+.denx-color-actions {
+  padding:10px 12px;
+  border-top:1px solid rgba(255,255,255,.075);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.denx-color-actions button {
+  min-height:38px;
+  padding:0 15px;
+  border:1px solid #303538;
+  border-radius:10px;
+  background:#1a1d1f;
+  color:#eef2f4;
+  font-size:9px;
+  font-weight:900;
+}
+
+.denx-color-actions .denx-color-apply {
+  background:#12c8f4;
+  border-color:#31d8ff;
+  color:#061116;
+}
+
+@media (orientation:landscape) and (max-height:430px) {
+  .denx-color-dialog {
+    width:min(820px,calc(100vw - 16px));
+    max-height:calc(100dvh - 10px);
+  }
+  .denx-color-shell {
+    max-height:calc(100dvh - 10px);
+  }
+  .denx-color-head {
+    min-height:44px;
+    padding:7px 10px;
+  }
+  .denx-color-body {
+    padding:9px;
+    gap:9px;
+  }
+  .denx-color-field {
+    min-height:170px;
+  }
+  .denx-color-preview-row {
+    display:none;
+  }
+  .denx-color-values {
+    gap:7px;
+    padding:8px;
+  }
+  .denx-color-value input {
+    height:30px;
+  }
+  .denx-color-hex input {
+    height:31px;
+  }
+  .denx-color-actions {
+    padding:7px 10px;
+  }
+}
+
+@media (orientation:portrait) {
+  .denx-color-body {
+    grid-template-columns:1fr;
+  }
+}
