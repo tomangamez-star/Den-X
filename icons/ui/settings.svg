@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M12 8.7a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Z" stroke="#F1F4F6" stroke-width="1.8"/><path d="m19 13.2.1-2.4-2-.6a5.8 5.8 0 0 0-.6-1.3l1-1.9-1.7-1.7-1.9 1a5.8 5.8 0 0 0-1.3-.6L10.8 3h-2.4l-.6 2a5.8 5.8 0 0 0-1.3.6l-1.9-1L2.9 6.3l1 1.9a5.8 5.8 0 0 0-.6 1.3l-2 .6v2.4l2 .6c.1.5.3.9.6 1.3l-1 1.9 1.7 1.7 1.9-1c.4.3.8.5 1.3.6l.6 2h2.4l.6-2c.5-.1.9-.3 1.3-.6l1.9 1 1.7-1.7-1-1.9c.3-.4.5-.8.6-1.3l2-.6Z" stroke="#B8C2C8" stroke-width="1.5" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <g stroke="#EEF3F5" stroke-width="1.75" stroke-linecap="round">
+    <circle cx="12" cy="12" r="5.25"/>
+    <path d="M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5 7 7M17 17l1.5 1.5M18.5 5.5 17 7M7 17l-1.5 1.5"/>
+  </g>
+  <circle cx="12" cy="12" r="2.25" stroke="#72DDF9" stroke-width="1.8"/>
+  <path d="M10.8 6.9 9.6 4.8h4.8l-1.2 2.1M17.1 10.8l2.1-1.2v4.8l-2.1-1.2M13.2 17.1l1.2 2.1H9.6l1.2-2.1M6.9 13.2l-2.1 1.2V9.6l2.1 1.2" stroke="#AEBBC1" stroke-width="1.35" stroke-linejoin="round"/>
+</svg>
