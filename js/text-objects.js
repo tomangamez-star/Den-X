@@ -77,6 +77,7 @@
             group.classList.add("denx-text-object");
             if (item.id === selectedId) group.classList.add("selected");
             group.dataset.textId = item.id;
+            group.style.touchAction = "none";
             group.setAttribute(
                 "transform",
                 `translate(${item.x} ${item.y}) rotate(${item.rotation || 0}) scale(${item.scale || 1})`
@@ -105,6 +106,7 @@
 
             const hit = document.createElementNS(SVG_NS, "rect");
             hit.classList.add("denx-text-hitbox");
+            hit.style.touchAction = "none";
             hit.setAttribute("x", String(bbox.x - 16));
             hit.setAttribute("y", String(bbox.y - 14));
             hit.setAttribute("width", String(Math.max(36, bbox.width + 32)));
@@ -177,7 +179,10 @@
             offsetX: point.x - item.x,
             offsetY: point.y - item.y
         };
-        group.setPointerCapture?.(event.pointerId);
+        // Capture on the persistent SVG layer, not the text <g>. The previous
+        // implementation re-rendered the layer during drag, destroying the
+        // captured <g> after the first move and making text feel immovable.
+        layer.setPointerCapture?.(event.pointerId);
         event.preventDefault();
         event.stopPropagation();
     });
@@ -189,14 +194,27 @@
         const point = stagePoint(event.clientX, event.clientY);
         item.x = point.x - drag.offsetX;
         item.y = point.y - drag.offsetY;
-        render();
+
+        // Move only the live DOM object while the finger is down. Rebuilding
+        // the SVG here would break pointer capture and is more expensive.
+        const liveGroup = [...layer.querySelectorAll(".denx-text-object")].find(
+            node => node.dataset.textId === item.id
+        );
+        if (liveGroup) {
+            liveGroup.setAttribute(
+                "transform",
+                `translate(${item.x} ${item.y}) rotate(${item.rotation || 0}) scale(${item.scale || 1})`
+            );
+        }
         event.preventDefault();
         event.stopPropagation();
     });
 
     function finishDrag(event) {
         if (!drag || drag.pointerId !== event.pointerId) return;
+        layer.releasePointerCapture?.(event.pointerId);
         drag = null;
+        render();
         dispatchSelection();
         window.denxRefreshFrameThumbnail?.(window.currentFrame || 1);
     }

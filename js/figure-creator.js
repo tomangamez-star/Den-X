@@ -240,6 +240,72 @@
             "viewBox",
             `${stageView.x} ${stageView.y} ${stageView.width} ${stageView.height}`
         );
+        updateAdaptiveGrid();
+    }
+
+    function niceGridStep(worldUnitsPerPixel, targetPixels = 26) {
+        const ideal = Math.max(0.000001, worldUnitsPerPixel * targetPixels);
+        const power = Math.pow(10, Math.floor(Math.log10(ideal)));
+        const scaled = ideal / power;
+        let factor = 1;
+        if (scaled > 5) factor = 10;
+        else if (scaled > 2) factor = 5;
+        else if (scaled > 1) factor = 2;
+        return factor * power;
+    }
+
+    function positiveModulo(value, divisor) {
+        if (!Number.isFinite(value) || !Number.isFinite(divisor) || divisor === 0) return 0;
+        return ((value % divisor) + divisor) % divisor;
+    }
+
+    function updateAdaptiveGrid() {
+        if (!stageWrap) return;
+        const rect = stageWrap.getBoundingClientRect();
+        if (!(rect.width > 0) || !(rect.height > 0) || !(stageView.width > 0) || !(stageView.height > 0)) return;
+
+        // Infinite nested graph: the figure remains in world coordinates while
+        // the graph redraws itself for the current camera scale. Zooming deeper
+        // reveals finer cells instead of stretching one fixed 28px texture.
+        const worldPerPixelX = stageView.width / rect.width;
+        const worldPerPixelY = stageView.height / rect.height;
+        const worldPerPixel = Math.max(0.000001, (worldPerPixelX + worldPerPixelY) / 2);
+        const minorWorld = niceGridStep(worldPerPixel, 24);
+        const mediumWorld = minorWorld * 5;
+        const majorWorld = minorWorld * 25;
+
+        const minorPxX = minorWorld / worldPerPixelX;
+        const minorPxY = minorWorld / worldPerPixelY;
+        const mediumPxX = mediumWorld / worldPerPixelX;
+        const mediumPxY = mediumWorld / worldPerPixelY;
+        const majorPxX = majorWorld / worldPerPixelX;
+        const majorPxY = majorWorld / worldPerPixelY;
+
+        const pos = (worldX, worldY, stepWorld, pxX, pxY) => {
+            const screenX = (worldX - stageView.x) / worldPerPixelX;
+            const screenY = (worldY - stageView.y) / worldPerPixelY;
+            return `${positiveModulo(screenX, pxX)}px ${positiveModulo(screenY, pxY)}px`;
+        };
+
+        stageWrap.style.backgroundColor = "#303030";
+        stageWrap.style.backgroundImage = [
+            "linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px)",
+            "linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px)",
+            "linear-gradient(rgba(255,255,255,.080) 1px, transparent 1px)",
+            "linear-gradient(90deg, rgba(255,255,255,.080) 1px, transparent 1px)",
+            "linear-gradient(rgba(0,200,255,.115) 1px, transparent 1px)",
+            "linear-gradient(90deg, rgba(0,200,255,.115) 1px, transparent 1px)"
+        ].join(",");
+        stageWrap.style.backgroundSize = [
+            `${minorPxX}px ${minorPxY}px`, `${minorPxX}px ${minorPxY}px`,
+            `${mediumPxX}px ${mediumPxY}px`, `${mediumPxX}px ${mediumPxY}px`,
+            `${majorPxX}px ${majorPxY}px`, `${majorPxX}px ${majorPxY}px`
+        ].join(",");
+        stageWrap.style.backgroundPosition = [
+            pos(0, 0, minorWorld, minorPxX, minorPxY), pos(0, 0, minorWorld, minorPxX, minorPxY),
+            pos(0, 0, mediumWorld, mediumPxX, mediumPxY), pos(0, 0, mediumWorld, mediumPxX, mediumPxY),
+            pos(0, 0, majorWorld, majorPxX, majorPxY), pos(0, 0, majorWorld, majorPxX, majorPxY)
+        ].join(",");
     }
 
     function fitStageViewToPose() {
@@ -1120,6 +1186,9 @@
     });
 
     // -------------------------------------------------------------
+    // Keep the infinite graph aligned if the creator viewport changes size.
+    window.addEventListener("resize", updateAdaptiveGrid);
+
     // Zoom + direct canvas pan + two-finger pan/pinch
     // -------------------------------------------------------------
     zoomInBtn.addEventListener("click", event => {
