@@ -39,15 +39,31 @@
 
       <button id="pasteFrameBtn" class="cluster-btn" title="Paste copied frame" aria-label="Paste copied frame">📋</button>
       <button id="playBtn" class="cluster-btn" title="Play" aria-label="Play">▶</button>
-      <button id="workspaceSaveBtn" class="cluster-btn denx-workspace-action" title="Save project" aria-label="Save project">💾</button>
-      <button id="workspaceExportBtn" class="cluster-btn denx-workspace-action" title="Export" aria-label="Export">⇩</button>
-      <button id="workspaceHomeBtn" class="cluster-btn denx-workspace-action" title="Home" aria-label="Home">⌂</button>
-      <button id="workspaceSettingsBtn" class="cluster-btn" title="Settings" aria-label="Settings">⚙</button>
     </div>
   </header>
 
   <div class="editor">
     <aside id="toolbox" class="toolbar expanded-toolbar" aria-label="DenX toolbox">
+
+      <section class="tool-section" id="tool-project" data-tool-section="project">
+        <div class="tool-section-title">Project</div>
+
+        <button id="workspaceSaveBtn" class="tool-row tool-action" title="Save project" aria-label="Save project">
+          <span class="tool-icon">S</span><span class="tool-label">Save</span>
+        </button>
+
+        <button id="workspaceExportBtn" class="tool-row tool-action" title="Export animation" aria-label="Export animation">
+          <span class="tool-icon">⇩</span><span class="tool-label">Export</span>
+        </button>
+
+        <button id="workspaceSettingsBtn" class="tool-row tool-action" title="Project settings" aria-label="Project settings">
+          <span class="tool-icon">⚙</span><span class="tool-label">Settings</span>
+        </button>
+
+        <button id="workspaceHomeBtn" class="tool-row tool-action" title="Back to projects" aria-label="Back to projects">
+          <span class="tool-icon">⌂</span><span class="tool-label">Projects</span>
+        </button>
+      </section>
 
       <section class="tool-section" id="tool-general" data-tool-section="general">
         <div class="tool-section-title">General</div>
@@ -161,6 +177,7 @@
     </aside>
 
     <nav class="tool-quickfind" aria-label="Toolbox quick find">
+      <button class="quickfind-link" data-tool-target="project">Project</button>
       <button class="quickfind-link active" data-tool-target="general">General</button>
       <button class="quickfind-link" data-tool-target="draw">Draw</button>
       <button class="quickfind-link" data-tool-target="animation">Animate</button>
@@ -429,6 +446,14 @@
 
     <input id="figureFileInput" class="hidden-file-input" type="file" accept=".dxf,.json,application/json">
   </div>
+</dialog>
+
+<dialog id="workspaceProjectSettingsDialog" class="denx-project-dialog denx-settings-dialog">
+  <div class="denx-dialog-head"><strong>Project Settings</strong><button id="closeWorkspaceProjectSettingsBtn" type="button">×</button></div>
+  <label class="denx-setting-row"><span>Auto save</span><input id="workspaceAutoSaveToggle" type="checkbox"></label>
+  <label class="denx-setting-row"><span>Save reminder</span><input id="workspaceSaveReminderToggle" type="checkbox"></label>
+  <label class="denx-form-field"><span>Every</span><select id="workspaceSaveIntervalSelect"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option></select></label>
+  <small class="denx-setting-note">These save preferences stay on this device.</small>
 </dialog>
 
 <dialog id="denxExportDialog" class="denx-project-dialog denx-export-dialog">

@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v30-projects-save-open-figure-handoff";
+const CACHE_NAME = "denx-animator-v31-studio-polish-camera-export";
 const APP_SHELL = [
   "./",
   "./index.html",
