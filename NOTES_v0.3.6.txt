@@ -1,0 +1,49 @@
+DenX Animator v0.3.6 — Tool Identity + Color Studio
+
+Built on top of v0.3.5.
+
+TOOL ICON PASS
+- Replaces high-frequency Unicode toolbar glyphs with DenX SVGs.
+- Uses the same silver/white + selective cyan language as the approved icon sheet.
+- Figure icons use a NORMAL stick figure with NO neck.
+- Added distinct SVG meanings for:
+  Pan
+  Select
+  Workspace Background
+  Pencil
+  Text
+  Drawing/figure Color
+  Eraser
+  Onion Skin
+  Create Figure
+  Import Figure
+  Add Figure
+  Camera
+  Move Front
+  Move Back
+- Front/Back are a paired icon system: cyan indicates the depth plane being targeted.
+- Create / Import / Add Figure are intentionally three different symbols.
+
+DENX COLOR STUDIO
+- Replaces the bare browser color picker for:
+  Workspace background
+  Drawing color
+  Figure color
+- Large DenX color field inspired by the supplied references.
+- Horizontal = hue.
+- Vertical = brightness.
+- Saturation remains editable precisely in HSB controls.
+- Live H/S/B, R/G/B and HEX synchronization.
+- Previous and current color previews.
+- Recent colors saved locally.
+- Built-in DenX swatches.
+- Apply and Cancel semantics.
+- Changes dispatch the existing input/change events so current DenX drawing,
+  background and figure-color logic stays connected.
+
+UNCHANGED
+- v0.3.5 stability/native-shell behavior.
+- Live Saved/Unsaved system.
+- Quick Deck.
+- High-quality PNG export.
+- MP4 remains for the later export pass.

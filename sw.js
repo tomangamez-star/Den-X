@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v035-live-save-native-shell";
+const CACHE_NAME = "denx-animator-v036-tool-identity-color-studio";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -41,7 +41,23 @@ const APP_SHELL = [
   "./icons/ui/paste.svg",
   "./icons/ui/play.svg",
   "./icons/ui/pause.svg",
-  "./icons/ui/settings.svg"
+  "./icons/ui/settings.svg",
+  "./css/tool-identity.css",
+  "./js/tool-identity.js",
+  "./icons/tools/pan.svg",
+  "./icons/tools/select.svg",
+  "./icons/tools/background.svg",
+  "./icons/tools/pencil.svg",
+  "./icons/tools/text.svg",
+  "./icons/tools/color.svg",
+  "./icons/tools/eraser.svg",
+  "./icons/tools/onion.svg",
+  "./icons/tools/create-figure.svg",
+  "./icons/tools/import-figure.svg",
+  "./icons/tools/add-figure.svg",
+  "./icons/tools/camera.svg",
+  "./icons/tools/front.svg",
+  "./icons/tools/back.svg"
 ];
 
 self.addEventListener("install", event => {
