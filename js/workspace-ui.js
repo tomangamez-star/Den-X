@@ -290,6 +290,8 @@
         addFigureBtn.disabled = !workspaceFigureSelect.value;
     });
 
+    window.denxRenderProjectFigures = renderProjectFigures;
+
     addFigureBtn?.addEventListener("click", () => {
         const id = workspaceFigureSelect?.value;
         const definition = DenXFigureLibrary.getProjectFigure(id);
@@ -316,7 +318,7 @@
     createFigureBtn?.addEventListener("click", () => {
         try {
             window.denxStopPlayback?.();
-            window.denxSaveWorkspaceHandoff?.();
+            window.denxSaveWorkspaceHandoff?.("figure-create");
         } catch (_) {}
 
         window.location.href = "figure-creator.html";
@@ -894,6 +896,9 @@
             showToast("Could not open Figure Creator.");
             return;
         }
+        try {
+            window.denxSaveWorkspaceHandoff?.("figure-edit");
+        } catch (_) {}
         sessionStorage.setItem("denx.figureEditPayload", JSON.stringify({
             figureId: contextualFigureId,
             definition,

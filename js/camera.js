@@ -198,6 +198,8 @@ function updateWorkspace() {
     }));
 }
 
+window.denxRefreshCamera = updateWorkspace;
+
 function syncStageGuide() {
     if (!stageGuideEl || !cameraFrameState) return;
     stageGuideEl.classList.toggle("hidden", !cameraFrameState.showStageGuide);

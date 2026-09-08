@@ -424,6 +424,16 @@
         const clean = sanitizeDefinition(definition);
         const store = readStore();
 
+        const normalizedName = String(clean.name || "").trim().toLocaleLowerCase();
+        const nameCollision = store.library.find(item =>
+            String(item.id) !== String(clean.id) &&
+            String(item.name || "").trim().toLocaleLowerCase() === normalizedName
+        );
+
+        if (nameCollision) {
+            throw new Error(`A figure named "${clean.name}" already exists. Choose a different name.`);
+        }
+
         const existing = store.library.findIndex(item =>
             String(item.id) === clean.id
         );
@@ -445,6 +455,15 @@
         store.projectFigures = result.valid;
         writeStore(store);
 
+        return clone(result.valid);
+    }
+
+
+    function setProjectFigures(definitions) {
+        const result = safeSanitizeList(definitions || []);
+        const store = readStore();
+        store.projectFigures = result.valid;
+        writeStore(store);
         return clone(result.valid);
     }
 
@@ -482,6 +501,7 @@
         getLibrary,
         saveToLibrary,
         getProjectFigures,
+        setProjectFigures,
         getProjectFigure,
         importToProject,
         parseFigureFile,

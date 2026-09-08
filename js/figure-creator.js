@@ -1460,6 +1460,7 @@
                 .some(figure => figure.id === saved.id);
             if (!persisted) throw new Error("Figure did not persist. Save cancelled.");
             sessionStorage.setItem("denx.figureCreatedNotice", saved.name);
+            sessionStorage.setItem("denx.figureCreatedReturn", JSON.stringify(saved));
             window.location.href = "workspace.html";
         } catch (error) {
             showToast(error?.message || "Could not save figure.");
