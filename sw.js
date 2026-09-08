@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v21-velocity-0-2-6-surgical-nav-text-drag";
+const CACHE_NAME = "denx-animator-v22-velocity-0-2-7-select-world-boundary";
 const APP_SHELL = [
   "./",
   "./index.html",
