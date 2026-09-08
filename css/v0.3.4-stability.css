@@ -1,0 +1,542 @@
+/* ============================================================
+   DENX v0.3.4 STABILITY PASS
+   Bug fixes / navigation architecture / export presentation.
+   No unrelated icon expansion.
+   ============================================================ */
+
+/* ---------- Native DenX page architecture ---------- */
+.denx-native-page,
+.denx-project-setup.home-card {
+  background:
+    radial-gradient(circle at 82% 22%,rgba(0,200,255,.12),transparent 27%),
+    radial-gradient(circle at 14% 72%,rgba(0,200,255,.055),transparent 25%),
+    #0d0f10;
+}
+
+.denx-native-copy h2 {
+  color:#12c8f4;
+}
+
+.denx-native-panel {
+  min-width:0;
+  min-height:0;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  background:rgba(20,23,25,.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025),
+    0 20px 60px rgba(0,0,0,.18);
+  overflow:hidden;
+}
+
+.denx-native-panel-head {
+  min-height:68px;
+  padding:13px 17px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.denx-native-panel-head > div {
+  display:grid;
+  gap:3px;
+}
+
+.denx-native-kicker {
+  color:#10c9f4;
+  font-size:9px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:1.15px;
+}
+
+.denx-native-panel-head strong {
+  color:#f5f7f8;
+  font-size:17px;
+}
+
+.denx-native-count {
+  min-width:30px;
+  height:24px;
+  padding:0 8px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:rgba(0,200,255,.10);
+  border:1px solid rgba(0,200,255,.19);
+  color:#7edfff;
+  font-size:10px;
+  font-weight:900;
+}
+
+/* ---------- Create Project: real contained form ---------- */
+.denx-project-form {
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:5px 9px 18px 2px;
+}
+
+.denx-project-form .denx-form-field {
+  margin:0 !important;
+}
+
+.denx-project-form .denx-primary-action {
+  flex:0 0 auto;
+  min-height:52px;
+  margin:4px 0 0 !important;
+  border:0;
+  border-radius:12px;
+  background:linear-gradient(180deg,#20d4ff,#08bee9);
+  color:#061116;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.denx-project-form .denx-inline-error {
+  margin:0 !important;
+  min-height:18px;
+}
+
+/* ---------- Open Project native screen ---------- */
+.denx-native-project-list {
+  min-height:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:10px;
+  display:grid;
+  gap:8px;
+}
+
+.denx-native-project-card {
+  width:100%;
+  min-height:72px;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:13px;
+  background:#17191b;
+  color:#fff;
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:11px;
+  text-align:left;
+}
+
+.denx-native-project-card:active {
+  background:#1d2022;
+  border-color:rgba(0,200,255,.32);
+}
+
+.denx-native-project-mark {
+  width:40px;
+  height:40px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  background:#232628;
+  color:#c6d0d5;
+  font-size:20px;
+}
+
+.denx-native-project-copy {
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.denx-native-project-copy strong {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13px;
+}
+
+.denx-native-project-copy small {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#9aa1a5;
+  font-size:9px;
+}
+
+.denx-native-project-open {
+  color:#12c8f4;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.7px;
+}
+
+.denx-native-empty {
+  min-height:170px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:6px;
+  color:#949a9d;
+  text-align:center;
+}
+
+.denx-native-empty strong {
+  color:#e7eaec;
+}
+
+.denx-native-empty span {
+  font-size:10px;
+}
+
+/* ---------- Native Settings screen ---------- */
+.denx-settings-panel {
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+
+.denx-native-setting-row,
+.denx-native-setting-select {
+  min-height:74px;
+  padding:13px 17px;
+  border-bottom:1px solid rgba(255,255,255,.065);
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:16px;
+  align-items:center;
+}
+
+.denx-native-setting-row > span,
+.denx-native-setting-select > span {
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.denx-native-setting-row strong,
+.denx-native-setting-select strong {
+  color:#f4f6f7;
+  font-size:12px;
+}
+
+.denx-native-setting-row small,
+.denx-native-setting-select small {
+  color:#858d91;
+  font-size:9px;
+}
+
+.denx-native-setting-row input {
+  width:20px;
+  height:20px;
+  accent-color:#00c8ff;
+}
+
+.denx-native-setting-select select {
+  min-width:130px;
+  height:38px;
+  padding:0 10px;
+  border:1px solid rgba(0,200,255,.24);
+  border-radius:10px;
+  background:#101214;
+  color:#dce3e6;
+}
+
+.denx-settings-foot {
+  padding:13px 17px;
+  color:#687075;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.8px;
+}
+
+/* ---------- Workspace: project name belongs in Project section ---------- */
+.denx-project-status {
+  display:none !important;
+}
+
+.denx-sidebar-project-identity {
+  min-width:0;
+  margin:0 0 3px;
+  padding:8px 8px 7px;
+  border:1px solid rgba(255,255,255,.065);
+  border-radius:9px;
+  background:
+    linear-gradient(105deg,rgba(0,200,255,.055),transparent 55%),
+    #131516;
+  display:grid;
+  gap:5px;
+}
+
+.denx-sidebar-project-identity > strong {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#f2f5f6;
+  font-size:10px;
+  line-height:1.15;
+  font-weight:900;
+}
+
+.denx-sidebar-save-state {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  color:#8e989d;
+  font-size:7.5px;
+  font-weight:800;
+}
+
+.denx-sidebar-save-state i {
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#8a9296;
+}
+
+.denx-sidebar-project-identity[data-state="saved"]
+.denx-sidebar-save-state {
+  color:#7edfff;
+}
+
+.denx-sidebar-project-identity[data-state="saved"]
+.denx-sidebar-save-state i {
+  background:#18cffa;
+  box-shadow:0 0 7px rgba(0,200,255,.65);
+}
+
+/* ---------- Leave-project guard ---------- */
+.denx-leave-dialog {
+  width:min(430px,calc(100vw - 28px));
+  margin:auto;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:17px;
+  background:#121416;
+  color:#fff;
+  box-shadow:0 26px 80px rgba(0,0,0,.50);
+}
+
+.denx-leave-dialog::backdrop {
+  background:rgba(0,0,0,.74);
+  backdrop-filter:blur(6px);
+}
+
+.denx-leave-head {
+  display:grid;
+  gap:4px;
+}
+
+.denx-leave-kicker {
+  color:#11c9f4;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:1.1px;
+}
+
+.denx-leave-head strong {
+  font-size:19px;
+}
+
+.denx-leave-dialog p {
+  margin:10px 0 16px;
+  color:#a6adb1;
+  font-size:11px;
+  line-height:1.45;
+}
+
+.denx-leave-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.denx-leave-actions button {
+  min-height:38px;
+  padding:0 13px;
+  border:1px solid #303538;
+  border-radius:10px;
+  background:#1b1e20;
+  color:#f0f3f4;
+  font-size:9px;
+  font-weight:900;
+}
+
+.denx-leave-actions .denx-leave-primary {
+  border-color:#1ed4ff;
+  background:#12c8f4;
+  color:#061116;
+}
+
+.denx-leave-actions .denx-leave-discard {
+  color:#ff9d9d;
+  border-color:rgba(255,110,110,.24);
+}
+
+/* ---------- Export dialog: same intentional centering as Figure Browser ---------- */
+#denxExportDialog.denx-project-dialog {
+  position:fixed !important;
+  inset:0 !important;
+  width:min(520px,calc(100vw - 26px)) !important;
+  max-height:min(620px,calc(100dvh - 26px));
+  margin:auto !important;
+  padding:15px !important;
+  overflow:auto;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:17px;
+  background:#111315;
+  box-shadow:0 24px 70px rgba(0,0,0,.48);
+}
+
+#denxExportDialog::backdrop {
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(6px);
+}
+
+#denxExportDialog .denx-dialog-head strong {
+  font-size:17px;
+}
+
+#denxExportDialog .denx-export-choice {
+  gap:8px;
+}
+
+#denxExportDialog .denx-export-choice button {
+  min-height:72px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;
+  background:#181a1c;
+}
+
+#denxExportDialog .denx-export-choice button:not(:disabled) {
+  border-color:rgba(0,200,255,.34);
+  box-shadow:inset 3px 0 0 #12c8f4;
+}
+
+#denxExportDialog .denx-export-choice button:not(:disabled) strong {
+  color:#31d7ff;
+}
+
+#denxExportDialog .denx-export-choice button:disabled {
+  opacity:.48;
+}
+
+#denxExportDialog .denx-export-note {
+  padding-top:4px;
+  color:#7d8589;
+}
+
+/* ---------- Landscape native layouts ---------- */
+@media (orientation:landscape) and (min-width:640px) {
+  .denx-project-setup.home-card,
+  .denx-native-page.home-card {
+    width:100%;
+    max-width:none;
+    height:100dvh;
+    min-height:100dvh;
+    margin:0;
+    padding:clamp(22px,5vh,48px) clamp(42px,7vw,105px);
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    box-sizing:border-box;
+    display:grid;
+    grid-template-columns:minmax(260px,.8fr) minmax(420px,1.2fr);
+    grid-template-rows:minmax(0,1fr);
+    column-gap:clamp(48px,8vw,130px);
+    align-items:center;
+    text-align:left;
+    overflow:hidden;
+  }
+
+  .denx-project-setup .denx-back-link,
+  .denx-native-page .denx-back-link {
+    position:absolute;
+    top:20px;
+    left:28px;
+    margin:0;
+    background:transparent;
+    border:0;
+    color:#aeb5b8;
+    z-index:4;
+  }
+
+  .denx-project-setup .denx-native-copy,
+  .denx-native-page .denx-native-copy {
+    grid-column:1;
+    align-self:center;
+    min-width:0;
+  }
+
+  .denx-project-setup .denx-native-copy h2,
+  .denx-native-page .denx-native-copy h2 {
+    margin:0;
+    font-size:clamp(2.5rem,4.7vw,4.7rem);
+    line-height:.91;
+    max-width:6.5em;
+  }
+
+  .denx-project-setup .denx-native-copy p,
+  .denx-native-page .denx-native-copy p {
+    max-width:350px;
+    margin:14px 0 0;
+    color:#8e969a;
+    font-size:clamp(.86rem,1.3vw,1rem);
+    line-height:1.42;
+  }
+
+  .denx-project-setup .denx-project-form,
+  .denx-native-page .denx-native-panel {
+    grid-column:2;
+    align-self:center;
+    width:100%;
+    max-height:calc(100dvh - 72px);
+  }
+
+  .denx-project-form {
+    padding-top:8px;
+  }
+
+  .denx-project-form .denx-form-field input,
+  .denx-project-form .denx-form-field select {
+    min-height:46px;
+  }
+
+  .denx-open-page .denx-native-panel {
+    height:min(72dvh,540px);
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+  }
+
+  .denx-settings-page .denx-native-panel {
+    max-width:680px;
+  }
+}
+
+@media (orientation:portrait) {
+  .denx-native-page.home-card {
+    width:calc(100% - 32px);
+    max-width:520px;
+    max-height:calc(100dvh - 32px);
+    overflow:auto;
+  }
+
+  .denx-native-page .denx-native-copy {
+    margin-bottom:18px;
+    text-align:left;
+  }
+
+  .denx-native-page .denx-native-copy h2 {
+    font-size:34px;
+    line-height:.96;
+  }
+
+  .denx-native-page .denx-native-copy p {
+    margin-top:10px;
+    color:#92999d;
+  }
+}
