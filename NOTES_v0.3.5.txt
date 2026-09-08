@@ -1,0 +1,21 @@
+DenX Animator v0.3.5 — Live Save + Native Shell Fix
+
+Changes:
+- Saved status now updates live:
+  meaningful edits immediately switch Saved -> Unsaved.
+  Save/Auto-save returns it to Saved.
+  A short Saving state is shown during save.
+- Create Project, Open Project and DenX Settings now use a fixed page shell.
+- Main native screen never scrolls.
+- Title/description stay visible at the top.
+- Only the lower form/list/settings region scrolls.
+- Extra short-landscape rules prevent the title crop seen on phone screens.
+- Home footer now shows Version 0.3.5 Stability.
+- Settings footer now shows DENX · Version 0.3.5 Stability.
+- PWA cache bumped to v0.3.5.
+
+Intentionally untouched:
+- Quick Deck/current icon family.
+- Working high-quality PNG export from v0.3.4.
+- Stable Home layout.
+- MP4 export.

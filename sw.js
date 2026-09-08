@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v034-stability-bugfix";
+const CACHE_NAME = "denx-animator-v035-live-save-native-shell";
 const APP_SHELL = [
   "./",
   "./index.html",
