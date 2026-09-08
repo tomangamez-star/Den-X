@@ -1,0 +1,25 @@
+DenX Animator v0.3.3 Quick Deck / Icon Accuracy patch
+
+Modified:
+- js/app.js
+- sw.js
+- icons/ui/add-frame.svg
+- icons/ui/delete-frame.svg
+- icons/ui/play.svg
+- icons/ui/settings.svg
+
+New:
+- css/v0.3.3-quickdeck.css
+- icons/ui/copy.svg
+- icons/ui/paste.svg
+- icons/ui/pause.svg
+
+UI changes:
+- Exact 2x3 quick deck: Add|Copy|Play / Delete|Paste|Settings.
+- Add/Delete are wider for faster thumb access.
+- Outer corners curve as one unified control box; internal corners stay tight.
+- Copy/Paste semantics replace misleading Duplicate/Clipboard labels.
+- Settings icon rebuilt as a clean gear with silver/cyan DenX geometry.
+- Play remains vector-based during playback and switches to a pause glyph.
+- Home Open/New/Settings cards are compressed in landscape.
+- Recent Projects receives the reclaimed vertical space and remains independently scrollable.

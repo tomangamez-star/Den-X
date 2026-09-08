@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v31-studio-polish-camera-export";
+const CACHE_NAME = "denx-animator-v033-quickdeck-icon-accuracy";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const APP_SHELL = [
   "./css/workspace-ui.css",
   "./css/project-ui.css",
   "./css/figure-creator.css",
+  "./css/v0.3.3-quickdeck.css",
   "./js/project-store.js",
   "./js/app.js",
   "./js/home-projects.js",
@@ -28,7 +29,14 @@ const APP_SHELL = [
   "./js/pwa.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icons/icon-512.png",
+  "./icons/ui/add-frame.svg",
+  "./icons/ui/delete-frame.svg",
+  "./icons/ui/copy.svg",
+  "./icons/ui/paste.svg",
+  "./icons/ui/play.svg",
+  "./icons/ui/pause.svg",
+  "./icons/ui/settings.svg"
 ];
 
 self.addEventListener("install", event => {
