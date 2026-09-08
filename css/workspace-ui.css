@@ -1747,3 +1747,142 @@ body.denx-navigating .figure-context-toolbar {
 .figure-context-toolbar .figure-rotate-stepper .denx-number-display {
   color: var(--primary);
 }
+
+/* ============================================================
+   DENX v0.2.5 VELOCITY — contextual polish + Text objects
+   ============================================================ */
+
+/* Keep the whole figure toolbar narrow: all three flip axes must fit. */
+.figure-context-toolbar .figure-axis-buttons {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.figure-context-toolbar .figure-axis-buttons button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding-inline: 0 !important;
+}
+
+/* Front / Back are one compact row instead of two tall rows. */
+.figure-layer-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
+
+.figure-layer-row .tool-row {
+  min-width: 0;
+  width: 100%;
+  grid-template-columns: 18px 1fr;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.figure-layer-row .tool-icon {
+  width: 18px;
+  min-width: 18px;
+}
+
+.figure-layer-row .tool-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Text is a first-class stage object above figures. */
+#textLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  overflow: visible;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+}
+
+.denx-text-object {
+  cursor: grab;
+  touch-action: none;
+}
+
+.denx-text-object:active {
+  cursor: grabbing;
+}
+
+.denx-text-value {
+  pointer-events: none;
+  dominant-baseline: hanging;
+}
+
+.denx-text-hitbox {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: all;
+}
+
+.denx-text-object.selected .denx-text-hitbox {
+  stroke: var(--primary);
+  stroke-dasharray: 7 5;
+  filter: drop-shadow(0 0 5px rgba(0,200,255,.55));
+}
+
+body.denx-playing #textLayer,
+body.denx-camera-preview-playing #textLayer,
+body.denx-navigating #textLayer {
+  pointer-events: none !important;
+}
+
+.text-context-toolbar {
+  z-index: 37;
+}
+
+.text-context-field {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 7px 4px;
+  color: #aaa;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.text-context-field textarea,
+.text-context-field select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid #303030;
+  border-radius: 7px;
+  background: #111;
+  color: #f3f3f3;
+  font: inherit;
+  font-size: 10px;
+  outline: none;
+}
+
+.text-context-field textarea {
+  min-height: 54px;
+  padding: 7px;
+  resize: vertical;
+  line-height: 1.3;
+}
+
+.text-context-field select {
+  height: 31px;
+  padding: 0 5px;
+}
+
+.text-context-field textarea:focus,
+.text-context-field select:focus {
+  border-color: rgba(0,200,255,.65);
+  box-shadow: 0 0 0 1px rgba(0,200,255,.16);
+}
+#textLayer { pointer-events: none; }
+.denx-text-object { pointer-events: all; }
