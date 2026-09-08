@@ -10,117 +10,335 @@
     el.textContent = message;
     el.classList.add("show");
     clearTimeout(el.__timer);
-    el.__timer = setTimeout(() => el.classList.remove("show"), 1800);
+    el.__timer = setTimeout(
+      () => el.classList.remove("show"),
+      1800
+    );
   };
 
-  exportBtn?.addEventListener("click", () => dialog?.showModal ? dialog.showModal() : dialog?.setAttribute("open", ""));
-  closeBtn?.addEventListener("click", () => dialog?.close?.());
+  exportBtn?.addEventListener("click", () => {
+    if (dialog?.showModal) dialog.showModal();
+    else dialog?.setAttribute("open", "");
+  });
 
-  function stripEditorArtifacts(svg, width, height) {
+  closeBtn?.addEventListener(
+    "click",
+    () => dialog?.close?.()
+  );
+
+  function cleanSvgLayer(svg) {
     const clone = svg.cloneNode(true);
-    clone.setAttribute("width", width);
-    clone.setAttribute("height", height);
-    clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    clone.setAttribute("preserveAspectRatio", "none");
-    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
     clone.querySelectorAll([
-      "[data-denx-node]", ".figure-node-visual", ".figure-node-touch-target",
-      ".figure-selection-outline", ".figure-main-handle", ".text-hit-target",
-      ".camera-frame", ".camera-frame-handle", ".camera-overlay",
-      ".creator-node", ".creator-node-touch", ".bone-node", ".bone-node-touch",
-      ".tool-preview", "[data-editor-only='true']"
-    ].join(",")).forEach(n => n.remove());
+      "[data-denx-node]",
+      ".figure-node-visual",
+      ".figure-node-touch-target",
+      ".figure-selection-outline",
+      ".figure-main-handle",
+      ".text-hit-target",
+      ".camera-frame",
+      ".camera-frame-handle",
+      ".camera-overlay",
+      ".creator-node",
+      ".creator-node-touch",
+      ".bone-node",
+      ".bone-node-touch",
+      ".tool-preview",
+      "[data-editor-only='true']"
+    ].join(",")).forEach(node => node.remove());
+
     return clone;
   }
 
-  function svgToImage(svg, width, height) {
+  function transformedSvgToImage(
+    sourceSvg,
+    stageWidth,
+    stageHeight,
+    outWidth,
+    outHeight,
+    matrix
+  ) {
     return new Promise((resolve, reject) => {
-      const xml = new XMLSerializer().serializeToString(stripEditorArtifacts(svg, width, height));
-      const blob = new Blob([xml], {type: "image/svg+xml;charset=utf-8"});
+      const clean = cleanSvgLayer(sourceSvg);
+      const children = [...clean.childNodes]
+        .map(node => new XMLSerializer().serializeToString(node))
+        .join("");
+
+      const { a, b, c, d, e, f } = matrix;
+
+      const xml = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="${outWidth}" height="${outHeight}"
+             viewBox="0 0 ${outWidth} ${outHeight}">
+          <g transform="matrix(${a} ${b} ${c} ${d} ${e} ${f})">
+            <svg x="0" y="0"
+                 width="${stageWidth}" height="${stageHeight}"
+                 viewBox="0 0 ${stageWidth} ${stageHeight}"
+                 preserveAspectRatio="none"
+                 overflow="visible">
+              ${children}
+            </svg>
+          </g>
+        </svg>`;
+
+      const blob = new Blob(
+        [xml],
+        { type: "image/svg+xml;charset=utf-8" }
+      );
+
       const url = URL.createObjectURL(blob);
-      const img = new Image();
-      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not render SVG export layer.")); };
-      img.src = url;
+      const image = new Image();
+
+      image.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(image);
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(
+          new Error("Could not render a vector export layer.")
+        );
+      };
+
+      image.src = url;
     });
   }
 
-  async function renderStage() {
-    const drawing = document.getElementById("drawingCanvas");
-    const figures = document.getElementById("figureLayer");
-    const texts = document.getElementById("textLayer");
-    if (!drawing || !figures || !texts) throw new Error("Workspace renderer is not ready.");
-    const width = Number(drawing.width || 2048);
-    const height = Number(drawing.height || 1152);
-    const stage = document.createElement("canvas");
-    stage.width = width;
-    stage.height = height;
-    const ctx = stage.getContext("2d", {alpha:false});
-    const background = document.getElementById("backgroundColorControl")?.value || "#ffffff";
-    ctx.fillStyle = background;
-    ctx.fillRect(0,0,width,height);
-    ctx.drawImage(drawing,0,0,width,height);
-    const [figImg, textImg] = await Promise.all([svgToImage(figures,width,height), svgToImage(texts,width,height)]);
-    ctx.drawImage(figImg,0,0,width,height);
-    ctx.drawImage(textImg,0,0,width,height);
-    return {canvas:stage,width,height,background};
+  function cameraMatrix(
+    stageWidth,
+    stageHeight,
+    camera,
+    outWidth,
+    outHeight
+  ) {
+    const cx =
+      stageWidth / 2 + Number(camera.x || 0);
+    const cy =
+      stageHeight / 2 + Number(camera.y || 0);
+
+    const radians =
+      (-Number(camera.rotation || 0) * Math.PI) / 180;
+
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+
+    const sx =
+      outWidth /
+      Math.max(1, Number(camera.width || stageWidth));
+
+    const sy =
+      outHeight /
+      Math.max(1, Number(camera.height || stageHeight));
+
+    const a = sx * cos;
+    const b = -sy * sin;
+    const c = sx * sin;
+    const d = sy * cos;
+    const e = outWidth / 2 - a * cx - c * cy;
+    const f = outHeight / 2 - b * cx - d * cy;
+
+    return { a, b, c, d, e, f };
   }
 
   async function renderCameraFrame() {
-    window.denxSaveCameraFrameState?.(Number(window.currentFrame || 1));
-    const stage = await renderStage();
-    const frameNumber = Number(window.currentFrame || 1);
-    const camera = window.denxGetCameraFrameState?.(frameNumber) || {x:0,y:0,width:stage.width,height:stage.height,rotation:0};
-    const project = window.denxGetActiveProject?.();
-    const outWidth = Math.max(1, Number(project?.width) || Math.round(camera.width));
-    const outHeight = Math.max(1, Number(project?.height) || Math.round(camera.height));
-    const out = document.createElement("canvas");
-    out.width = outWidth;
-    out.height = outHeight;
-    const ctx = out.getContext("2d", {alpha:false});
-    ctx.fillStyle = stage.background;
-    ctx.fillRect(0,0,outWidth,outHeight);
+    const drawing =
+      document.getElementById("drawingCanvas");
+    const figures =
+      document.getElementById("figureLayer");
+    const texts =
+      document.getElementById("textLayer");
 
-    const cx = stage.width/2 + Number(camera.x||0);
-    const cy = stage.height/2 + Number(camera.y||0);
-    const radians = (-Number(camera.rotation||0)*Math.PI)/180;
-    const cos = Math.cos(radians), sin = Math.sin(radians);
-    const sx = outWidth / Math.max(1, Number(camera.width||stage.width));
-    const sy = outHeight / Math.max(1, Number(camera.height||stage.height));
-    const a = sx*cos, b = -sy*sin, c = sx*sin, d = sy*cos;
-    const e = outWidth/2 - a*cx - c*cy;
-    const f = outHeight/2 - b*cx - d*cy;
-    ctx.setTransform(a,b,c,d,e,f);
-    ctx.drawImage(stage.canvas,0,0);
-    ctx.resetTransform();
-    return out;
+    if (!drawing || !figures || !texts) {
+      throw new Error("Workspace renderer is not ready.");
+    }
+
+    const stageWidth = Number(drawing.width || 2048);
+    const stageHeight = Number(drawing.height || 1152);
+
+    const frameNumber =
+      Number(window.denxCurrentFrame?.() || 1);
+
+    window.denxSaveCameraFrameState?.(frameNumber);
+
+    const camera =
+      window.denxGetCameraFrameState?.(frameNumber) || {
+        x: 0,
+        y: 0,
+        width: stageWidth,
+        height: stageHeight,
+        rotation: 0
+      };
+
+    const project = window.denxGetActiveProject?.();
+
+    const outWidth =
+      Math.max(
+        1,
+        Number(project?.width) ||
+        Math.round(camera.width)
+      );
+
+    const outHeight =
+      Math.max(
+        1,
+        Number(project?.height) ||
+        Math.round(camera.height)
+      );
+
+    const output = document.createElement("canvas");
+    output.width = outWidth;
+    output.height = outHeight;
+
+    const ctx =
+      output.getContext("2d", {
+        alpha: false,
+        desynchronized: false
+      });
+
+    if (!ctx) {
+      throw new Error("Could not create export canvas.");
+    }
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    const background =
+      document.getElementById(
+        "backgroundColorControl"
+      )?.value ||
+      window.denxStageBackgroundColor ||
+      "#ffffff";
+
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, outWidth, outHeight);
+
+    const matrix =
+      cameraMatrix(
+        stageWidth,
+        stageHeight,
+        camera,
+        outWidth,
+        outHeight
+      );
+
+    // Raster drawing layer: transform the original canvas once, directly
+    // into the final output. No low-resolution intermediate camera crop.
+    ctx.save();
+    ctx.setTransform(
+      matrix.a,
+      matrix.b,
+      matrix.c,
+      matrix.d,
+      matrix.e,
+      matrix.f
+    );
+    ctx.drawImage(drawing, 0, 0);
+    ctx.restore();
+
+    // Vector layers: transform inside SVG and rasterize at FINAL output size.
+    // This preserves the clean line quality visible in the DenX editor.
+    const [figureImage, textImage] =
+      await Promise.all([
+        transformedSvgToImage(
+          figures,
+          stageWidth,
+          stageHeight,
+          outWidth,
+          outHeight,
+          matrix
+        ),
+        transformedSvgToImage(
+          texts,
+          stageWidth,
+          stageHeight,
+          outWidth,
+          outHeight,
+          matrix
+        )
+      ]);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(
+      figureImage,
+      0,
+      0,
+      outWidth,
+      outHeight
+    );
+    ctx.drawImage(
+      textImage,
+      0,
+      0,
+      outWidth,
+      outHeight
+    );
+
+    return output;
   }
 
   async function exportCurrentPng() {
     const frame = await renderCameraFrame();
-    const blob = await new Promise((resolve,reject) => frame.toBlob(b => b ? resolve(b) : reject(new Error("PNG encoding failed.")), "image/png"));
+
+    const blob = await new Promise(
+      (resolve, reject) =>
+        frame.toBlob(
+          result =>
+            result
+              ? resolve(result)
+              : reject(
+                  new Error("PNG encoding failed.")
+                ),
+          "image/png"
+        )
+    );
+
     const project = window.denxGetActiveProject?.();
-    const safe = String(project?.name || "DenX-Frame").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "") || "DenX-Frame";
-    const current = Number(window.currentFrame || 1);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${safe}-frame-${current}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1600);
+
+    const safe =
+      String(project?.name || "DenX-Frame")
+        .replace(/[^a-z0-9_-]+/gi, "-")
+        .replace(/^-+|-+$/g, "") ||
+      "DenX-Frame";
+
+    const current =
+      Number(window.denxCurrentFrame?.() || 1);
+
+    const anchor = document.createElement("a");
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = `${safe}-frame-${current}.png`;
+
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+
+    const href = anchor.href;
+    setTimeout(
+      () => URL.revokeObjectURL(href),
+      1600
+    );
   }
 
-  window.denxRenderCurrentCameraFrame = renderCameraFrame;
+  window.denxRenderCurrentCameraFrame =
+    renderCameraFrame;
 
   pngBtn?.addEventListener("click", async () => {
     pngBtn.disabled = true;
+
     try {
-      toast("Rendering camera frame…");
+      toast("Rendering full-quality camera frame…");
       await exportCurrentPng();
       toast("PNG ready ✓");
       dialog?.close?.();
     } catch (error) {
-      console.error("DenX frame export failed:", error);
-      toast(error?.message || "Could not export this frame.");
+      console.error(
+        "DenX frame export failed:",
+        error
+      );
+      toast(
+        error?.message ||
+        "Could not export this frame."
+      );
     } finally {
       pngBtn.disabled = false;
     }
