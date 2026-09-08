@@ -540,3 +540,169 @@
     color:#92999d;
   }
 }
+
+
+/* ============================================================
+   DENX v0.3.5 — FIXED NATIVE PAGE SHELL
+   Screen never scrolls. Header stays visible.
+   Only lower content region scrolls.
+   ============================================================ */
+
+@media (orientation:landscape) and (min-width:640px) {
+  .denx-project-setup.home-card,
+  .denx-native-page.home-card {
+    width:100% !important;
+    max-width:none !important;
+    height:100dvh !important;
+    min-height:100dvh !important;
+    overflow:hidden !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:auto minmax(0,1fr) !important;
+    align-items:stretch !important;
+    gap:0 !important;
+    padding:0 clamp(42px,7vw,105px) 18px !important;
+  }
+
+  .denx-project-setup .denx-back-link,
+  .denx-native-page .denx-back-link {
+    position:absolute !important;
+    top:16px !important;
+    left:clamp(24px,4vw,56px) !important;
+    z-index:5;
+  }
+
+  .denx-project-setup .denx-native-copy,
+  .denx-native-page .denx-native-copy {
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:min(100%,1180px) !important;
+    margin:0 auto !important;
+    padding:52px 0 12px !important;
+    align-self:start !important;
+    text-align:left !important;
+  }
+
+  .denx-project-setup .denx-native-copy h2,
+  .denx-native-page .denx-native-copy h2 {
+    margin:0 !important;
+    max-width:none !important;
+    font-size:clamp(2rem,4vw,3.65rem) !important;
+    line-height:.94 !important;
+  }
+
+  .denx-project-setup .denx-native-copy h2 br,
+  .denx-native-page .denx-native-copy h2 br {
+    display:none !important;
+  }
+
+  .denx-project-setup .denx-native-copy p,
+  .denx-native-page .denx-native-copy p {
+    max-width:720px !important;
+    margin:7px 0 0 !important;
+    font-size:clamp(.76rem,1.1vw,.94rem) !important;
+    line-height:1.34 !important;
+  }
+
+  .denx-project-setup .denx-project-form,
+  .denx-native-page .denx-native-panel {
+    grid-column:1 !important;
+    grid-row:2 !important;
+    min-height:0 !important;
+    max-height:none !important;
+    width:min(100%,1180px) !important;
+    max-width:1180px !important;
+    margin:0 auto !important;
+    align-self:stretch !important;
+    justify-self:center !important;
+    overflow:auto !important;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+  }
+
+  .denx-project-setup .denx-project-form {
+    padding:12px max(10px,15vw) 26px !important;
+    justify-content:flex-start !important;
+  }
+
+  .denx-project-form .denx-form-field,
+  .denx-project-form .denx-primary-action,
+  .denx-project-form .denx-inline-error {
+    width:100% !important;
+    max-width:720px !important;
+    align-self:center !important;
+  }
+
+  .denx-open-page .denx-native-panel {
+    display:grid !important;
+    grid-template-rows:auto minmax(0,1fr) !important;
+    overflow:hidden !important;
+  }
+
+  .denx-open-page .denx-native-project-list {
+    min-height:0 !important;
+    overflow:auto !important;
+    padding:12px !important;
+  }
+
+  .denx-settings-page .denx-native-panel {
+    overflow:auto !important;
+  }
+}
+
+@media (orientation:landscape) and (max-height:430px) {
+  .denx-project-setup .denx-native-copy,
+  .denx-native-page .denx-native-copy {
+    padding-top:39px !important;
+    padding-bottom:7px !important;
+  }
+
+  .denx-project-setup .denx-native-copy h2,
+  .denx-native-page .denx-native-copy h2 {
+    font-size:clamp(1.55rem,6.6vh,2.35rem) !important;
+  }
+
+  .denx-project-setup .denx-native-copy p,
+  .denx-native-page .denx-native-copy p {
+    margin-top:3px !important;
+    font-size:clamp(.66rem,2.6vh,.8rem) !important;
+  }
+
+  .denx-native-panel-head {
+    min-height:52px !important;
+    padding:9px 13px !important;
+  }
+
+  .denx-native-setting-row,
+  .denx-native-setting-select {
+    min-height:60px !important;
+    padding:9px 13px !important;
+  }
+
+  .denx-project-form .denx-form-field input,
+  .denx-project-form .denx-form-field select {
+    min-height:40px !important;
+  }
+
+  .denx-project-form .denx-primary-action {
+    min-height:44px !important;
+  }
+}
+
+.denx-sidebar-project-identity[data-state="unsaved"] .denx-sidebar-save-state {
+  color:#ffd27b;
+}
+.denx-sidebar-project-identity[data-state="unsaved"] .denx-sidebar-save-state i {
+  background:#ffb84d;
+  box-shadow:0 0 7px rgba(255,184,77,.50);
+}
+.denx-sidebar-project-identity[data-state="saving"] .denx-sidebar-save-state {
+  color:#c5cdd1;
+}
+.denx-sidebar-project-identity[data-state="saving"] .denx-sidebar-save-state i {
+  background:#c5cdd1;
+  animation:denxSavePulse .9s ease-in-out infinite;
+}
+@keyframes denxSavePulse {
+  50% { opacity:.35; transform:scale(.72); }
+}
