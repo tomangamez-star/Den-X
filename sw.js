@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v22-velocity-0-2-7-select-world-boundary";
+const CACHE_NAME = "denx-animator-v30-projects-save-open-figure-handoff";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,8 +7,12 @@ const APP_SHELL = [
   "./figure-creator.html",
   "./css/style.css",
   "./css/workspace-ui.css",
+  "./css/project-ui.css",
   "./css/figure-creator.css",
+  "./js/project-store.js",
   "./js/app.js",
+  "./js/home-projects.js",
+  "./js/project-setup.js",
   "./js/history.js",
   "./js/figure-library.js",
   "./js/tools.js",
@@ -19,6 +23,7 @@ const APP_SHELL = [
   "./js/bones.js",
   "./js/timeline.js",
   "./js/workspace-persistence.js",
+  "./js/frame-export.js",
   "./js/figure-creator.js",
   "./js/pwa.js",
   "./manifest.webmanifest",

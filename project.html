@@ -3,47 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Create Project</title>
-
+<title>Create Project · DenX</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/project-ui.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111111">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="icon" href="icons/icon-192.png">
 </head>
 <body>
-
 <div id="app">
+  <section class="home-card denx-project-setup">
+    <button id="backBtn" class="denx-back-link" type="button">← Back</button>
+    <h2>Create Project</h2>
+    <p>Set up the animation. You can change export options later.</p>
 
-<section id="projectScreen" class="home-card">
+    <label class="denx-form-field">
+      <span>Project name</span>
+      <input id="projectNameInput" type="text" maxlength="60" placeholder="My Animation" autocomplete="off">
+    </label>
 
-<h2>Create Project</h2>
+    <label class="denx-form-field">
+      <span>Canvas</span>
+      <select id="projectCanvasPreset">
+        <option value="1920x1080">16:9 · 1920 × 1080</option>
+        <option value="1080x1920">9:16 · 1080 × 1920</option>
+        <option value="1080x1080">1:1 · 1080 × 1080</option>
+        <option value="2048x1152">DenX Wide · 2048 × 1152</option>
+      </select>
+    </label>
 
-<p>Name your animation</p>
+    <label class="denx-form-field">
+      <span>FPS</span>
+      <select id="projectFpsInput">
+        <option value="12">12 FPS</option>
+        <option value="24" selected>24 FPS</option>
+        <option value="30">30 FPS</option>
+        <option value="60">60 FPS</option>
+      </select>
+    </label>
 
-<input
-type="text"
-id="projectName"
-placeholder="Project Name">
-
-<div class="project-actions">
-  <button id="createBtn">
-  Create
-  </button>
-
-  <button id="backBtn" class="secondary-btn">
-  Back
-  </button>
+    <button id="createBtn" class="denx-primary-action" type="button">Create Project</button>
+    <div id="projectSetupError" class="denx-inline-error" aria-live="polite"></div>
+  </section>
 </div>
-
-</section>
-
-</div>
-
+<script src="js/project-store.js"></script>
 <script src="js/app.js"></script>
-<script src="js/pwa.js"></script>
-
+<script src="js/project-setup.js"></script>
 </body>
 </html>
