@@ -1,5 +1,28 @@
 console.log("DenX Animator has started.");
 
+
+(function loadDenx036ToolIdentity(){
+    if (!document.querySelector('link[data-denx-tools-v036]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/tool-identity.css';
+        link.dataset.denxToolsV036 = 'true';
+        document.head.appendChild(link);
+    }
+
+    if (
+        document.getElementById('workspace') &&
+        !document.querySelector('script[data-denx-tools-v036]')
+    ) {
+        const script = document.createElement('script');
+        script.src = 'js/tool-identity.js';
+        script.defer = true;
+        script.dataset.denxToolsV036 = 'true';
+        document.body.appendChild(script);
+    }
+})();
+
+
 // v0.3.3+ Quick Deck visual patch loader.
 (function loadDenxQuickDeckPolish(){
     if (!document.querySelector('link[data-denx-v033]')) {
@@ -27,7 +50,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.3.5 Stability';
+    if (footer) footer.textContent = 'Version 0.3.6 Tool Identity';
 })();
 
 // HOME SCREEN
