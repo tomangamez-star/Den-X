@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+<!-- no neck: head touches body at y=7.4 -->
+<circle cx="10" cy="5.2" r="2.2" stroke="#EEF3F5" stroke-width="1.55"/>
+<path d="M10 7.4v6M10 9.4 6.6 11.8M10 9.4l3.4 2.4M10 13.4l-2.8 5M10 13.4l2.8 5" stroke="#EEF3F5" stroke-width="1.65" stroke-linecap="round"/>
+<circle cx="10" cy="9.4" r=".95" fill="#72DDF9"/>
+<path d="M17.8 13.5v6M14.8 16.5h6" stroke="#72DDF9" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
