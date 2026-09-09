@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v039-color-accuracy-mp4";
+const CACHE_NAME = "denx-animator-v0400-stable-render";
 
 const APP_SHELL = [
   "./",

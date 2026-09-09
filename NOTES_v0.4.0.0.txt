@@ -1,0 +1,26 @@
+DenX Animator v0.4.0.0 — Stable Render
+
+MAIN FIXES
+
+1. MP4 FPS / SLOW-MOTION FIX
+- DenX no longer starts the video clock while it is still rendering clean frames.
+- Phase 1 pre-renders every clean camera frame.
+- Phase 2 starts MediaRecorder only after those frames are ready.
+- Frames are then presented on exact FPS deadlines.
+- 12 FPS now targets a final duration of frame_count / 12 seconds.
+- Expensive 1080p frame preparation can take as long as needed without stretching the animation.
+- Export status separates Pre-rendering from Encoding.
+
+2. LEFT TOOLBAR CORRUPTION — INTERACTION PASS
+- The evidence shows corruption starts when Export/Pan/Select/etc are PRESSED.
+- v0.4 therefore targets interaction compositing rather than SVG rendering.
+- Disabled transitions, animations, filters, backdrop filters, transforms,
+  text shadows and GPU-style state effects inside the left toolbar.
+- Active/pressed tool states can still change normal colors/borders.
+- Quick Deck and canvas are untouched.
+
+3. VERSION
+- Home footer: Version 0.4.0.0 Stable Render
+- PWA cache bumped to v0.4.0.0
+
+No new icon pass in this build. This is deliberately a stability/render patch.
