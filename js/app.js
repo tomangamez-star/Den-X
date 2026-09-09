@@ -38,6 +38,26 @@ console.log("DenX Animator has started.");
 })();
 
 
+
+(function loadDenx043ToolbarRenderer(){
+    if (!document.getElementById('workspace')) return;
+
+    if (!document.querySelector('link[data-denx-toolbar-v043]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/toolbar-stability-v043.css';
+        link.dataset.denxToolbarV043 = 'true';
+        document.head.appendChild(link);
+    }
+
+    if (!document.querySelector('script[data-denx-toolbar-v043]')) {
+        const script = document.createElement('script');
+        script.src = 'js/toolbar-stability-v043.js';
+        script.dataset.denxToolbarV043 = 'true';
+        document.body.appendChild(script);
+    }
+})();
+
 // v0.3.3+ Quick Deck visual patch loader.
 (function loadDenxQuickDeckPolish(){
     if (!document.querySelector('link[data-denx-v033]')) {
@@ -65,7 +85,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.4.2 Stability Engine';
+    if (footer) footer.textContent = 'Version 0.4.3 Toolbar Renderer';
 })();
 
 // HOME SCREEN
