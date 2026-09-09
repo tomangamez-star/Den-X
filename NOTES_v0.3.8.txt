@@ -1,0 +1,32 @@
+DenX Animator v0.3.8 — CUMULATIVE Tool / Color Fix
+
+IMPORTANT:
+This ZIP already contains the entire uncommitted v0.3.7 fix PLUS this new pass,
+so you only need to apply/commit this one ZIP.
+
+Includes v0.3.7:
+- Full-spectrum Color Studio fix for white/gray backgrounds.
+- Android/Chromium toolbar repaint/compositing safeguards.
+- Dedicated nav-back.svg navigation icon.
+- v0.3.7 tool identity fixes.
+
+New in v0.3.8:
+- DenX Color Studio now works in Figure Creator for:
+  Segment / normal figure color
+  Polyfill color
+- Figure main color continues to use the corrected full-spectrum picker.
+- Text color is also wired to DenX Color Studio.
+- Figure Creator keeps its existing quick palette; tapping the main color control
+  opens the full DenX Color Studio.
+- Front / Back object-depth controls are resized/reflowed so the labels show
+  completely instead of appearing as “Fron” / “Bac”.
+- Native Create/Open/Settings pages explicitly load the nav-back icon script,
+  so the new navigation back SVG actually appears there.
+- Cumulative PWA cache bumped to v0.3.8.
+- Home footer version bumped to Version 0.3.8 Tool Polish.
+
+Still untouched:
+- Quick Deck.
+- Clean high-quality PNG export.
+- Animation mechanics.
+- MP4 export.

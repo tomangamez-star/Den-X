@@ -1,0 +1,24 @@
+DenX Animator v0.3.7 — Color Studio Render Fix + Back Navigation Icon
+
+Fixes:
+- Background Color Studio no longer turns the color field white when the
+  selected color has 0% saturation (white/gray/black).
+- The color field now ALWAYS shows the full hue/brightness spectrum.
+- Removed the mix-blend saturation overlay that caused the white-field bug.
+- Removed backdrop blur and added paint containment/isolation around the
+  Color Studio and toolbox to reduce Android/Chromium repaint corruption.
+- Added a dedicated native navigation Back icon:
+  icons/tools/nav-back.svg
+  This is intentionally separate from icons/tools/back.svg, which remains
+  the object/layer Move Back icon.
+- Native Create/Open/Settings back buttons keep the text label but now use
+  the proper DenX SVG arrow.
+- Version bumped to 0.3.7 Render Fix.
+- PWA cache bumped so the fixed CSS/JS replaces the corrupted cached pass.
+
+Intentionally unchanged:
+- Quick Deck.
+- High-quality PNG export.
+- v0.3.5 native screen shell.
+- Existing v0.3.6 tool icons.
+- MP4 export.

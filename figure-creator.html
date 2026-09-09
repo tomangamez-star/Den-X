@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DenX Figure Creator</title>
 <link rel="stylesheet" href="css/figure-creator.css">
+<link rel="stylesheet" href="css/tool-identity.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0d0d0d">
 <meta name="mobile-web-app-capable" content="yes">
@@ -19,14 +20,12 @@
       <button id="creatorUndoBtn" class="creator-top-btn" title="Undo" aria-label="Undo">↶</button>
       <button id="creatorRedoBtn" class="creator-top-btn" title="Redo" aria-label="Redo">↷</button>
     </div>
-
     <input id="figureNameInput" class="figure-name-input" value="New Figure" maxlength="40" aria-label="Figure name">
     <button id="creatorSaveBtn" class="creator-save-btn">Save</button>
   </header>
 
   <main class="creator-main">
     <aside id="creatorToolbar" class="creator-toolbar">
-
       <section class="creator-tool-section" data-creator-section="segments">
         <div class="creator-section-title">Segments</div>
         <button class="segment-type-btn" data-segment-type="none">None</button>
@@ -40,12 +39,10 @@
 
       <section class="creator-tool-section" data-creator-section="segment">
         <div class="creator-section-title">Segment</div>
-
         <label class="creator-control">
           <span>Color</span>
           <input id="segmentColorInput" type="color" value="#111111">
         </label>
-
         <div class="creator-palette" id="creatorPalette" aria-label="Color palette">
           <button data-color="#111111" style="--swatch:#111111" aria-label="Black"></button>
           <button data-color="#ffffff" style="--swatch:#ffffff" aria-label="White"></button>
@@ -58,48 +55,38 @@
           <button data-color="#9b5cff" style="--swatch:#9b5cff" aria-label="Purple"></button>
           <button data-color="#ff4fb3" style="--swatch:#ff4fb3" aria-label="Pink"></button>
         </div>
-
         <label class="creator-control creator-range-control">
           <span class="creator-range-label"><span>Size</span><output id="segmentWidthValue">18</output></span>
           <input id="segmentWidthInput" type="range" min="2" max="80" value="18">
         </label>
-
         <label class="creator-toggle-control">
           <span>Elastic</span>
           <input id="elasticToggle" type="checkbox">
         </label>
-
         <button id="deleteSegmentBtn" class="creator-action-btn">Delete</button>
       </section>
 
       <section class="creator-tool-section" data-creator-section="polyfill">
         <div class="creator-section-title">Polyfill</div>
-
         <button id="polyfillBeginBtn" class="creator-action-btn">Begin</button>
-
         <label class="creator-control">
           <span>Color</span>
           <input id="polyfillColorInput" type="color" value="#00c8ff">
         </label>
-
         <button id="polyfillUndoPointBtn" class="creator-action-btn" disabled>Undo Point</button>
         <button id="polyfillFinishBtn" class="creator-action-btn" disabled>Finish</button>
       </section>
 
       <section class="creator-tool-section" data-creator-section="reference">
         <div class="creator-section-title">Reference</div>
-
         <button id="referenceImportBtn" class="creator-action-btn">Import Image</button>
-
         <label class="creator-control creator-range-control">
           <span class="creator-range-label"><span>Opacity</span><output id="referenceOpacityValue">45%</output></span>
           <input id="referenceOpacityInput" type="range" min="0.08" max="1" step="0.01" value="0.45">
         </label>
-
         <button id="referenceHideBtn" class="creator-action-btn" disabled>Hide</button>
         <button id="referenceRemoveBtn" class="creator-action-btn" disabled>Remove</button>
         <button id="creatorCancelBtn" class="creator-action-btn creator-cancel-btn">Cancel</button>
-
         <input id="referenceFileInput" type="file" accept="image/*" hidden>
       </section>
 
@@ -125,10 +112,8 @@
       <div id="creatorCamera" class="creator-camera">
         <svg id="creatorStage" viewBox="0 0 4096 4096" aria-label="Figure creator 4K construction world"></svg>
       </div>
-
       <div class="creator-world-note">4096 × 4096</div>
       <div class="creator-stage-note">MAIN ■</div>
-
       <div class="creator-zoom-controls" aria-label="Creator zoom">
         <button id="creatorZoomIn" class="creator-zoom-btn">＋</button>
         <button id="creatorZoomOut" class="creator-zoom-btn">−</button>
@@ -141,6 +126,7 @@
 
 <script src="js/figure-library.js"></script>
 <script src="js/figure-creator.js"></script>
+<script src="js/tool-identity.js"></script>
 <script src="js/pwa.js"></script>
 </body>
 </html>
