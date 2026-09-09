@@ -1,0 +1,30 @@
+DenX Animator v0.4.3 — Toolbar Renderer Rebuild
+
+Base / rollback
+- v0.4.2's global .toolbar.expanded-toolbar paint/position override is REMOVED.
+- tool-identity.css is restored from the v0.4.1 baseline.
+- Old Android stability rules are narrowed to #toolbox only, so they no longer
+  affect the right contextual figure/text rails.
+
+Structural corruption fix
+- #toolbox is now a fixed, non-scrolling shell.
+- A new .denx-toolbox-scroller is created inside it at runtime and is the only
+  vertical scrolling surface.
+- No transforms, blur, backdrop blur, shadows, smooth scrolling, containment,
+  or will-change are used on the left scroll surface.
+- Quick Find no longer uses backdrop blur over the moving toolbar.
+- Quick Find now targets the inner scroller directly and uses instant scrolling.
+
+Right toolbar regression
+- Figure and Text contextual rails are explicitly anchored top/right/bottom.
+- They are never allowed into the editor flex flow or the center of the canvas.
+
+Preserved
+- v0.4.2 node priority / precision interaction remains.
+- v0.4.2 duplicate-tool event reduction remains.
+- v0.4.0 exact-FPS MP4 export remains untouched.
+
+Primary test:
+1. Scroll the left toolbar aggressively up/down for 20–30 seconds.
+2. Spam Pan / Select.
+3. Select a figure and confirm the contextual rail stays on the far right.

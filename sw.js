@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v042-stability-engine";
+const CACHE_NAME = "denx-animator-v043-toolbar-renderer";
 
 const APP_SHELL = [
   "./",
@@ -16,6 +16,7 @@ const APP_SHELL = [
   "./css/v0.3.3-quickdeck.css",
   "./css/v0.3.4-stability.css",
   "./css/tool-identity.css",
+  "./css/toolbar-stability-v043.css",
 
   "./js/project-store.js",
   "./js/app.js",
@@ -36,6 +37,7 @@ const APP_SHELL = [
   "./js/frame-export.js",
   "./js/video-export.js",
   "./js/node-interaction-v042.js",
+  "./js/toolbar-stability-v043.js",
   "./js/figure-creator.js",
   "./js/tool-identity.js",
   "./js/pwa.js",
