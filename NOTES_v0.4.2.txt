@@ -1,0 +1,23 @@
+DenX Animator v0.4.2 — Stability Engine
+
+Toolbar / corruption
+- Tool changes are now idempotent.
+- Re-tapping an already active tool no longer emits denx:toolchange.
+- Removed the old active-tool -> Pan bounce behavior.
+- Active tool visuals use only solid background/border changes: no glow, filter,
+  transform, animation, shadow or transition.
+- The toolbar is forced to a simple opaque paint surface.
+
+Interaction engine
+- Node acquisition still beats Pan.
+- Overlap priority remains active figure -> connected chain -> same figure -> other figure.
+- Automatic node acquisition now enters Select through window.denxSetTool()
+  directly instead of faking a click on the Select toolbar button.
+- This separates interaction routing from UI presentation.
+
+Performance
+- Duplicate tool taps no longer trigger repeated full figure/UI rebuilds.
+- Node dragging still uses DenX Velocity's frame-limited live geometry path.
+- Selection feedback remains one thin non-glowing line.
+
+The exact-FPS MP4 renderer from v0.4.0 is untouched.
