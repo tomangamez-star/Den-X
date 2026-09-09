@@ -1,4 +1,5 @@
-const CACHE_NAME = "denx-animator-v038-cumulative-color-figure-label-fix";
+const CACHE_NAME = "denx-animator-v039-color-accuracy-mp4";
+
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,12 +8,15 @@ const APP_SHELL = [
   "./settings.html",
   "./workspace.html",
   "./figure-creator.html",
+
   "./css/style.css",
   "./css/workspace-ui.css",
   "./css/project-ui.css",
   "./css/figure-creator.css",
   "./css/v0.3.3-quickdeck.css",
   "./css/v0.3.4-stability.css",
+  "./css/tool-identity.css",
+
   "./js/project-store.js",
   "./js/app.js",
   "./js/home-projects.js",
@@ -30,11 +34,16 @@ const APP_SHELL = [
   "./js/timeline.js",
   "./js/workspace-persistence.js",
   "./js/frame-export.js",
+  "./js/video-export.js",
   "./js/figure-creator.js",
+  "./js/tool-identity.js",
   "./js/pwa.js",
+
   "./manifest.webmanifest",
+
   "./icons/icon-192.png",
   "./icons/icon-512.png",
+
   "./icons/ui/add-frame.svg",
   "./icons/ui/delete-frame.svg",
   "./icons/ui/copy.svg",
@@ -42,8 +51,7 @@ const APP_SHELL = [
   "./icons/ui/play.svg",
   "./icons/ui/pause.svg",
   "./icons/ui/settings.svg",
-  "./css/tool-identity.css",
-  "./js/tool-identity.js",
+
   "./icons/tools/pan.svg",
   "./icons/tools/select.svg",
   "./icons/tools/background.svg",
@@ -59,3 +67,44 @@ const APP_SHELL = [
   "./icons/tools/front.svg",
   "./icons/tools/back.svg",
   "./icons/tools/nav-back.svg"
+];
+
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME)
+          .then(cache => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() =>
+        caches.match(event.request)
+          .then(cached =>
+            cached || caches.match("./index.html")
+          )
+      )
+  );
+});

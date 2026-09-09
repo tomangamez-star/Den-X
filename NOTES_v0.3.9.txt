@@ -1,0 +1,35 @@
+DenX Animator v0.3.9 — Color Accuracy + Toolbar Render Fix + MP4 Start
+
+COLOR STUDIO
+- Rebuilt the picker model.
+- Main field:
+  horizontal = Hue
+  vertical = Saturation
+- New vertical side slider controls Brightness / Darkness.
+- Picker is now a compact centered popup, not a full-screen takeover.
+- HSB, RGB, HEX, cursor, previews and the final applied color all use one HSV state.
+- Works with Workspace Background, Drawing, Figure, Text, Figure Creator Segment and Polyfill colors.
+
+LEFT TOOLBAR CORRUPTION
+- Removed the failed contain/isolation paint hacks.
+- High-frequency toolbar SVGs are now fetched and inserted INLINE in the toolbar DOM
+  rather than rendered as external SVG <img> elements in the scrolling toolbar.
+- This specifically targets the retained-pixel corruption seen on Android/Chromium.
+
+MP4 — FIRST WORKING RENDER PASS
+- The old disabled GIF / MP4 option becomes Animation · MP4.
+- Reuses the already-clean DenX camera frame renderer for every animation frame.
+- Uses the project's current FPS.
+- Restores the frame the animator was on after export.
+- Produces a real .mp4 only when MediaRecorder reports MP4/H.264 support.
+- If the browser cannot encode MP4, DenX reports that clearly instead of creating a fake MP4.
+
+VERSION / PWA
+- Home version: Version 0.3.9 Color + MP4.
+- PWA cache rebuilt and bumped to v0.3.9.
+
+UNCHANGED
+- Quick Deck.
+- Clean PNG export path.
+- Native Create/Open/Settings shell.
+- Core animation/editing mechanics.
