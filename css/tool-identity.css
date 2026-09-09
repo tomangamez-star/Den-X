@@ -599,3 +599,59 @@
   filter: none !important;
 }
 .figure-node-touch-target { touch-action: none !important; }
+
+
+/* ============================================================
+   DENX v0.4.2 — STABLE TOOLBAR PAINT + CHEAP ACTIVE STATES
+   ============================================================ */
+#toolbox,
+.toolbar.expanded-toolbar {
+  position: relative !important;
+  z-index: 4 !important;
+  background: #0d0d0d !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+#toolbox button,
+.toolbar.expanded-toolbar button,
+#toolbox button.active,
+.toolbar.expanded-toolbar button.active,
+#toolbox button:active,
+.toolbar.expanded-toolbar button:active {
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+#toolbox button.active,
+.toolbar.expanded-toolbar button.active {
+  background: var(--primary) !important;
+  color: #050505 !important;
+  border-color: rgba(255,255,255,.35) !important;
+}
+
+#toolbox .tool-icon,
+#toolbox .tool-icon svg,
+.toolbar.expanded-toolbar .tool-icon,
+.toolbar.expanded-toolbar .tool-icon svg {
+  filter: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+.denx-active-chain-guide {
+  stroke-width: 1.2px;
+  opacity: .9;
+}
