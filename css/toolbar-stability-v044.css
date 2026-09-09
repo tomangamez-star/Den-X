@@ -1,0 +1,361 @@
+/* ============================================================
+   DENX v0.4.4 — LAYOUT ISOLATION ENGINE
+   Separates the scrolling tool UI from the renderer/compositor tree.
+   ============================================================ */
+
+.editor.denx-layout-isolated {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  background: #111 !important;
+}
+
+/* Dedicated left UI region. It owns its own paint area and never overlays
+   the stage, camera or right contextual rails. */
+.denx-left-region {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: var(--denx-toolbox-width, 132px) 50px;
+  min-width: calc(var(--denx-toolbox-width, 132px) + 50px);
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  z-index: 8;
+  background: #0d0d0d;
+  border-right: 1px solid #242424;
+  isolation: isolate;
+  contain: layout paint;
+}
+
+/* Dedicated renderer region. Canvas/SVG/right rails never share the toolbox
+   scroller's paint surface. */
+.denx-editor-region {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  background: #111;
+  isolation: isolate;
+  contain: layout paint;
+}
+
+/* Left toolbar fixed shell. */
+.denx-left-region > #toolbox.toolbar.expanded-toolbar {
+  grid-column: 1;
+  grid-row: 1;
+  width: var(--denx-toolbox-width, 132px) !important;
+  min-width: var(--denx-toolbox-width, 132px) !important;
+  max-width: var(--denx-toolbox-width, 132px) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  inset: auto !important;
+  background: #0d0d0d !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: none !important;
+  contain: content;
+}
+
+/* Only this child scrolls. */
+#toolbox > .denx-toolbox-scroller {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 7px 6px 80px;
+  overscroll-behavior-y: contain;
+  scroll-behavior: auto !important;
+  touch-action: pan-y;
+  background: #0d0d0d;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  will-change: auto !important;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+#toolbox > .denx-toolbox-scroller::-webkit-scrollbar { display:none; }
+
+#toolbox > .denx-toolbox-scroller *,
+#toolbox > .denx-toolbox-scroller .tool-row,
+#toolbox > .denx-toolbox-scroller .tool-control {
+  backface-visibility: visible !important;
+  transform-style: flat !important;
+  will-change: auto !important;
+}
+
+/* Quick Find is now a RESERVED 50px rail instead of a translucent overlay
+   hovering over the stage. */
+.denx-left-region > .tool-quickfind {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative !important;
+  inset: auto !important;
+  align-self: stretch;
+  width: 50px;
+  min-width: 50px;
+  height: 100%;
+  padding: 8px 4px;
+  border: 0;
+  border-left: 1px solid #242424;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #101010 !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.denx-left-region > .tool-quickfind .quickfind-link {
+  pointer-events: auto !important;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 4px;
+  font-size: 7.5px;
+  text-align: left;
+}
+
+/* Viewport becomes an ordinary full-region child instead of a flex sibling
+   of scrolling toolbars. */
+.denx-editor-region > #viewport {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Right contextual rails are owned by renderer region only. */
+.denx-editor-region > #figureActionsRail.figure-context-toolbar,
+.denx-editor-region > #textActionsRail.text-context-toolbar {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+  margin: 0 !important;
+  flex: none !important;
+  z-index: 60 !important;
+}
+
+.denx-editor-region > #figureActionsRail.figure-context-toolbar:not(.hidden),
+.denx-editor-region > #textActionsRail.text-context-toolbar:not(.hidden) {
+  transform: translateX(0) !important;
+}
+
+.denx-editor-region > #figureActionsRail.figure-context-toolbar.hidden,
+.denx-editor-region > #textActionsRail.text-context-toolbar.hidden {
+  transform: translateX(100%) !important;
+}
+
+/* Camera properties / zoom are also contained inside renderer region. */
+.denx-editor-region > #cameraProperties,
+.denx-editor-region > .zoom-controls {
+  z-index: 65;
+}
+
+/* Cheap active node language — selected + neighbor, no whole figure glow. */
+.figure-node-visual.denx-node-neighbor {
+  stroke: rgba(0,200,255,.55) !important;
+  stroke-width: var(--denx-node-stroke, 1px) !important;
+  filter: none !important;
+}
+
+.figure-node-visual.selected {
+  stroke: var(--primary) !important;
+  filter: none !important;
+}
+
+.denx-active-chain-guide {
+  stroke: var(--primary) !important;
+  stroke-width: 2 !important;
+  opacity: .82 !important;
+  filter: none !important;
+  pointer-events: none !important;
+}
+
+/* Figure copy / paste row. */
+.denx-figure-copy-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 4px;
+  width: 100%;
+}
+
+.figure-context-toolbar .denx-figure-copy-row .tool-row {
+  min-width: 0 !important;
+  width: 100% !important;
+  grid-template-columns: 18px 1fr !important;
+  padding-left: 5px !important;
+  padding-right: 5px !important;
+}
+
+.figure-context-toolbar .denx-figure-copy-row .tool-icon {
+  width: 18px !important;
+  min-width: 18px !important;
+}
+
+/* Export Studio second screen. */
+.denx-export-screen[hidden] { display:none !important; }
+.denx-export-screen {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.denx-export-screen-head {
+  display:grid;
+  grid-template-columns:34px 1fr;
+  gap:8px;
+  align-items:center;
+}
+
+.denx-export-back {
+  width:34px;
+  height:34px;
+  border:1px solid #303030;
+  border-radius:9px;
+  background:#171717;
+  color:#fff;
+  font-size:18px;
+}
+
+.denx-export-screen-head strong {
+  display:block;
+  color:#fff;
+  font-size:13px;
+}
+
+.denx-export-screen-head small {
+  display:block;
+  margin-top:2px;
+  color:#888;
+  font-size:9px;
+}
+
+.denx-quality-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+}
+
+.denx-quality-option {
+  min-height:66px;
+  padding:9px;
+  border:1px solid #303030;
+  border-radius:11px;
+  background:#151515;
+  color:#fff;
+  text-align:left;
+}
+
+.denx-quality-option strong,
+.denx-quality-option small {
+  display:block;
+}
+
+.denx-quality-option strong {
+  color:#f4f4f4;
+  font-size:11px;
+}
+
+.denx-quality-option small {
+  margin-top:4px;
+  color:#858585;
+  font-size:9px;
+}
+
+.denx-quality-option.active {
+  border-color:rgba(0,200,255,.74);
+  background:rgba(0,200,255,.11);
+  box-shadow:0 0 0 1px rgba(0,200,255,.12) inset;
+}
+
+.denx-quality-option.active strong { color:var(--primary); }
+
+.denx-export-meta-card {
+  padding:9px 10px;
+  border:1px solid #292929;
+  border-radius:10px;
+  background:#111;
+  display:grid;
+  gap:5px;
+  color:#aaa;
+  font-size:9px;
+}
+
+.denx-export-meta-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.denx-export-meta-row b { color:#e8e8e8; }
+
+.denx-watermark-lock {
+  color:var(--primary);
+}
+
+.denx-export-start {
+  min-height:43px;
+  border:1px solid rgba(0,200,255,.45);
+  border-radius:11px;
+  background:var(--primary);
+  color:#050505;
+  font-size:11px;
+  font-weight:900;
+}
+
+.denx-video-export-status {
+  min-height:20px;
+  color:#aaa;
+  font-size:9px;
+  line-height:1.35;
+}
+
+@media (max-width:420px) {
+  .denx-left-region {
+    grid-template-columns: var(--denx-toolbox-width,122px) 46px;
+    min-width: calc(var(--denx-toolbox-width,122px) + 46px);
+  }
+  .denx-left-region > .tool-quickfind {
+    width:46px;
+    min-width:46px;
+  }
+}
