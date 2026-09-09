@@ -2,33 +2,55 @@
 (() => {
   const ICON = "icons/tools/";
 
-  function installNativeBackIcons() {
-    document
-      .querySelectorAll(".denx-back-link")
-      .forEach(button => {
-        if (button.querySelector(".denx-nav-back-icon")) return;
+  // ----------------------------------------------------------
+  // ICON SYSTEM
+  // Inline the toolbar SVGs instead of keeping them as <img>.
+  // Some Android/Chromium GPU stacks corrupt external SVG <img>
+  // layers inside a scrolling toolbar during repaints.
+  // ----------------------------------------------------------
+  const svgCache = new Map();
 
-        const label =
-          button.textContent
-            .replace(/^←\s*/, "")
-            .trim() || "Back";
+  async function fetchSvg(file) {
+    if (svgCache.has(file)) return svgCache.get(file);
 
-        button.textContent = "";
+    const promise = fetch(ICON + file, { cache: "force-cache" })
+      .then(response => {
+        if (!response.ok) throw new Error(`Icon ${file} failed`);
+        return response.text();
+      })
+      .then(text => text.replace(
+        /<svg\b/,
+        '<svg class="denx-tool-svg" aria-hidden="true" focusable="false"'
+      ));
 
-        const icon = document.createElement("img");
-        icon.className = "denx-nav-back-icon";
-        icon.src = ICON + "nav-back.svg";
-        icon.alt = "";
-
-        const text = document.createElement("span");
-        text.className = "denx-back-text";
-        text.textContent = label;
-
-        button.append(icon, text);
-      });
+    svgCache.set(file, promise);
+    return promise;
   }
 
-  installNativeBackIcons();
+  async function setButtonIcon(id, file) {
+    const button = document.getElementById(id);
+    const host = button?.querySelector(".tool-icon");
+    if (!host) return;
+
+    try {
+      host.innerHTML = await fetchSvg(file);
+    } catch (_) {
+      // Keep the existing glyph if an icon asset cannot be read.
+    }
+  }
+
+  async function replaceControlIcon(inputId, file) {
+    const input = document.getElementById(inputId);
+    const label = input?.closest(".tool-control");
+    const host = label?.querySelector(".tool-control-icon");
+    if (!host) return;
+
+    try {
+      host.innerHTML = await fetchSvg(file);
+    } catch (_) {}
+
+    label.classList.add("denx-color-launcher");
+  }
 
   const iconMap = {
     panTool: "pan.svg",
@@ -40,67 +62,59 @@
     createFigureBtn: "create-figure.svg",
     importFigureBtn: "import-figure.svg",
     addFigureBtn: "add-figure.svg",
-    cameraTool: "camera.svg"
+    cameraTool: "camera.svg",
+    figureMoveFrontBtn: "front.svg",
+    figureMoveBackBtn: "back.svg"
   };
 
-  function setButtonIcon(id, file) {
-    const button = document.getElementById(id);
-    if (!button) return;
+  Object.entries(iconMap).forEach(([id, file]) => {
+    setButtonIcon(id, file);
+  });
 
-    let host = button.querySelector(".tool-icon");
-    if (!host) return;
+  replaceControlIcon("backgroundColorControl", "background.svg");
+  replaceControlIcon("drawColorControl", "color.svg");
+  replaceControlIcon("figureMainColorInput", "color.svg");
+  replaceControlIcon("textColorInput", "color.svg");
 
-    host.innerHTML = "";
-    const image = document.createElement("img");
-    image.className = "denx-tool-svg";
-    image.alt = "";
-    image.src = ICON + file;
-    host.appendChild(image);
+  function installNativeBackIcons() {
+    document.querySelectorAll(".denx-back-link").forEach(button => {
+      if (button.querySelector(".denx-nav-back-icon")) return;
+
+      const label =
+        button.textContent.replace(/^←\s*/, "").trim() || "Back";
+
+      button.textContent = "";
+
+      const icon = document.createElement("img");
+      icon.className = "denx-nav-back-icon";
+      icon.src = ICON + "nav-back.svg";
+      icon.alt = "";
+
+      const text = document.createElement("span");
+      text.className = "denx-back-text";
+      text.textContent = label;
+
+      button.append(icon, text);
+    });
   }
 
-  Object.entries(iconMap).forEach(([id, file]) =>
-    setButtonIcon(id, file)
-  );
-
-  // Paired depth-state icons, if present in the contextual toolbar.
-  setButtonIcon("figureMoveFrontBtn", "front.svg");
-  setButtonIcon("figureMoveBackBtn", "back.svg");
-
-  function replaceControlIcon(inputId, file) {
-    const input = document.getElementById(inputId);
-    const label = input?.closest?.(".tool-control");
-    const host =
-      label?.querySelector?.(".tool-control-icon");
-
-    if (!host) return;
-
-    host.innerHTML = "";
-    const img = document.createElement("img");
-    img.className = "denx-tool-svg";
-    img.src = ICON + file;
-    img.alt = "";
-    host.appendChild(img);
-
-    label.classList.add("denx-color-launcher");
-  }
-
-  replaceControlIcon(
-    "backgroundColorControl",
-    "background.svg"
-  );
-  replaceControlIcon(
-    "drawColorControl",
-    "color.svg"
-  );
-  replaceControlIcon(
-    "figureMainColorInput",
-    "color.svg"
-  );
+  installNativeBackIcons();
 
   // ----------------------------------------------------------
-  // DENX COLOR STUDIO
+  // DENX COLOR STUDIO v2
+  //
+  // Main field:
+  //   X = Hue
+  //   Y = Saturation
+  //
+  // Separate vertical slider:
+  //   Brightness / darkness
+  //
+  // This prevents the previous mismatch where the visible picker,
+  // HSB numbers and the actually-applied color disagreed.
   // ----------------------------------------------------------
-  const recentKey = "denx.colors.recent.v1";
+  const recentKey = "denx.colors.recent.v2";
+
   const defaultSwatches = [
     "#000000","#FFFFFF","#00C8FF","#8A8F96",
     "#FF3B5C","#FFB020","#35E06F","#5F7DFF",
@@ -113,17 +127,17 @@
   let saturation = 100;
   let brightness = 100;
 
-  const clamp = (n, min, max) =>
-    Math.min(max, Math.max(min, n));
+  const clamp = (value, min, max) =>
+    Math.min(max, Math.max(min, value));
 
   function normalizeHex(value) {
     let hex = String(value || "").trim();
     if (!hex.startsWith("#")) hex = "#" + hex;
 
     if (/^#[0-9a-f]{3}$/i.test(hex)) {
-      hex = "#" +
-        hex.slice(1).split("")
-          .map(c => c + c).join("");
+      hex =
+        "#" +
+        hex.slice(1).split("").map(c => c + c).join("");
     }
 
     return /^#[0-9a-f]{6}$/i.test(hex)
@@ -132,43 +146,52 @@
   }
 
   function rgbToHex(r, g, b) {
-    const c = n =>
-      clamp(Math.round(Number(n) || 0), 0, 255)
+    const part = value =>
+      clamp(Math.round(Number(value) || 0), 0, 255)
         .toString(16)
         .padStart(2, "0");
-    return `#${c(r)}${c(g)}${c(b)}`.toUpperCase();
+
+    return `#${part(r)}${part(g)}${part(b)}`.toUpperCase();
   }
 
   function hexToRgb(hex) {
-    const clean = normalizeHex(hex);
-    if (!clean) return { r:0, g:0, b:0 };
+    const clean = normalizeHex(hex) || "#000000";
     const n = parseInt(clean.slice(1), 16);
+
     return {
-      r:(n >> 16) & 255,
-      g:(n >> 8) & 255,
-      b:n & 255
+      r: (n >> 16) & 255,
+      g: (n >> 8) & 255,
+      b: n & 255
     };
   }
 
   function rgbToHsv(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r,g,b);
-    const min = Math.min(r,g,b);
-    const d = max - min;
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+
     let h = 0;
 
-    if (d) {
-      if (max === r) h = 60 * (((g-b)/d) % 6);
-      else if (max === g) h = 60 * (((b-r)/d) + 2);
-      else h = 60 * (((r-g)/d) + 4);
+    if (delta !== 0) {
+      if (max === r) {
+        h = 60 * (((g - b) / delta) % 6);
+      } else if (max === g) {
+        h = 60 * (((b - r) / delta) + 2);
+      } else {
+        h = 60 * (((r - g) / delta) + 4);
+      }
     }
 
     if (h < 0) h += 360;
 
     return {
       h,
-      s:max === 0 ? 0 : (d/max) * 100,
-      v:max * 100
+      s: max === 0 ? 0 : (delta / max) * 100,
+      v: max * 100
     };
   }
 
@@ -178,31 +201,44 @@
     v = clamp(Number(v) || 0, 0, 100) / 100;
 
     const c = v * s;
-    const x = c * (1 - Math.abs(((h/60)%2)-1));
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
     const m = v - c;
-    let rp=0,gp=0,bp=0;
 
-    if (h < 60) [rp,gp,bp] = [c,x,0];
-    else if (h < 120) [rp,gp,bp] = [x,c,0];
-    else if (h < 180) [rp,gp,bp] = [0,c,x];
-    else if (h < 240) [rp,gp,bp] = [0,x,c];
-    else if (h < 300) [rp,gp,bp] = [x,0,c];
-    else [rp,gp,bp] = [c,0,x];
+    let rp = 0;
+    let gp = 0;
+    let bp = 0;
+
+    if (h < 60) [rp, gp, bp] = [c, x, 0];
+    else if (h < 120) [rp, gp, bp] = [x, c, 0];
+    else if (h < 180) [rp, gp, bp] = [0, c, x];
+    else if (h < 240) [rp, gp, bp] = [0, x, c];
+    else if (h < 300) [rp, gp, bp] = [x, 0, c];
+    else [rp, gp, bp] = [c, 0, x];
 
     return {
-      r:(rp+m)*255,
-      g:(gp+m)*255,
-      b:(bp+m)*255
+      r: (rp + m) * 255,
+      g: (gp + m) * 255,
+      b: (bp + m) * 255
     };
+  }
+
+  function currentHex() {
+    const rgb = hsvToRgb(hue, saturation, brightness);
+    return rgbToHex(rgb.r, rgb.g, rgb.b);
+  }
+
+  function pureHueHex() {
+    const rgb = hsvToRgb(hue, saturation, 100);
+    return rgbToHex(rgb.r, rgb.g, rgb.b);
   }
 
   function getRecent() {
     try {
-      const values = JSON.parse(
-        localStorage.getItem(recentKey) || "[]"
-      );
-      return Array.isArray(values)
-        ? values.filter(normalizeHex).slice(0,12)
+      const value =
+        JSON.parse(localStorage.getItem(recentKey) || "[]");
+
+      return Array.isArray(value)
+        ? value.map(normalizeHex).filter(Boolean).slice(0, 12)
         : [];
     } catch (_) {
       return [];
@@ -212,17 +248,17 @@
   function saveRecent(hex) {
     const clean = normalizeHex(hex);
     if (!clean) return;
+
     const next = [
       clean,
-      ...getRecent().filter(c => c !== clean)
-    ].slice(0,12);
+      ...getRecent().filter(value => value !== clean)
+    ].slice(0, 12);
+
     localStorage.setItem(recentKey, JSON.stringify(next));
   }
 
   function ensureDialog() {
-    let dialog =
-      document.getElementById("denxColorDialog");
-
+    let dialog = document.getElementById("denxColorDialog");
     if (dialog) return dialog;
 
     dialog = document.createElement("dialog");
@@ -236,23 +272,49 @@
             <span class="denx-color-kicker">DENX COLOR STUDIO</span>
             <strong id="denxColorTitle">Color</strong>
           </div>
-          <button id="denxColorClose" class="denx-color-close" type="button" aria-label="Close">×</button>
+          <button id="denxColorClose" class="denx-color-close"
+                  type="button" aria-label="Close">×</button>
         </header>
 
         <div class="denx-color-body">
-          <section class="denx-color-field-wrap">
-            <div id="denxColorField" class="denx-color-field" aria-label="Color field">
-              <span id="denxColorCursor" class="denx-color-cursor"></span>
+          <section class="denx-color-picker-column">
+            <div class="denx-color-picker-row">
+              <div id="denxColorField"
+                   class="denx-color-field"
+                   aria-label="Hue and saturation field">
+                <span id="denxColorCursor"
+                      class="denx-color-cursor"></span>
+              </div>
+
+              <div class="denx-brightness-wrap">
+                <input id="denxBrightnessSlider"
+                       class="denx-brightness-slider"
+                       type="range"
+                       min="0"
+                       max="100"
+                       step="1"
+                       aria-label="Brightness">
+                <span class="denx-brightness-label">B</span>
+              </div>
             </div>
 
             <div class="denx-color-preview-row">
               <div class="denx-color-preview">
-                <span id="denxPreviousChip" class="denx-color-chip"></span>
-                <span><small>Previous</small><code id="denxPreviousHex">#000000</code></span>
+                <span id="denxPreviousChip"
+                      class="denx-color-chip"></span>
+                <span>
+                  <small>Previous</small>
+                  <code id="denxPreviousHex">#000000</code>
+                </span>
               </div>
+
               <div class="denx-color-preview">
-                <span id="denxCurrentChip" class="denx-color-chip"></span>
-                <span><small>Current</small><code id="denxCurrentHex">#000000</code></span>
+                <span id="denxCurrentChip"
+                      class="denx-color-chip"></span>
+                <span>
+                  <small>Current</small>
+                  <code id="denxCurrentHex">#000000</code>
+                </span>
               </div>
             </div>
           </section>
@@ -260,193 +322,277 @@
           <section class="denx-color-values">
             <div class="denx-color-section-title">HSB</div>
             <div class="denx-color-grid">
-              <label class="denx-color-value">H<input id="denxH" inputmode="decimal" type="number" min="0" max="359"></label>
-              <label class="denx-color-value">S<input id="denxS" inputmode="decimal" type="number" min="0" max="100"></label>
-              <label class="denx-color-value">B<input id="denxB" inputmode="decimal" type="number" min="0" max="100"></label>
+              <label class="denx-color-value">
+                H
+                <input id="denxH" type="number" min="0" max="359">
+              </label>
+              <label class="denx-color-value">
+                S
+                <input id="denxS" type="number" min="0" max="100">
+              </label>
+              <label class="denx-color-value">
+                B
+                <input id="denxB" type="number" min="0" max="100">
+              </label>
             </div>
 
             <div class="denx-color-section-title">RGB</div>
             <div class="denx-color-grid">
-              <label class="denx-color-value">R<input id="denxR" inputmode="numeric" type="number" min="0" max="255"></label>
-              <label class="denx-color-value">G<input id="denxG" inputmode="numeric" type="number" min="0" max="255"></label>
-              <label class="denx-color-value">B<input id="denxBlue" inputmode="numeric" type="number" min="0" max="255"></label>
+              <label class="denx-color-value">
+                R
+                <input id="denxR" type="number" min="0" max="255">
+              </label>
+              <label class="denx-color-value">
+                G
+                <input id="denxG" type="number" min="0" max="255">
+              </label>
+              <label class="denx-color-value">
+                B
+                <input id="denxBlue" type="number" min="0" max="255">
+              </label>
             </div>
 
             <label class="denx-color-hex">
               <span>HEX</span>
-              <input id="denxHex" maxlength="7" autocomplete="off" spellcheck="false">
+              <input id="denxHex" maxlength="7"
+                     autocomplete="off" spellcheck="false">
             </label>
 
             <div class="denx-color-section-title">Recent / DenX</div>
-            <div id="denxColorSwatches" class="denx-color-swatches"></div>
+            <div id="denxColorSwatches"
+                 class="denx-color-swatches"></div>
           </section>
         </div>
 
         <footer class="denx-color-actions">
           <button id="denxColorCancel" type="button">Cancel</button>
-          <button id="denxColorApply" class="denx-color-apply" type="button">Apply Color</button>
+          <button id="denxColorApply"
+                  class="denx-color-apply"
+                  type="button">Apply Color</button>
         </footer>
-      </div>`;
+      </div>
+    `;
 
     document.body.appendChild(dialog);
-
-    dialog
-      .querySelector("#denxColorClose")
-      ?.addEventListener("click", closeColorStudio);
-
-    dialog
-      .querySelector("#denxColorCancel")
-      ?.addEventListener("click", closeColorStudio);
-
-    dialog
-      .querySelector("#denxColorApply")
-      ?.addEventListener("click", applyAndClose);
 
     const field =
       dialog.querySelector("#denxColorField");
 
-    let dragging = false;
+    const brightnessSlider =
+      dialog.querySelector("#denxBrightnessSlider");
 
-    const updateField = event => {
+    let fieldDragging = false;
+
+    function updateFieldFromPointer(event) {
       const rect = field.getBoundingClientRect();
-      const x = clamp(event.clientX - rect.left, 0, rect.width);
-      const y = clamp(event.clientY - rect.top, 0, rect.height);
+
+      const x =
+        clamp(event.clientX - rect.left, 0, rect.width);
+
+      const y =
+        clamp(event.clientY - rect.top, 0, rect.height);
 
       hue = (x / rect.width) * 360;
-      brightness = 100 - (y / rect.height) * 100;
-      updateUiFromHsv(true);
-    };
+      saturation = 100 - (y / rect.height) * 100;
+
+      updateUi(true);
+    }
 
     field.addEventListener("pointerdown", event => {
-      dragging = true;
-      try { field.setPointerCapture(event.pointerId); } catch (_) {}
-      updateField(event);
+      fieldDragging = true;
+      try {
+        field.setPointerCapture(event.pointerId);
+      } catch (_) {}
+
+      updateFieldFromPointer(event);
       event.preventDefault();
     });
 
     field.addEventListener("pointermove", event => {
-      if (!dragging) return;
-      updateField(event);
+      if (!fieldDragging) return;
+      updateFieldFromPointer(event);
       event.preventDefault();
     });
 
-    const end = event => {
-      dragging = false;
-      try { field.releasePointerCapture(event.pointerId); } catch (_) {}
+    const endField = event => {
+      fieldDragging = false;
+      try {
+        field.releasePointerCapture(event.pointerId);
+      } catch (_) {}
     };
 
-    field.addEventListener("pointerup", end);
-    field.addEventListener("pointercancel", end);
+    field.addEventListener("pointerup", endField);
+    field.addEventListener("pointercancel", endField);
 
-    ["denxH","denxS","denxB"].forEach(id => {
-      dialog.querySelector("#"+id)?.addEventListener(
-        "change",
-        updateFromHsbInputs
-      );
+    brightnessSlider.addEventListener("input", () => {
+      brightness =
+        clamp(Number(brightnessSlider.value) || 0, 0, 100);
+      updateUi(true);
     });
 
-    ["denxR","denxG","denxBlue"].forEach(id => {
-      dialog.querySelector("#"+id)?.addEventListener(
-        "change",
-        updateFromRgbInputs
-      );
+    ["denxH", "denxS", "denxB"].forEach(id => {
+      dialog.querySelector("#" + id)
+        ?.addEventListener("change", updateFromHsbInputs);
     });
 
-    dialog
-      .querySelector("#denxHex")
+    ["denxR", "denxG", "denxBlue"].forEach(id => {
+      dialog.querySelector("#" + id)
+        ?.addEventListener("change", updateFromRgbInputs);
+    });
+
+    dialog.querySelector("#denxHex")
       ?.addEventListener("change", updateFromHexInput);
+
+    dialog.querySelector("#denxColorClose")
+      ?.addEventListener("click", cancelAndClose);
+
+    dialog.querySelector("#denxColorCancel")
+      ?.addEventListener("click", cancelAndClose);
+
+    dialog.querySelector("#denxColorApply")
+      ?.addEventListener("click", applyAndClose);
 
     return dialog;
   }
 
-  function currentHex() {
-    const rgb = hsvToRgb(hue, saturation, brightness);
-    return rgbToHex(rgb.r, rgb.g, rgb.b);
-  }
-
-  function updateUiFromHsv(liveApply = false) {
+  function updateUi(livePreview = false) {
     const dialog = ensureDialog();
-    const rgb = hsvToRgb(hue, saturation, brightness);
-    const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+
+    const rgb =
+      hsvToRgb(hue, saturation, brightness);
+
+    const hex =
+      rgbToHex(rgb.r, rgb.g, rgb.b);
 
     dialog.querySelector("#denxH").value =
       String(Math.round(hue) % 360);
+
     dialog.querySelector("#denxS").value =
       String(Math.round(saturation));
+
     dialog.querySelector("#denxB").value =
       String(Math.round(brightness));
 
     dialog.querySelector("#denxR").value =
       String(Math.round(rgb.r));
+
     dialog.querySelector("#denxG").value =
       String(Math.round(rgb.g));
+
     dialog.querySelector("#denxBlue").value =
       String(Math.round(rgb.b));
 
     dialog.querySelector("#denxHex").value = hex;
     dialog.querySelector("#denxCurrentHex").textContent = hex;
     dialog.querySelector("#denxCurrentChip").style.background = hex;
-const cursor = dialog.querySelector("#denxColorCursor");
-    cursor.style.left = `${(hue / 360) * 100}%`;
-    cursor.style.top = `${100 - brightness}%`;
 
-    if (liveApply && targetInput) {
+    const cursor =
+      dialog.querySelector("#denxColorCursor");
+
+    cursor.style.left =
+      `${(hue / 360) * 100}%`;
+
+    cursor.style.top =
+      `${100 - saturation}%`;
+
+    const brightnessSlider =
+      dialog.querySelector("#denxBrightnessSlider");
+
+    brightnessSlider.value =
+      String(Math.round(brightness));
+
+    brightnessSlider.style.setProperty(
+      "--denx-bright-top",
+      pureHueHex()
+    );
+
+    if (livePreview && targetInput) {
       targetInput.value = hex;
       targetInput.dispatchEvent(
-        new Event("input", { bubbles:true })
+        new Event("input", { bubbles: true })
       );
     }
   }
 
   function updateFromHsbInputs() {
     const dialog = ensureDialog();
-    hue = clamp(
-      Number(dialog.querySelector("#denxH").value) || 0,
-      0, 359
-    );
-    saturation = clamp(
-      Number(dialog.querySelector("#denxS").value) || 0,
-      0, 100
-    );
-    brightness = clamp(
-      Number(dialog.querySelector("#denxB").value) || 0,
-      0, 100
-    );
-    updateUiFromHsv(true);
+
+    hue =
+      clamp(
+        Number(dialog.querySelector("#denxH").value) || 0,
+        0,
+        359
+      );
+
+    saturation =
+      clamp(
+        Number(dialog.querySelector("#denxS").value) || 0,
+        0,
+        100
+      );
+
+    brightness =
+      clamp(
+        Number(dialog.querySelector("#denxB").value) || 0,
+        0,
+        100
+      );
+
+    updateUi(true);
   }
 
   function updateFromRgbInputs() {
     const dialog = ensureDialog();
-    const rgb = {
-      r:clamp(Number(dialog.querySelector("#denxR").value)||0,0,255),
-      g:clamp(Number(dialog.querySelector("#denxG").value)||0,0,255),
-      b:clamp(Number(dialog.querySelector("#denxBlue").value)||0,0,255)
-    };
-    const hsv = rgbToHsv(rgb.r,rgb.g,rgb.b);
+
+    const r =
+      clamp(
+        Number(dialog.querySelector("#denxR").value) || 0,
+        0,
+        255
+      );
+
+    const g =
+      clamp(
+        Number(dialog.querySelector("#denxG").value) || 0,
+        0,
+        255
+      );
+
+    const b =
+      clamp(
+        Number(dialog.querySelector("#denxBlue").value) || 0,
+        0,
+        255
+      );
+
+    const hsv = rgbToHsv(r, g, b);
+
     hue = hsv.h;
     saturation = hsv.s;
     brightness = hsv.v;
-    updateUiFromHsv(true);
+
+    updateUi(true);
   }
 
   function updateFromHexInput() {
     const dialog = ensureDialog();
-    const clean = normalizeHex(
-      dialog.querySelector("#denxHex").value
-    );
+
+    const clean =
+      normalizeHex(dialog.querySelector("#denxHex").value);
 
     if (!clean) {
-      dialog.querySelector("#denxHex").value =
-        currentHex();
+      dialog.querySelector("#denxHex").value = currentHex();
       return;
     }
 
     const rgb = hexToRgb(clean);
-    const hsv = rgbToHsv(rgb.r,rgb.g,rgb.b);
+    const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+
     hue = hsv.h;
     saturation = hsv.s;
     brightness = hsv.v;
-    updateUiFromHsv(true);
+
+    updateUi(true);
   }
 
   function renderSwatches() {
@@ -456,12 +602,12 @@ const cursor = dialog.querySelector("#denxColorCursor");
 
     host.innerHTML = "";
 
-    const values = [
-      ...getRecent(),
-      ...defaultSwatches
-    ].filter((value, index, array) =>
-      array.indexOf(value) === index
-    ).slice(0,18);
+    const values =
+      [...getRecent(), ...defaultSwatches]
+        .filter((value, index, array) =>
+          array.indexOf(value) === index
+        )
+        .slice(0, 18);
 
     values.forEach(hex => {
       const button = document.createElement("button");
@@ -473,11 +619,13 @@ const cursor = dialog.querySelector("#denxColorCursor");
 
       button.addEventListener("click", () => {
         const rgb = hexToRgb(hex);
-        const hsv = rgbToHsv(rgb.r,rgb.g,rgb.b);
+        const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+
         hue = hsv.h;
         saturation = hsv.s;
         brightness = hsv.v;
-        updateUiFromHsv(true);
+
+        updateUi(true);
       });
 
       host.appendChild(button);
@@ -492,42 +640,47 @@ const cursor = dialog.querySelector("#denxColorCursor");
       normalizeHex(input.value) || "#000000";
 
     const rgb = hexToRgb(originalColor);
-    const hsv = rgbToHsv(rgb.r,rgb.g,rgb.b);
+    const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+
     hue = hsv.h;
     saturation = hsv.s;
     brightness = hsv.v;
 
     const dialog = ensureDialog();
+
     dialog.querySelector("#denxColorTitle").textContent =
       title || "Color";
 
     dialog.querySelector("#denxPreviousChip").style.background =
       originalColor;
+
     dialog.querySelector("#denxPreviousHex").textContent =
       originalColor;
 
-    updateUiFromHsv(false);
+    updateUi(false);
     renderSwatches();
 
     try {
       if (!dialog.open) dialog.showModal();
     } catch (_) {
-      dialog.setAttribute("open","");
+      dialog.setAttribute("open", "");
     }
   }
 
-  function closeColorStudio() {
+  function cancelAndClose() {
     const dialog = ensureDialog();
 
     if (targetInput) {
       targetInput.value = originalColor;
       targetInput.dispatchEvent(
-        new Event("input", { bubbles:true })
+        new Event("input", { bubbles: true })
       );
     }
 
     targetInput = null;
-    dialog.close?.();
+
+    if (dialog.open) dialog.close();
+    else dialog.removeAttribute("open");
   }
 
   function applyAndClose() {
@@ -536,11 +689,13 @@ const cursor = dialog.querySelector("#denxColorCursor");
 
     if (targetInput) {
       targetInput.value = hex;
+
       targetInput.dispatchEvent(
-        new Event("input", { bubbles:true })
+        new Event("input", { bubbles: true })
       );
+
       targetInput.dispatchEvent(
-        new Event("change", { bubbles:true })
+        new Event("change", { bubbles: true })
       );
 
       window.denxMarkProjectDirty?.();
@@ -548,7 +703,9 @@ const cursor = dialog.querySelector("#denxColorCursor");
 
     saveRecent(hex);
     targetInput = null;
-    dialog.close?.();
+
+    if (dialog.open) dialog.close();
+    else dialog.removeAttribute("open");
   }
 
   function wireColorInput(id, title) {
@@ -562,16 +719,18 @@ const cursor = dialog.querySelector("#denxColorCursor");
 
     launcher?.classList.add("denx-color-launcher");
 
+    // Do not let the browser's native color picker open.
     const open = event => {
       event.preventDefault();
       event.stopPropagation();
       openColorStudio(input, title);
     };
 
-    launcher?.addEventListener("pointerdown", open, true);
+    launcher?.addEventListener("click", open);
 
     input.addEventListener("click", event => {
       event.preventDefault();
+      event.stopPropagation();
       openColorStudio(input, title);
     });
   }
@@ -580,22 +739,27 @@ const cursor = dialog.querySelector("#denxColorCursor");
     "backgroundColorControl",
     "Workspace Background"
   );
+
   wireColorInput(
     "drawColorControl",
     "Drawing Color"
   );
+
   wireColorInput(
     "figureMainColorInput",
     "Figure Color"
   );
+
   wireColorInput(
     "textColorInput",
     "Text Color"
   );
+
   wireColorInput(
     "segmentColorInput",
     "Segment Color"
   );
+
   wireColorInput(
     "polyfillColorInput",
     "Polyfill Color"

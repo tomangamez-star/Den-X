@@ -1,6 +1,21 @@
 console.log("DenX Animator has started.");
 
 
+(function loadDenx039VideoExport(){
+    if (
+        document.getElementById('workspace') &&
+        !document.querySelector('script[data-denx-video-v039]')
+    ) {
+        const script = document.createElement('script');
+        script.src = 'js/video-export.js';
+        script.defer = true;
+        script.dataset.denxVideoV039 = 'true';
+        document.body.appendChild(script);
+    }
+})();
+
+
+
 (function loadDenx036ToolIdentity(){
     if (!document.querySelector('link[data-denx-tools-v036]')) {
         const link = document.createElement('link');
@@ -50,7 +65,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.3.8 Tool Polish';
+    if (footer) footer.textContent = 'Version 0.3.9 Color + MP4';
 })();
 
 // HOME SCREEN
