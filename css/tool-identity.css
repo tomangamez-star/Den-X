@@ -1,13 +1,13 @@
 
 /* ============================================================
-   DENX v0.3.6 — TOOL IDENTITY + COLOR STUDIO
+   DENX v0.3.9 — TOOL IDENTITY / COLOR STUDIO
    ============================================================ */
 
 .denx-tool-svg {
   width:19px;
   height:19px;
   display:block;
-  object-fit:contain;
+  overflow:visible;
   pointer-events:none;
 }
 
@@ -20,414 +20,10 @@
   cursor:pointer;
 }
 
-.denx-color-launcher input[type="color"] {
-  width:24px !important;
-  height:24px !important;
-  border:1px solid rgba(255,255,255,.20) !important;
-  border-radius:7px !important;
-  padding:2px !important;
-  background:#0c0e0f !important;
-  pointer-events:none;
-}
-
-.denx-color-dialog {
-  width:min(760px,calc(100vw - 24px));
-  max-width:760px;
-  max-height:calc(100dvh - 20px);
-  margin:auto;
-  padding:0;
-  border:1px solid rgba(255,255,255,.11);
-  border-radius:18px;
-  background:#101214;
-  color:#f2f5f6;
-  overflow:hidden;
-  box-shadow:0 28px 90px rgba(0,0,0,.56);
-}
-
-.denx-color-dialog::backdrop {
-  background:rgba(0,0,0,.76);
-}
-
-.denx-color-shell {
-  display:grid;
-  grid-template-rows:auto minmax(0,1fr) auto;
-  max-height:calc(100dvh - 20px);
-}
-
-.denx-color-head {
-  min-height:54px;
-  padding:10px 13px;
-  border-bottom:1px solid rgba(255,255,255,.075);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-
-.denx-color-head-copy {
-  display:grid;
-  gap:2px;
-}
-
-.denx-color-kicker {
-  color:#12c8f4;
-  font-size:8px;
-  font-weight:900;
-  letter-spacing:1.15px;
-}
-
-.denx-color-head strong {
-  font-size:16px;
-}
-
-.denx-color-close {
-  width:34px;
-  height:34px;
-  border:1px solid #303538;
-  border-radius:10px;
-  background:#191c1e;
-  color:#fff;
-  font-size:18px;
-}
-
-.denx-color-body {
-  min-height:0;
-  padding:12px;
-  display:grid;
-  grid-template-columns:minmax(280px,1.5fr) minmax(210px,.8fr);
-  gap:12px;
-  overflow:auto;
-}
-
-.denx-color-field-wrap {
-  display:grid;
-  gap:8px;
-  min-width:0;
-}
-
-.denx-color-field {
-  position:relative;
-  width:100%;
-  aspect-ratio:1.65/1;
-  min-height:190px;
-  max-height:360px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:13px;
-  cursor:crosshair;
-  touch-action:none;
-  background:
-    linear-gradient(to bottom,rgba(0,0,0,0) 0%,#000 100%),
-    linear-gradient(to right,
-      #ff0000 0%,
-      #ffff00 16.666%,
-      #00ff00 33.333%,
-      #00ffff 50%,
-      #0000ff 66.666%,
-      #ff00ff 83.333%,
-      #ff0000 100%);
-}
-
-.denx-color-field::after {
-  content:none !important;
-  display:none !important;
-}
-
-.denx-color-cursor {
-  position:absolute;
-  width:18px;
-  height:18px;
-  border:2px solid #fff;
-  border-radius:50%;
-  transform:translate(-50%,-50%);
-  box-shadow:0 0 0 2px rgba(0,0,0,.66),0 2px 8px rgba(0,0,0,.55);
-  pointer-events:none;
-  z-index:2;
-}
-
-.denx-color-preview-row {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.denx-color-preview {
-  min-height:46px;
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:10px;
-  background:#17191b;
-  padding:6px;
-  display:grid;
-  grid-template-columns:32px 1fr;
-  gap:8px;
-  align-items:center;
-}
-
-.denx-color-chip {
-  width:32px;
-  height:32px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,.22);
-  background:#000;
-}
-
-.denx-color-preview span {
-  display:grid;
-  gap:2px;
-}
-
-.denx-color-preview small {
-  color:#81898d;
-  font-size:7px;
-  font-weight:850;
-  letter-spacing:.65px;
-  text-transform:uppercase;
-}
-
-.denx-color-preview code {
-  color:#dce3e6;
-  font-size:9px;
-}
-
-.denx-color-values {
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:13px;
-  background:#151719;
-  padding:10px;
-  display:grid;
-  gap:9px;
-  align-content:start;
-}
-
-.denx-color-section-title {
-  color:#12c8f4;
-  font-size:8px;
-  font-weight:900;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  padding-bottom:3px;
-}
-
-.denx-color-grid {
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:6px;
-}
-
-.denx-color-value {
-  display:grid;
-  gap:3px;
-  color:#8e969a;
-  font-size:7px;
-  font-weight:850;
-}
-
-.denx-color-value input {
-  width:100%;
-  min-width:0;
-  height:34px;
-  margin:0;
-  padding:0 7px;
-  border:1px solid #303538;
-  border-radius:8px;
-  background:#0e1012;
-  color:#f1f4f5;
-  font-size:10px;
-  text-align:center;
-}
-
-.denx-color-hex {
-  display:grid;
-  grid-template-columns:36px 1fr;
-  gap:6px;
-  align-items:center;
-}
-
-.denx-color-hex span {
-  color:#8e969a;
-  font-size:8px;
-  font-weight:900;
-}
-
-.denx-color-hex input {
-  width:100%;
-  height:36px;
-  margin:0;
-  border:1px solid rgba(0,200,255,.27);
-  border-radius:8px;
-  background:#0e1012;
-  color:#8de5ff;
-  font-family:monospace;
-  font-size:11px;
-  text-transform:uppercase;
-}
-
-.denx-color-swatches {
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  gap:5px;
-}
-
-.denx-swatch {
-  aspect-ratio:1;
-  min-height:26px;
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:7px;
-  background:var(--swatch,#000);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);
-}
-
-.denx-color-actions {
-  padding:10px 12px;
-  border-top:1px solid rgba(255,255,255,.075);
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-}
-
-.denx-color-actions button {
-  min-height:38px;
-  padding:0 15px;
-  border:1px solid #303538;
-  border-radius:10px;
-  background:#1a1d1f;
-  color:#eef2f4;
-  font-size:9px;
-  font-weight:900;
-}
-
-.denx-color-actions .denx-color-apply {
-  background:#12c8f4;
-  border-color:#31d8ff;
-  color:#061116;
-}
-
-@media (orientation:landscape) and (max-height:430px) {
-  .denx-color-dialog {
-    width:min(820px,calc(100vw - 16px));
-    max-height:calc(100dvh - 10px);
-  }
-  .denx-color-shell {
-    max-height:calc(100dvh - 10px);
-  }
-  .denx-color-head {
-    min-height:44px;
-    padding:7px 10px;
-  }
-  .denx-color-body {
-    padding:9px;
-    gap:9px;
-  }
-  .denx-color-field {
-    min-height:170px;
-  }
-  .denx-color-preview-row {
-    display:none;
-  }
-  .denx-color-values {
-    gap:7px;
-    padding:8px;
-  }
-  .denx-color-value input {
-    height:30px;
-  }
-  .denx-color-hex input {
-    height:31px;
-  }
-  .denx-color-actions {
-    padding:7px 10px;
-  }
-}
-
-@media (orientation:portrait) {
-  .denx-color-body {
-    grid-template-columns:1fr;
-  }
-}
-
-
-/* ============================================================
-   DENX v0.3.7 — COLOR / RENDER SAFETY FIX
-   ============================================================ */
-
-/* The picker must always show the full spectrum. Saturation is an input
-   value, NOT a reason to wash the whole field white. */
-.denx-color-field {
-  isolation:isolate;
-  contain:paint;
-  background:
-    linear-gradient(to bottom,rgba(0,0,0,0) 0%,#000 100%),
-    linear-gradient(to right,
-      #ff0000 0%,
-      #ffff00 16.666%,
-      #00ff00 33.333%,
-      #00ffff 50%,
-      #0000ff 66.666%,
-      #ff00ff 83.333%,
-      #ff0000 100%) !important;
-}
-
-/* Keep expensive composition inside its own paint boundary on Android. */
-.denx-color-dialog {
-  isolation:isolate;
-  contain:layout paint style;
-}
-
-.denx-color-dialog::backdrop {
-  background:rgba(0,0,0,.78) !important;
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
-}
-
-/* Android/Chromium repaint guard for the toolbox. */
-#toolbox,
-.toolbar.expanded-toolbar {
-  isolation:isolate;
-  contain:paint;
-  backface-visibility:hidden;
-}
-
-/* Do not promote individual buttons into extra GPU layers. */
-.tool-row,
-.tool-control,
-.denx-tool-svg {
-  transform:none !important;
-  filter:none;
-  will-change:auto !important;
-}
-
-/* Native Back control — uses nav-back.svg, not the object-depth back.svg. */
-.denx-back-link {
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:8px !important;
-}
-
-.denx-back-link .denx-nav-back-icon {
-  width:18px;
-  height:18px;
-  display:block;
-  flex:0 0 auto;
-}
-
-.denx-back-link .denx-back-text {
-  line-height:1;
-}
-
-
-/* ============================================================
-   DENX v0.3.8 — FIGURE CREATOR COLOR + FRONT/BACK LABEL FIX
-   ============================================================ */
-
-/* Figure Creator color controls now open DenX Color Studio instead
-   of the browser picker while keeping a real-color preview square. */
-.creator-control.denx-color-launcher {
-  cursor:pointer;
-}
-
+.denx-color-launcher input[type="color"],
 .creator-control.denx-color-launcher input[type="color"] {
-  width:26px !important;
-  height:26px !important;
+  width:25px !important;
+  height:25px !important;
   padding:2px !important;
   border:1px solid rgba(255,255,255,.20) !important;
   border-radius:7px !important;
@@ -435,7 +31,33 @@
   pointer-events:none !important;
 }
 
-/* Front / Back are a paired depth control. Keep both full names readable. */
+/* Important: NO contain/isolation/backdrop-filter on the scrolling toolbar.
+   Those rules caused retained-pixel corruption on the target Android GPU. */
+#toolbox,
+.toolbar.expanded-toolbar,
+.tool-row,
+.tool-control {
+  contain:none !important;
+  isolation:auto !important;
+  backface-visibility:visible !important;
+  will-change:auto !important;
+}
+
+/* -------- Native back icon -------- */
+.denx-back-link {
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+
+.denx-nav-back-icon {
+  width:18px;
+  height:18px;
+  display:block;
+  flex:0 0 auto;
+}
+
+/* -------- Front / Back paired depth controls -------- */
 .figure-layer-row {
   display:grid !important;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
@@ -448,14 +70,12 @@
   min-width:0 !important;
   grid-template-columns:17px minmax(0,1fr) !important;
   gap:3px !important;
-  padding:4px 4px !important;
+  padding:4px !important;
 }
 
 .figure-layer-row .tool-icon {
   width:17px !important;
   min-width:17px !important;
-  display:grid !important;
-  place-items:center !important;
 }
 
 .figure-layer-row .tool-icon .denx-tool-svg {
@@ -464,7 +84,6 @@
 }
 
 .figure-layer-row .tool-label {
-  min-width:0 !important;
   overflow:visible !important;
   text-overflow:clip !important;
   white-space:nowrap !important;
@@ -472,18 +91,427 @@
   letter-spacing:0 !important;
 }
 
-/* Extra narrow phones: vertical icon-over-label prevents any truncation. */
-@media (max-width:760px) and (orientation:landscape) {
-  .figure-layer-row .tool-row {
-    grid-template-columns:1fr !important;
-    grid-template-rows:17px auto !important;
-    justify-items:center !important;
-    text-align:center !important;
-    gap:2px !important;
-    padding:4px 2px !important;
+/* ============================================================
+   DENX COLOR STUDIO v2
+   Compact popup, not a whole-screen takeover.
+   ============================================================ */
+.denx-color-dialog {
+  position:fixed;
+  inset:0;
+  width:min(690px,calc(100vw - 28px));
+  max-width:690px;
+  height:auto;
+  max-height:min(390px,calc(100dvh - 24px));
+  margin:auto;
+  padding:0;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:17px;
+  background:#101214;
+  color:#f2f5f6;
+  overflow:hidden;
+  box-shadow:0 24px 70px rgba(0,0,0,.54);
+}
+
+.denx-color-dialog::backdrop {
+  background:rgba(0,0,0,.60);
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+.denx-color-shell {
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  max-height:min(390px,calc(100dvh - 24px));
+}
+
+.denx-color-head {
+  min-height:48px;
+  padding:8px 11px;
+  border-bottom:1px solid rgba(255,255,255,.075);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.denx-color-head-copy {
+  display:grid;
+  gap:2px;
+}
+
+.denx-color-kicker {
+  color:#12c8f4;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:1.05px;
+}
+
+.denx-color-head strong {
+  font-size:15px;
+}
+
+.denx-color-close {
+  width:32px;
+  height:32px;
+  border:1px solid #303538;
+  border-radius:9px;
+  background:#191c1e;
+  color:#fff;
+  font-size:17px;
+}
+
+.denx-color-body {
+  min-height:0;
+  padding:10px;
+  display:grid;
+  grid-template-columns:minmax(310px,1.45fr) minmax(220px,.82fr);
+  gap:10px;
+  overflow:auto;
+}
+
+.denx-color-picker-column {
+  min-width:0;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  gap:7px;
+}
+
+.denx-color-picker-row {
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 34px;
+  gap:8px;
+}
+
+.denx-color-field {
+  position:relative;
+  width:100%;
+  min-height:185px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:12px;
+  overflow:hidden;
+  cursor:crosshair;
+  touch-action:none;
+
+  /* X = hue. Y = saturation.
+     Bottom fades to white/gray rather than changing brightness. */
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,1) 100%
+    ),
+    linear-gradient(
+      to right,
+      #ff0000 0%,
+      #ffff00 16.666%,
+      #00ff00 33.333%,
+      #00ffff 50%,
+      #0000ff 66.666%,
+      #ff00ff 83.333%,
+      #ff0000 100%
+    );
+}
+
+.denx-color-cursor {
+  position:absolute;
+  width:17px;
+  height:17px;
+  border:2px solid #fff;
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:
+    0 0 0 2px rgba(0,0,0,.72),
+    0 2px 8px rgba(0,0,0,.50);
+  pointer-events:none;
+}
+
+.denx-brightness-wrap {
+  position:relative;
+  min-height:185px;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+}
+
+.denx-brightness-slider {
+  --denx-bright-top:#00C8FF;
+
+  width:185px;
+  height:30px;
+  margin:77px -76px;
+  transform:rotate(-90deg);
+  transform-origin:center;
+  appearance:none;
+  -webkit-appearance:none;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  background:
+    linear-gradient(
+      to right,
+      #000 0%,
+      var(--denx-bright-top) 100%
+    );
+  outline:none;
+}
+
+.denx-brightness-slider::-webkit-slider-thumb {
+  appearance:none;
+  -webkit-appearance:none;
+  width:18px;
+  height:18px;
+  border:2px solid #fff;
+  border-radius:50%;
+  background:transparent;
+  box-shadow:0 0 0 2px rgba(0,0,0,.65);
+}
+
+.denx-brightness-slider::-moz-range-thumb {
+  width:18px;
+  height:18px;
+  border:2px solid #fff;
+  border-radius:50%;
+  background:transparent;
+  box-shadow:0 0 0 2px rgba(0,0,0,.65);
+}
+
+.denx-brightness-label {
+  position:absolute;
+  right:50%;
+  bottom:2px;
+  transform:translateX(50%);
+  color:#7edfff;
+  font-size:7px;
+  font-weight:900;
+}
+
+.denx-color-preview-row {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+
+.denx-color-preview {
+  min-height:38px;
+  padding:5px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:9px;
+  background:#17191b;
+  display:grid;
+  grid-template-columns:28px 1fr;
+  gap:7px;
+  align-items:center;
+}
+
+.denx-color-chip {
+  width:28px;
+  height:28px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:7px;
+}
+
+.denx-color-preview span {
+  display:grid;
+  gap:1px;
+}
+
+.denx-color-preview small {
+  color:#81898d;
+  font-size:6.5px;
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+}
+
+.denx-color-preview code {
+  color:#dce3e6;
+  font-size:8px;
+}
+
+.denx-color-values {
+  min-width:0;
+  padding:9px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:#151719;
+  display:grid;
+  gap:7px;
+  align-content:start;
+}
+
+.denx-color-section-title {
+  color:#12c8f4;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.9px;
+  text-transform:uppercase;
+}
+
+.denx-color-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+}
+
+.denx-color-value {
+  display:grid;
+  gap:2px;
+  color:#8e969a;
+  font-size:6.5px;
+  font-weight:850;
+}
+
+.denx-color-value input {
+  min-width:0;
+  width:100%;
+  height:31px;
+  margin:0;
+  padding:0 5px;
+  border:1px solid #303538;
+  border-radius:7px;
+  background:#0e1012;
+  color:#f1f4f5;
+  text-align:center;
+  font-size:9px;
+}
+
+.denx-color-hex {
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr);
+  gap:5px;
+  align-items:center;
+}
+
+.denx-color-hex span {
+  color:#8e969a;
+  font-size:7px;
+  font-weight:900;
+}
+
+.denx-color-hex input {
+  width:100%;
+  min-width:0;
+  height:32px;
+  margin:0;
+  padding:0 7px;
+  border:1px solid rgba(0,200,255,.27);
+  border-radius:7px;
+  background:#0e1012;
+  color:#8de5ff;
+  font-family:monospace;
+  font-size:10px;
+  text-transform:uppercase;
+}
+
+.denx-color-swatches {
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:4px;
+}
+
+.denx-swatch {
+  aspect-ratio:1;
+  min-height:24px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:6px;
+  background:var(--swatch,#000);
+}
+
+.denx-color-actions {
+  padding:8px 10px;
+  border-top:1px solid rgba(255,255,255,.075);
+  display:flex;
+  justify-content:flex-end;
+  gap:7px;
+}
+
+.denx-color-actions button {
+  min-height:35px;
+  padding:0 13px;
+  border:1px solid #303538;
+  border-radius:9px;
+  background:#1a1d1f;
+  color:#eef2f4;
+  font-size:8px;
+  font-weight:900;
+}
+
+.denx-color-actions .denx-color-apply {
+  background:#12c8f4;
+  border-color:#31d8ff;
+  color:#061116;
+}
+
+/* Small landscape phones */
+@media (orientation:landscape) and (max-height:430px) {
+  .denx-color-dialog {
+    width:min(680px,calc(100vw - 20px));
+    max-height:calc(100dvh - 16px);
   }
 
-  .figure-layer-row .tool-label {
-    font-size:7.5px !important;
+  .denx-color-shell {
+    max-height:calc(100dvh - 16px);
   }
+
+  .denx-color-head {
+    min-height:42px;
+    padding:6px 9px;
+  }
+
+  .denx-color-body {
+    padding:8px;
+    gap:8px;
+  }
+
+  .denx-color-field,
+  .denx-brightness-wrap {
+    min-height:160px;
+  }
+
+  .denx-brightness-slider {
+    width:160px;
+    margin:65px -64px;
+  }
+
+  .denx-color-preview-row {
+    display:none;
+  }
+
+  .denx-color-values {
+    padding:7px;
+    gap:5px;
+  }
+
+  .denx-color-value input,
+  .denx-color-hex input {
+    height:28px;
+  }
+
+  .denx-color-actions {
+    padding:6px 8px;
+  }
+}
+
+@media (orientation:portrait) {
+  .denx-color-dialog {
+    width:calc(100vw - 24px);
+    max-height:calc(100dvh - 24px);
+  }
+
+  .denx-color-body {
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* MP4 export progress */
+.denx-video-export-status {
+  margin-top:7px;
+  padding:8px 10px;
+  border:1px solid rgba(0,200,255,.20);
+  border-radius:9px;
+  background:rgba(0,200,255,.06);
+  color:#8de5ff;
+  font-size:8px;
+  font-weight:850;
 }
