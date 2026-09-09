@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v0400-stable-render";
+const CACHE_NAME = "denx-animator-v0401-precision-nodes";
 
 const APP_SHELL = [
   "./",
@@ -35,6 +35,7 @@ const APP_SHELL = [
   "./js/workspace-persistence.js",
   "./js/frame-export.js",
   "./js/video-export.js",
+  "./js/node-interaction-v0401.js",
   "./js/figure-creator.js",
   "./js/tool-identity.js",
   "./js/pwa.js",

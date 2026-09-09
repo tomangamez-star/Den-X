@@ -1,0 +1,9 @@
+DenX Animator v0.4.0.1 — Precision Nodes
+
+- One-touch node acquisition: no figure pre-tap required.
+- Valid node touches outrank Pan and automatically enter Select.
+- Overlap priority: active figure -> connected chain -> same figure -> other figure.
+- Removed selection glow.
+- Added one thin cyan connected-segment guide.
+- Dragging hands back to the existing Velocity live-geometry path; no full-project rebuild per pointermove.
+- v0.4.0.0 exact-FPS MP4 renderer remains unchanged.
