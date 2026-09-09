@@ -46,7 +46,6 @@
 
 .denx-color-dialog::backdrop {
   background:rgba(0,0,0,.76);
-  backdrop-filter:blur(7px);
 }
 
 .denx-color-shell {
@@ -130,12 +129,8 @@
 }
 
 .denx-color-field::after {
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:rgba(255,255,255,var(--denx-desaturate,0));
-  mix-blend-mode:screen;
+  content:none !important;
+  display:none !important;
 }
 
 .denx-color-cursor {
@@ -347,5 +342,148 @@
 @media (orientation:portrait) {
   .denx-color-body {
     grid-template-columns:1fr;
+  }
+}
+
+
+/* ============================================================
+   DENX v0.3.7 — COLOR / RENDER SAFETY FIX
+   ============================================================ */
+
+/* The picker must always show the full spectrum. Saturation is an input
+   value, NOT a reason to wash the whole field white. */
+.denx-color-field {
+  isolation:isolate;
+  contain:paint;
+  background:
+    linear-gradient(to bottom,rgba(0,0,0,0) 0%,#000 100%),
+    linear-gradient(to right,
+      #ff0000 0%,
+      #ffff00 16.666%,
+      #00ff00 33.333%,
+      #00ffff 50%,
+      #0000ff 66.666%,
+      #ff00ff 83.333%,
+      #ff0000 100%) !important;
+}
+
+/* Keep expensive composition inside its own paint boundary on Android. */
+.denx-color-dialog {
+  isolation:isolate;
+  contain:layout paint style;
+}
+
+.denx-color-dialog::backdrop {
+  background:rgba(0,0,0,.78) !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+/* Android/Chromium repaint guard for the toolbox. */
+#toolbox,
+.toolbar.expanded-toolbar {
+  isolation:isolate;
+  contain:paint;
+  backface-visibility:hidden;
+}
+
+/* Do not promote individual buttons into extra GPU layers. */
+.tool-row,
+.tool-control,
+.denx-tool-svg {
+  transform:none !important;
+  filter:none;
+  will-change:auto !important;
+}
+
+/* Native Back control — uses nav-back.svg, not the object-depth back.svg. */
+.denx-back-link {
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+
+.denx-back-link .denx-nav-back-icon {
+  width:18px;
+  height:18px;
+  display:block;
+  flex:0 0 auto;
+}
+
+.denx-back-link .denx-back-text {
+  line-height:1;
+}
+
+
+/* ============================================================
+   DENX v0.3.8 — FIGURE CREATOR COLOR + FRONT/BACK LABEL FIX
+   ============================================================ */
+
+/* Figure Creator color controls now open DenX Color Studio instead
+   of the browser picker while keeping a real-color preview square. */
+.creator-control.denx-color-launcher {
+  cursor:pointer;
+}
+
+.creator-control.denx-color-launcher input[type="color"] {
+  width:26px !important;
+  height:26px !important;
+  padding:2px !important;
+  border:1px solid rgba(255,255,255,.20) !important;
+  border-radius:7px !important;
+  background:#0c0e0f !important;
+  pointer-events:none !important;
+}
+
+/* Front / Back are a paired depth control. Keep both full names readable. */
+.figure-layer-row {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  gap:5px !important;
+  width:100% !important;
+}
+
+.figure-layer-row .tool-row {
+  width:100% !important;
+  min-width:0 !important;
+  grid-template-columns:17px minmax(0,1fr) !important;
+  gap:3px !important;
+  padding:4px 4px !important;
+}
+
+.figure-layer-row .tool-icon {
+  width:17px !important;
+  min-width:17px !important;
+  display:grid !important;
+  place-items:center !important;
+}
+
+.figure-layer-row .tool-icon .denx-tool-svg {
+  width:16px !important;
+  height:16px !important;
+}
+
+.figure-layer-row .tool-label {
+  min-width:0 !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+  font-size:8px !important;
+  letter-spacing:0 !important;
+}
+
+/* Extra narrow phones: vertical icon-over-label prevents any truncation. */
+@media (max-width:760px) and (orientation:landscape) {
+  .figure-layer-row .tool-row {
+    grid-template-columns:1fr !important;
+    grid-template-rows:17px auto !important;
+    justify-items:center !important;
+    text-align:center !important;
+    gap:2px !important;
+    padding:4px 2px !important;
+  }
+
+  .figure-layer-row .tool-label {
+    font-size:7.5px !important;
   }
 }
