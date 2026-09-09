@@ -1,0 +1,40 @@
+DenX Animator v0.4.4
+
+Layout isolation / corruption attack
+- The editor is split into two real sibling paint regions:
+  1) dedicated left UI region
+  2) dedicated renderer/right-properties region
+- Quick Find no longer floats over the canvas. It has a reserved 50px rail.
+- Left toolbar scroll is contained entirely inside the left region.
+- Canvas/SVG/camera/right rails never share the left scroller paint surface.
+- Right figure/text rails remain anchored to the far right of renderer region.
+
+New figure feature
+- Copy + Paste added to Selected Figure toolbar.
+- Copy preserves figure structure, colors, scale/pose and all frame poses.
+- Paste creates an independent duplicate with remapped figure/node/segment IDs
+  and a small +42px offset.
+
+Export Studio
+- Pressing Animation · MP4 opens a second export screen.
+- Quality choices:
+  SD 360p
+  SD+ 480p
+  HD 720p
+  FHD 1080p
+- Existing exact-project-FPS timing path is retained.
+- Resolution is applied during clean-frame rendering, not after recording.
+
+Mandatory DenX branding
+- PNG and MP4 clean-frame exports now include a subtle DENX ANIMATOR watermark.
+- Watermark is rendered into the exported pixels, not as editor HTML.
+
+Version footer
+- Visible footer is now Version 0.4.4.
+
+Main corruption torture test
+1. Scroll left toolbar continuously.
+2. Rapidly use Pan / Select.
+3. Select/deselect figures and open right contextual rail.
+4. Pan/zoom canvas while scrolling tool UI.
+5. Report whether any stale/duplicated UI tiles still appear.
