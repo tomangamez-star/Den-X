@@ -2,6 +2,34 @@
 (() => {
   const ICON = "icons/tools/";
 
+  function installNativeBackIcons() {
+    document
+      .querySelectorAll(".denx-back-link")
+      .forEach(button => {
+        if (button.querySelector(".denx-nav-back-icon")) return;
+
+        const label =
+          button.textContent
+            .replace(/^←\s*/, "")
+            .trim() || "Back";
+
+        button.textContent = "";
+
+        const icon = document.createElement("img");
+        icon.className = "denx-nav-back-icon";
+        icon.src = ICON + "nav-back.svg";
+        icon.alt = "";
+
+        const text = document.createElement("span");
+        text.className = "denx-back-text";
+        text.textContent = label;
+
+        button.append(icon, text);
+      });
+  }
+
+  installNativeBackIcons();
+
   const iconMap = {
     panTool: "pan.svg",
     selectTool: "select.svg",
@@ -358,14 +386,7 @@
     dialog.querySelector("#denxHex").value = hex;
     dialog.querySelector("#denxCurrentHex").textContent = hex;
     dialog.querySelector("#denxCurrentChip").style.background = hex;
-
-    const field = dialog.querySelector("#denxColorField");
-    field.style.setProperty(
-      "--denx-desaturate",
-      String((100 - saturation) / 100)
-    );
-
-    const cursor = dialog.querySelector("#denxColorCursor");
+const cursor = dialog.querySelector("#denxColorCursor");
     cursor.style.left = `${(hue / 360) * 100}%`;
     cursor.style.top = `${100 - brightness}%`;
 
@@ -535,7 +556,11 @@
     if (!input) return;
 
     const launcher =
-      input.closest(".tool-control") || input.parentElement;
+      input.closest(".tool-control") ||
+      input.closest(".creator-control") ||
+      input.parentElement;
+
+    launcher?.classList.add("denx-color-launcher");
 
     const open = event => {
       event.preventDefault();
@@ -562,5 +587,17 @@
   wireColorInput(
     "figureMainColorInput",
     "Figure Color"
+  );
+  wireColorInput(
+    "textColorInput",
+    "Text Color"
+  );
+  wireColorInput(
+    "segmentColorInput",
+    "Segment Color"
+  );
+  wireColorInput(
+    "polyfillColorInput",
+    "Polyfill Color"
   );
 })();

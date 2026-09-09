@@ -50,7 +50,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.3.6 Tool Identity';
+    if (footer) footer.textContent = 'Version 0.3.8 Tool Polish';
 })();
 
 // HOME SCREEN
