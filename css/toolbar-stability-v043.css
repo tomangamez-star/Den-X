@@ -1,0 +1,124 @@
+/* ============================================================
+   DENX v0.4.3 — TOOLBAR RENDERER REBUILD
+   Android Chromium stability: fixed shell + plain inner scroller.
+   ============================================================ */
+
+/* Outer left rail is NEVER the scrolling element anymore. */
+#toolbox.toolbar.expanded-toolbar {
+  display: flex !important;
+  flex-direction: column !important;
+  width: var(--denx-toolbox-width, 132px) !important;
+  min-width: var(--denx-toolbox-width, 132px) !important;
+  flex: 0 0 var(--denx-toolbox-width, 132px) !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  background: #0d0d0d !important;
+  border-right: 1px solid #242424 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transform: none !important;
+  contain: none !important;
+  isolation: auto !important;
+}
+
+/* This is the ONLY vertical scrolling surface in the left rail. */
+#toolbox > .denx-toolbox-scroller {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 7px 6px 80px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-behavior: auto !important;
+  touch-action: pan-y;
+  background: #0d0d0d;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform: none;
+  will-change: auto;
+  -webkit-overflow-scrolling: auto;
+  scrollbar-width: none;
+}
+
+#toolbox > .denx-toolbox-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* Keep each section boring to paint. No independent compositing surfaces. */
+#toolbox > .denx-toolbox-scroller > .tool-section {
+  position: static !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  will-change: auto !important;
+}
+
+/* Quick Find used to blur the moving content underneath it. On Android this
+   is exactly the kind of overlay + scroller combination we want to avoid. */
+.tool-quickfind {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  background: rgba(10,10,10,.92) !important;
+  filter: none !important;
+}
+
+/* HARD SAFETY: contextual rails belong to the RIGHT edge, never in the
+   left flex flow and never in the middle of the workspace. */
+#figureActionsRail.figure-context-toolbar,
+#textActionsRail.text-context-toolbar {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+  flex: none !important;
+  margin: 0 !important;
+}
+
+#figureActionsRail.figure-context-toolbar:not(.hidden),
+#textActionsRail.text-context-toolbar:not(.hidden) {
+  transform: translateX(0) !important;
+}
+
+#figureActionsRail.figure-context-toolbar.hidden,
+#textActionsRail.text-context-toolbar.hidden {
+  transform: translateX(100%) !important;
+}
+
+/* Keep left active states cheap. No glow layer is created when Pan/Select
+   changes state. */
+#toolbox button.active,
+#toolbox .tool-row.active {
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+}
+
+/* Existing precision-node feedback remains one cheap line primitive. */
+.denx-active-chain-guide {
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 420px) {
+  #toolbox > .denx-toolbox-scroller {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+}
