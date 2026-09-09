@@ -574,3 +574,28 @@
   scroll-behavior:auto !important;
   overscroll-behavior:contain;
 }
+
+
+/* DENX v0.4.0.1 — Precision Nodes / no-glow selection */
+.figure-root-node,
+.figure-node-visual.selected,
+.figure-node-handle.selected,
+.denx-figure.selected,
+.denx-figure-active {
+  filter: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+.figure-node-visual.selected {
+  stroke: var(--primary) !important;
+  stroke-width: var(--denx-node-selected-stroke, 1.45px) !important;
+}
+.denx-active-chain-guide {
+  stroke: var(--primary, #00c8ff);
+  stroke-width: 1.35px;
+  vector-effect: non-scaling-stroke;
+  opacity: .92;
+  pointer-events: none;
+  filter: none !important;
+}
+.figure-node-touch-target { touch-action: none !important; }
