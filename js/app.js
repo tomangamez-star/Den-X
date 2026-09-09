@@ -1,15 +1,15 @@
 console.log("DenX Animator has started.");
 
 
-(function loadDenx039VideoExport(){
+(function loadDenx0400VideoExport(){
     if (
         document.getElementById('workspace') &&
-        !document.querySelector('script[data-denx-video-v039]')
+        !document.querySelector('script[data-denx-video-v0400]')
     ) {
         const script = document.createElement('script');
         script.src = 'js/video-export.js';
         script.defer = true;
-        script.dataset.denxVideoV039 = 'true';
+        script.dataset.denxVideoV0400 = 'true';
         document.body.appendChild(script);
     }
 })();
@@ -65,7 +65,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.3.9 Color + MP4';
+    if (footer) footer.textContent = 'Version 0.4.0.0 Stable Render';
 })();
 
 // HOME SCREEN
