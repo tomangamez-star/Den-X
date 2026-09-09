@@ -1,6 +1,6 @@
 // =========================
-// DENX TOOL MANAGER V2
-// Active tool tapped again -> Pan.
+// DENX TOOL MANAGER V3 — v0.4.2 STABLE MODES
+// Explicit, stable interaction modes.
 // =========================
 
 const panTool = document.getElementById("panTool");
@@ -21,37 +21,38 @@ function toolButtonFor(tool) {
     return null;
 }
 
-function setTool(tool) {
-    currentTool = tool;
+function setTool(tool, options = {}) {
+    const next = String(tool || "pan");
+    if (!toolButtonFor(next) && next !== "pan") return false;
+
+    // Duplicate taps do nothing. This prevents repeated Android repaint/rebuild storms.
+    if (currentTool === next && !options.force) return false;
+
+    currentTool = next;
+    const activeButton = toolButtonFor(next);
 
     [panTool, selectTool, pencilTool, eraserTool, cameraTool].forEach(button => {
-        button?.classList.remove("active");
+        if (!button) return;
+        const active = button === activeButton;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
     });
 
-    toolButtonFor(tool)?.classList.add("active");
-
-    if (cameraFrame) {
-        cameraFrame.classList.toggle("camera-active", tool === "camera");
-    }
+    if (cameraFrame) cameraFrame.classList.toggle("camera-active", next === "camera");
 
     window.dispatchEvent(new CustomEvent("denx:toolchange", {
-        detail: { tool }
+        detail: { tool: next }
     }));
-}
-
-function activateOrPan(tool) {
-    // Fast mobile escape hatch:
-    // tapping the already-active tool returns to Pan.
-    setTool(currentTool === tool ? "pan" : tool);
+    return true;
 }
 
 window.denxSetTool = setTool;
 window.denxCurrentTool = () => currentTool;
 
 panTool?.addEventListener("click", () => setTool("pan"));
-selectTool?.addEventListener("click", () => activateOrPan("select"));
-pencilTool?.addEventListener("click", () => activateOrPan("pencil"));
-eraserTool?.addEventListener("click", () => activateOrPan("eraser"));
-cameraTool?.addEventListener("click", () => activateOrPan("camera"));
+selectTool?.addEventListener("click", () => setTool("select"));
+pencilTool?.addEventListener("click", () => setTool("pencil"));
+eraserTool?.addEventListener("click", () => setTool("eraser"));
+cameraTool?.addEventListener("click", () => setTool("camera"));
 
-setTool("pan");
+setTool("pan", { force: true });

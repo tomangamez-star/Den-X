@@ -65,7 +65,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.4.0.1 Precision Nodes';
+    if (footer) footer.textContent = 'Version 0.4.2 Stability Engine';
 })();
 
 // HOME SCREEN
@@ -100,13 +100,13 @@ if (workspaceBack) {
 }
 
 
-function loadDenx0401NodeInteraction() {
+function loadDenx042NodeInteraction() {
   if (!document.getElementById("workspace")) return;
-  if (document.querySelector('script[data-denx-node-v0401]')) return;
+  if (document.querySelector('script[data-denx-node-v042]')) return;
   const script = document.createElement("script");
-  script.src = "js/node-interaction-v0401.js";
-  script.dataset.denxNodeV0401 = "1";
+  script.src = "js/node-interaction-v042.js";
+  script.dataset.denxNodeV042 = "1";
   document.body.appendChild(script);
 }
 
-window.addEventListener('load', () => setTimeout(loadDenx0401NodeInteraction, 0));
+window.addEventListener('load', () => setTimeout(loadDenx042NodeInteraction, 0));
