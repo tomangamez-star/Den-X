@@ -1,0 +1,37 @@
+/* ============================================================
+   DENX RENDERER V1 — WebGL figure artwork layer
+   SVG is retained only for interaction handles/selection overlays.
+   ============================================================ */
+
+#denxWebGLFigureLayer{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  z-index:4;
+  pointer-events:none;
+  background:transparent;
+}
+
+/* SVG layer moves above GPU artwork and becomes interaction-only. */
+html.denx-webgl-figures #figureLayer{
+  z-index:5!important;
+  pointer-events:auto;
+}
+
+/* Hide painted figure artwork in the live editor only.
+   Keep nodes/touch targets/selection guides alive. */
+html.denx-webgl-figures #figureLayer .figure-segment,
+html.denx-webgl-figures #figureLayer .figure-segment-shape,
+html.denx-webgl-figures #figureLayer .figure-head,
+html.denx-webgl-figures #figureLayer .figure-polyfill,
+html.denx-webgl-figures #figureLayer .denx-static-figure-artwork{
+  opacity:0!important;
+  visibility:hidden!important;
+}
+
+/* Keep text above GPU figures. */
+html.denx-webgl-figures #textLayer{
+  z-index:6!important;
+}
