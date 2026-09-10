@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v049-section-scroll";
+const CACHE_NAME = "denx-animator-v050-layout-lock";
 
 const APP_SHELL = [
   "./",
@@ -16,11 +16,11 @@ const APP_SHELL = [
   "./css/v0.3.3-quickdeck.css",
   "./css/v0.3.4-stability.css",
   "./css/tool-identity.css",
-  "./css/toolbox-rebuild-v049.css",
+  "./css/toolbox-rebuild-v050.css",
 
   "./js/project-store.js",
   "./js/app.js",
-  "./js/toolbox-rebuild-v049.js",
+  "./js/toolbox-rebuild-v050.js",
   "./js/segment-tools-v049.js",
   "./js/figure-copy-paste-v044.js",
   "./js/home-projects.js",

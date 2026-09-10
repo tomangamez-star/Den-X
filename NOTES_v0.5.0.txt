@@ -1,0 +1,9 @@
+DenX v0.5.0 Layout Lock
+- Fixed footer: Version 0.5.0
+- Per-section scrolling retained.
+- Up/down section buttons permanently reserved in a footer row.
+- Fresh edge swipe directly on active section changes section.
+- Copy/Paste structurally forced immediately below figure name.
+- Figure rail resets to top on new selection.
+- Segment layout preserved: Parent|Branch, Split|Join, Delete Node.
+- Existing export/node features preserved.
