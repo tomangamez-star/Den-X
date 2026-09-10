@@ -39,21 +39,21 @@ console.log("DenX Animator has started.");
 
 
 
-(function loadDenx045ToolboxRebuild(){
+(function loadDenx046VirtualToolbox(){
     if (!document.getElementById('workspace')) return;
 
-    if (!document.querySelector('link[data-denx-toolbox-v045]')) {
+    if (!document.querySelector('link[data-denx-toolbox-v046]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'css/toolbox-rebuild-v045.css';
-        link.dataset.denxToolboxV045 = 'true';
+        link.href = 'css/toolbox-rebuild-v046.css';
+        link.dataset.denxToolboxV046 = 'true';
         document.head.appendChild(link);
     }
 
-    if (!document.querySelector('script[data-denx-toolbox-v045]')) {
+    if (!document.querySelector('script[data-denx-toolbox-v046]')) {
         const script = document.createElement('script');
-        script.src = 'js/toolbox-rebuild-v045.js';
-        script.dataset.denxToolboxV045 = 'true';
+        script.src = 'js/toolbox-rebuild-v046.js';
+        script.dataset.denxToolboxV046 = 'true';
         document.body.appendChild(script);
     }
 })();
@@ -85,7 +85,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.4.5';
+    if (footer) footer.textContent = 'Version 0.4.6';
 })();
 
 // HOME SCREEN
