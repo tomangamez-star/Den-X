@@ -17,7 +17,7 @@
   copyBtn.type = "button";
   copyBtn.className = "tool-row tool-action";
   copyBtn.title = "Copy selected figure";
-  copyBtn.innerHTML = '<span class="tool-icon"><img src="icons/ui/copy.svg" alt=""></span><span class="tool-label">Copy</span>';
+  copyBtn.innerHTML = '<span class="tool-icon"><img src="icons/ui/copy.svg" alt="Copy"></span>';
 
   const pasteBtn = document.createElement("button");
   pasteBtn.id = "figurePasteBtn";
@@ -25,7 +25,7 @@
   pasteBtn.className = "tool-row tool-action";
   pasteBtn.title = "Paste copied figure";
   pasteBtn.disabled = true;
-  pasteBtn.innerHTML = '<span class="tool-icon"><img src="icons/ui/clipboard.svg" alt=""></span><span class="tool-label">Paste</span>';
+  pasteBtn.innerHTML = '<span class="tool-icon"><img src="icons/ui/clipboard.svg" alt="Paste"></span>';
 
   row.append(copyBtn, pasteBtn);
   const figureName = document.getElementById("figureActionsName");
