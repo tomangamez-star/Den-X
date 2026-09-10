@@ -88,7 +88,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.5.2';
+    if (footer) footer.textContent = 'Version 0.5.3';
 })();
 
 // HOME SCREEN
@@ -144,3 +144,27 @@ function loadDenx044FigureCopyPaste() {
   document.body.appendChild(script);
 }
 window.addEventListener('load', () => setTimeout(loadDenx044FigureCopyPaste, 0));
+
+
+(function loadDenx053FrameLocalEngine(){
+  if (!document.getElementById('workspace')) return;
+
+  if (!document.querySelector('link[data-denx-v053]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'css/frame-local-v053.css';
+    link.dataset.denxV053 = '1';
+    document.head.appendChild(link);
+  }
+
+  [
+    ['js/workspace-boot-v053.js', 'denxBootV053'],
+    ['js/frame-local-v053.js', 'denxFrameLocalV053']
+  ].forEach(([src, key]) => {
+    if (document.querySelector(`script[data-${key.toLowerCase()}]`)) return;
+    const script = document.createElement('script');
+    script.src = src;
+    script.dataset[key] = '1';
+    document.body.appendChild(script);
+  });
+})();
