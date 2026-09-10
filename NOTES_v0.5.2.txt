@@ -1,0 +1,7 @@
+DenX Animator v0.5.2
+- WebGL Renderer V2: higher-detail geometry, 2x max DPR supersampling, direct interaction redraw scheduling.
+- Visible renderer badge: WebGL2 ✓ or SVG fallback.
+- Mobile viewport guard: right toolbar/Delete and floating zoom controls stay inside actual visible workspace.
+- Re-measures on orientation, resize, VisualViewport changes.
+- Preserves v0.5.1 figure name + Copy/Paste structure, toolbar section behavior, Segment layout and export system.
+- Visible footer: Version 0.5.2.
