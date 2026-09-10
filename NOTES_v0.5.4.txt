@@ -1,0 +1,30 @@
+DenX Animator v0.5.4 — Frame-Local Core + Renderer Diagnostics
+
+Permanent figure-transform fix
+- v0.5.3 loaded its override from app.js BEFORE bones.js existed.
+- v0.5.4 waits until bones.js exposes the real public transform API, then attaches.
+- Scale affects current frame only.
+- Rotate affects current frame only.
+- Flip X/Y/Z affects current frame only.
+- Previous/next onion poses are not rewritten.
+- Per-frame segment constraint lengths are remembered/restored so posing after a scaled frame does not snap to another frame's limb length.
+
+Renderer diagnostics
+- WebGL renderer now stores its actual backend in localStorage.
+- Settings has SYSTEM > Graphics Diagnostics.
+- Shows WebGL2 · Active ✓ or SVG · Fallback ⚠.
+- This is persistent across the workspace -> Settings navigation.
+
+MP4 progress
+- The same DenX-native loading visual is reused during MP4 export.
+- Reads the existing real render/encode status.
+- Progress is tied to frames rendered/encoded, not a fake timer.
+- Generic window.denxOperationOverlay API is available for large save/import jobs later.
+
+Preserved
+- Frame-local text behavior from v0.5.3 remains untouched.
+- Short project loading screen remains.
+- WebGL Renderer V2 remains.
+- Viewport guard remains.
+- Toolbar/Segment/Copy-Paste layout remains.
+- Footer updated to Version 0.5.4.

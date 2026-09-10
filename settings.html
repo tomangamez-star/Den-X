@@ -10,6 +10,16 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111111">
 <link rel="stylesheet" href="css/tool-identity.css">
+<style>
+.denx-diagnostic-card{margin-top:12px;padding:12px;border:1px solid #283037;border-radius:12px;background:#101417}
+.denx-diagnostic-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+.denx-diagnostic-row+ .denx-diagnostic-row{border-top:1px solid #20272c}
+.denx-diagnostic-row span strong,.denx-diagnostic-row span small{display:block}
+.denx-diagnostic-row span strong{font-size:11px;color:#f0f3f5}
+.denx-diagnostic-row span small{margin-top:3px;font-size:8px;color:#7f8a90}
+.denx-renderer-pill{white-space:nowrap;padding:5px 8px;border:1px solid rgba(0,200,255,.28);border-radius:999px;background:rgba(0,200,255,.08);color:#00c8ff;font-size:9px;font-weight:900}
+.denx-renderer-pill.fallback{border-color:rgba(240,173,78,.32);background:rgba(240,173,78,.08);color:#f0ad4e}
+</style>
 </head>
 <body>
 <div id="app">
@@ -58,12 +68,38 @@
         </select>
       </label>
 
-      <div class="denx-settings-foot">DENX · Version 0.3.8 Tool Polish</div>
+      <div class="denx-diagnostic-card">
+        <div class="denx-native-panel-head">
+          <div>
+            <span class="denx-native-kicker">SYSTEM</span>
+            <strong>Graphics Diagnostics</strong>
+          </div>
+        </div>
+
+        <div class="denx-diagnostic-row">
+          <span>
+            <strong>Renderer</strong>
+            <small>Last renderer used by the workspace.</small>
+          </span>
+          <b id="denxSettingsRenderer" class="denx-renderer-pill">Not checked</b>
+        </div>
+
+        <div class="denx-diagnostic-row">
+          <span>
+            <strong>Acceleration</strong>
+            <small>GPU artwork path when WebGL2 is active.</small>
+          </span>
+          <b id="denxSettingsAcceleration" class="denx-renderer-pill">Unknown</b>
+        </div>
+      </div>
+
+      <div class="denx-settings-foot">DENX · Version 0.5.4</div>
     </section>
   </section>
 </div>
 <script src="js/project-store.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/settings-diagnostics-v054.js"></script>
 <script src="js/tool-identity.js"></script>
 </body>
 </html>
