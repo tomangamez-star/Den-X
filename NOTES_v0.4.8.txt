@@ -1,0 +1,28 @@
+DenX Animator v0.4.8 — Snap Toolbar + Icon-only Figure Clipboard
+
+Corruption finding
+- v0.4.5 (no moving toolbar content) was clean.
+- v0.4.7 brought corruption back when toolbar content moved continuously.
+- v0.4.8 therefore removes BOTH native scrolling and translated/momentum scrolling.
+
+New toolbar behavior
+- Vertical swipe on the left toolbar snaps to the previous/next section on release.
+- Content does not move with the finger.
+- Quick Find still uses the original compact floating DenX design.
+- Optional tiny ↑ / ↓ buttons at the bottom provide the same section stepping.
+- No animated toolbar movement.
+
+Figure Copy/Paste
+- Moved directly under Selected Figure name remains.
+- Labels removed: icon-only priority controls.
+- Copy uses icons/ui/copy.svg.
+- Paste uses icons/ui/clipboard.svg.
+- This prevents the clipboard controls from covering/truncating the figure name.
+
+Preserved
+- Parent / Branch / Split Segment tools.
+- MP4 quality screen.
+- Mandatory DenX watermark.
+- Exact FPS MP4 export.
+- Corruption-safe stage/right-toolbar separation.
+- Footer updated to Version 0.4.8.
