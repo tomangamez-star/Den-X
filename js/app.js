@@ -39,28 +39,28 @@ console.log("DenX Animator has started.");
 
 
 
-(function loadDenx048SnapToolbar(){
+(function loadDenx049SectionScroll(){
     if (!document.getElementById('workspace')) return;
 
-    if (!document.querySelector('link[data-denx-toolbox-v048]')) {
+    if (!document.querySelector('link[data-denx-toolbox-v049]')) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'css/toolbox-rebuild-v048.css';
-        link.dataset.denxToolboxV048 = 'true';
+        link.href = 'css/toolbox-rebuild-v049.css';
+        link.dataset.denxToolboxV049 = 'true';
         document.head.appendChild(link);
     }
 
-    if (!document.querySelector('script[data-denx-toolbox-v048]')) {
+    if (!document.querySelector('script[data-denx-toolbox-v049]')) {
         const script = document.createElement('script');
-        script.src = 'js/toolbox-rebuild-v048.js';
-        script.dataset.denxToolboxV048 = 'true';
+        script.src = 'js/toolbox-rebuild-v049.js';
+        script.dataset.denxToolboxV049 = 'true';
         document.body.appendChild(script);
     }
 
-    if (!document.querySelector('script[data-denx-segment-tools-v047]')) {
+    if (!document.querySelector('script[data-denx-segment-tools-v049]')) {
         const script = document.createElement('script');
-        script.src = 'js/segment-tools-v047.js';
-        script.dataset.denxSegmentToolsV047 = 'true';
+        script.src = 'js/segment-tools-v049.js';
+        script.dataset.denxSegmentToolsV049 = 'true';
         document.body.appendChild(script);
     }
 })();
@@ -92,7 +92,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.4.8';
+    if (footer) footer.textContent = 'Version 0.4.9';
 })();
 
 // HOME SCREEN

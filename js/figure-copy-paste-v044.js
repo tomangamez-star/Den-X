@@ -29,10 +29,9 @@
 
   row.append(copyBtn, pasteBtn);
   const figureName = document.getElementById("figureActionsName");
-  if (figureName?.parentElement === section) {
-    figureName.insertAdjacentElement("afterend", row);
-  } else if (editBtn) {
-    section.insertBefore(row, editBtn);
+  const nameBlock = figureName?.closest(".figure-context-header, .figure-context-title, .selected-figure-header") || figureName?.parentElement;
+  if (nameBlock && section.contains(nameBlock)) {
+    nameBlock.insertAdjacentElement("afterend", row);
   } else {
     section.prepend(row);
   }
