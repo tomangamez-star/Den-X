@@ -1,0 +1,13 @@
+DenX Animator v0.4.7
+
+- Visible footer updated to Version 0.4.7.
+- Continuous toolbar scrolling feel is back without restoring native overflow scrolling.
+- Finger drag and momentum/flick are supported.
+- Quick Find remains the original compact floating DenX rail.
+- Copy/Paste Figure moved directly under the selected figure name.
+- Copy continues to use icons/ui/copy.svg; Paste uses icons/ui/clipboard.svg.
+- Added Parent, Branch and Split Segment under node/segment tools.
+- Parent jumps to the selected node's parent.
+- Branch selects/highlights descendant nodes.
+- Split Segment inserts a midpoint joint and rewires poses across frames.
+- MP4 quality Export Studio, watermark, exact-FPS export and corruption-safe stage separation are preserved.
