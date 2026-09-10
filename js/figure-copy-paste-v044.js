@@ -28,8 +28,14 @@
   pasteBtn.innerHTML = '<span class="tool-icon"><img src="icons/ui/clipboard.svg" alt=""></span><span class="tool-label">Paste</span>';
 
   row.append(copyBtn, pasteBtn);
-  if (editBtn) section.insertBefore(row, editBtn);
-  else section.appendChild(row);
+  const figureName = document.getElementById("figureActionsName");
+  if (figureName?.parentElement === section) {
+    figureName.insertAdjacentElement("afterend", row);
+  } else if (editBtn) {
+    section.insertBefore(row, editBtn);
+  } else {
+    section.prepend(row);
+  }
 
   let clipboard = null;
 
