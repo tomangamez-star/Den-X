@@ -1,0 +1,278 @@
+/* ============================================================
+   DENX v0.4.5 — TOOLBOX REBUILD
+   No scrolling. No compositor-heavy toolbox surface.
+   The quick rail now switches fixed pages instead of scrolling.
+   ============================================================ */
+
+.editor.denx-v045-shell {
+  display:grid !important;
+  grid-template-columns: 178px minmax(0,1fr) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  position:relative !important;
+  min-height:0 !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+  background:#111 !important;
+}
+
+.denx-v045-left {
+  grid-column:1;
+  grid-row:1;
+  width:178px;
+  min-width:178px;
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-columns:132px 46px;
+  position:relative;
+  overflow:hidden;
+  background:#0d0d0d;
+  border-right:1px solid #252525;
+  z-index:10;
+  contain:layout paint style;
+  isolation:isolate;
+}
+
+.denx-v045-stage {
+  grid-column:2;
+  grid-row:1;
+  position:relative;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  background:#111;
+  z-index:1;
+  contain:layout paint;
+  isolation:isolate;
+}
+
+/* Completely neutralize all old scroll/compositor behavior on toolbox. */
+.denx-v045-left > #toolbox,
+.denx-v045-left > #toolbox.toolbar,
+.denx-v045-left > #toolbox.expanded-toolbar {
+  grid-column:1;
+  position:relative !important;
+  inset:auto !important;
+  width:132px !important;
+  min-width:132px !important;
+  max-width:132px !important;
+  height:100% !important;
+  min-height:0 !important;
+  padding:7px 6px !important;
+  margin:0 !important;
+  display:block !important;
+  overflow:hidden !important;
+  overscroll-behavior:none !important;
+  scroll-behavior:auto !important;
+  touch-action:manipulation !important;
+  background:#0d0d0d !important;
+  border:0 !important;
+  box-shadow:none !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  transform:none !important;
+  transition:none !important;
+  animation:none !important;
+  will-change:auto !important;
+  contain:content;
+}
+
+/* v0.4.3/v0.4.4 inner scroller, if present, becomes a static page host. */
+#toolbox > .denx-toolbox-scroller {
+  position:relative !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:block !important;
+  overflow:hidden !important;
+  touch-action:manipulation !important;
+  background:#0d0d0d !important;
+  transform:none !important;
+  transition:none !important;
+  animation:none !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  box-shadow:none !important;
+  will-change:auto !important;
+}
+
+#toolbox .tool-section {
+  display:none !important;
+  position:static !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:none !important;
+  transition:none !important;
+  animation:none !important;
+  filter:none !important;
+  box-shadow:none !important;
+  will-change:auto !important;
+}
+
+#toolbox .tool-section.denx-v045-active-page {
+  display:flex !important;
+  flex-direction:column !important;
+  gap:7px !important;
+}
+
+/* Keep controls cheap and deterministic. */
+#toolbox button,
+#toolbox .tool-row,
+#toolbox .tool-control,
+#toolbox .animation-stepper-control,
+#toolbox .animation-toggle-control,
+#toolbox .animation-range-control,
+#toolbox .project-figure-picker {
+  transform:none !important;
+  transition:none !important;
+  animation:none !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  box-shadow:none !important;
+  will-change:auto !important;
+}
+
+/* Preserve DenX cyan active state without glow. */
+#toolbox .tool-row.active {
+  background:rgba(0,200,255,.96) !important;
+  color:#050505 !important;
+  border-color:#00c8ff !important;
+}
+
+/* The quick rail is now a PAGE SWITCHER. It never scrolls. */
+.denx-v045-left > .tool-quickfind {
+  grid-column:2;
+  position:relative !important;
+  inset:auto !important;
+  width:46px !important;
+  min-width:46px !important;
+  height:100% !important;
+  padding:7px 4px !important;
+  margin:0 !important;
+  display:grid !important;
+  grid-template-rows:repeat(6,minmax(0,1fr));
+  align-items:stretch !important;
+  gap:4px !important;
+  background:#101010 !important;
+  border:0 !important;
+  border-left:1px solid #252525 !important;
+  border-radius:0 !important;
+  overflow:hidden !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+  transform:none !important;
+  transition:none !important;
+  animation:none !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  box-shadow:none !important;
+  will-change:auto !important;
+}
+
+.denx-v045-left > .tool-quickfind .quickfind-link {
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
+  padding:4px 2px !important;
+  margin:0 !important;
+  border:1px solid transparent !important;
+  border-radius:7px !important;
+  background:#151515 !important;
+  color:#929292 !important;
+  font-size:7px !important;
+  font-weight:800 !important;
+  line-height:1.05 !important;
+  text-align:center !important;
+  transform:none !important;
+  transition:none !important;
+  box-shadow:none !important;
+}
+
+.denx-v045-left > .tool-quickfind .quickfind-link.active {
+  color:#00c8ff !important;
+  background:#10252b !important;
+  border-color:rgba(0,200,255,.28) !important;
+}
+
+/* The renderer area owns viewport and all right-side contextual UI. */
+.denx-v045-stage > #viewport {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+}
+
+.denx-v045-stage > #figureActionsRail,
+.denx-v045-stage > #textActionsRail {
+  position:absolute !important;
+  top:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  left:auto !important;
+  margin:0 !important;
+  flex:none !important;
+  z-index:60 !important;
+}
+
+/* Crucial: right rails are NOT affected by left toolbox button sizing. */
+#figureActionsRail button,
+#textActionsRail button,
+#cameraProperties button {
+  transform:none !important;
+}
+
+.denx-v045-stage > #figureActionsRail:not(.hidden),
+.denx-v045-stage > #textActionsRail:not(.hidden) {
+  transform:translateX(0) !important;
+}
+
+.denx-v045-stage > #figureActionsRail.hidden,
+.denx-v045-stage > #textActionsRail.hidden {
+  transform:translateX(100%) !important;
+}
+
+/* Copy/Paste added in 0.4.4 remains compact. */
+.denx-figure-copy-row {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:4px;
+  width:100%;
+}
+
+/* No visual glow around the complete figure. */
+.denx-figure,
+.denx-figure.selected {
+  filter:none !important;
+}
+
+/* Keep the selected-node language lightweight. */
+.figure-node-visual.denx-node-neighbor {
+  stroke:rgba(0,200,255,.58) !important;
+  filter:none !important;
+}
+.figure-node-visual.selected {
+  stroke:#00c8ff !important;
+  filter:none !important;
+}
+.denx-active-chain-guide {
+  stroke:#00c8ff !important;
+  opacity:.82 !important;
+  filter:none !important;
+  pointer-events:none !important;
+}
+
+/* Kill old v0.4.4 layout wrappers if they still exist. */
+.denx-left-region,
+.denx-editor-region {
+  display:contents !important;
+}
