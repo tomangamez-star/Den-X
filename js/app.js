@@ -39,44 +39,25 @@ console.log("DenX Animator has started.");
 
 
 
-(function loadDenx051(){
+(function loadDenx052(){
  if(!document.getElementById('workspace'))return;
-
- if(!document.querySelector('link[data-v051-layout]')){
-   const l=document.createElement('link');
-   l.rel='stylesheet';
-   l.href='css/toolbox-rebuild-v051.css';
-   l.dataset.v051Layout='1';
-   document.head.appendChild(l);
- }
-
- if(!document.querySelector('link[data-v051-webgl]')){
-   const l=document.createElement('link');
-   l.rel='stylesheet';
-   l.href='css/webgl-renderer-v1.css';
-   l.dataset.v051Webgl='1';
-   document.head.appendChild(l);
- }
-
- if(!document.querySelector('script[data-v051-layout]')){
-   const s=document.createElement('script');
-   s.src='js/toolbox-rebuild-v051.js';
-   s.dataset.v051Layout='1';
-   document.body.appendChild(s);
- }
-
+ [
+  ['css/toolbox-rebuild-v052.css','denxV052Layout'],
+  ['css/webgl-renderer-v2.css','denxV052Webgl']
+ ].forEach(([href,key])=>{
+   if(document.querySelector(`link[data-${key.toLowerCase()}]`))return;
+   const l=document.createElement('link'); l.rel='stylesheet'; l.href=href; l.dataset[key]='1'; document.head.appendChild(l);
+ });
+ [
+  ['js/toolbox-rebuild-v052.js','denxV052Layout'],
+  ['js/viewport-guard-v052.js','denxV052Viewport'],
+  ['js/webgl-renderer-v2.js','denxV052Webgl']
+ ].forEach(([src,key])=>{
+   if(document.querySelector(`script[data-${key.toLowerCase()}]`))return;
+   const s=document.createElement('script'); s.src=src; s.dataset[key]='1'; document.body.appendChild(s);
+ });
  if(!document.querySelector('script[data-denx-segment-tools-v049]')){
-   const s=document.createElement('script');
-   s.src='js/segment-tools-v049.js';
-   s.dataset.denxSegmentToolsV049='1';
-   document.body.appendChild(s);
- }
-
- if(!document.querySelector('script[data-v051-webgl]')){
-   const s=document.createElement('script');
-   s.src='js/webgl-renderer-v1.js';
-   s.dataset.v051Webgl='1';
-   document.body.appendChild(s);
+   const s=document.createElement('script'); s.src='js/segment-tools-v049.js'; s.dataset.denxSegmentToolsV049='1'; document.body.appendChild(s);
  }
 })();
 
@@ -107,7 +88,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.5.1';
+    if (footer) footer.textContent = 'Version 0.5.2';
 })();
 
 // HOME SCREEN
