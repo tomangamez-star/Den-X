@@ -8,7 +8,16 @@
 
  const status=document.createElement("div"); status.id="denxRendererStatus"; status.textContent="Renderer · starting";
  (document.getElementById("denxV052Stage")||stage.parentElement||stage).appendChild(status);
- const setStatus=(backend,text)=>{window.denxRendererBackend=backend;status.dataset.backend=backend==="webgl2"?"webgl2":"svg";status.textContent=text};
+ const setStatus=(backend,text)=>{
+  window.denxRendererBackend=backend;
+  status.dataset.backend=backend==="webgl2"?"webgl2":"svg";
+  status.textContent=text;
+  try{
+    localStorage.setItem("denx.rendererBackend",backend);
+    localStorage.setItem("denx.rendererStatusText",text);
+    localStorage.setItem("denx.rendererCheckedAt",String(Date.now()));
+  }catch(_){}
+};
 
  const gl=canvas.getContext("webgl2",{alpha:true,antialias:true,depth:false,stencil:false,premultipliedAlpha:true,preserveDrawingBuffer:false,powerPreference:"high-performance"});
  if(!gl){canvas.remove();setStatus("svg","Renderer · SVG fallback");return}
