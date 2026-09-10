@@ -1,0 +1,12 @@
+DenX Animator v0.4.6
+
+- Footer: Version 0.4.6.
+- Quick Find restored to the original floating canvas-edge design.
+- No permanent quick-rail column.
+- Left toolbox remains corruption-safe: no native vertical scroll surface.
+- Vertical swipe/wheel switches virtual toolbox sections without CSS scrolling.
+- Current toolbox section is the only painted section; neighboring sections are kept only as logical buffers.
+- Figure Copy now uses the existing icons/ui/copy.svg.
+- Figure Paste now uses the existing icons/ui/clipboard.svg.
+- Copy/Paste Figure and MP4 Export Studio/watermark remain intact.
+- Stage/right properties architecture from the corruption-free v0.4.5 path remains intact.
