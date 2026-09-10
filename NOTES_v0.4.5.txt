@@ -1,0 +1,25 @@
+DenX Animator v0.4.5 — Toolbox Rebuild / No-Scroll Engine
+
+This patch stops trying to repair the old scrolling toolbar.
+
+What changed
+- Left toolbox is rebuilt as a fixed page-based control panel.
+- There is NO vertical scroll surface in the left toolbox anymore.
+- The compact quick rail switches Project / General / Draw / Animate / Figure / Camera pages.
+- Canvas/renderer and right contextual panels live in their own fixed stage region.
+- v0.4.4 Copy/Paste Figure and MP4 Export Studio remain untouched.
+- Right contextual rails no longer inherit left-toolbar sizing behavior.
+- Whole-figure glow remains disabled; selected/neighbor node states stay lightweight.
+- Visible app footer updated to Version 0.4.5.
+
+Why
+The repeated corruption was strongly tied to Android Chromium repainting the complex left
+scroll surface. v0.4.5 removes that scroll path entirely instead of adding more compositor CSS.
+
+Test
+1. Tap every quick rail page repeatedly.
+2. Spam Pan / Select / Draw / Camera.
+3. Select/deselect figures repeatedly.
+4. Pan and zoom the stage.
+5. Leave the editor open and switch pages for 30–60 seconds.
+6. Confirm whether stale/duplicated toolbar tiles ever appear.

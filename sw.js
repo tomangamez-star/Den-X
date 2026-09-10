@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v044-layout-export-studio";
+const CACHE_NAME = "denx-animator-v045-toolbox-rebuild";
 
 const APP_SHELL = [
   "./",
@@ -16,11 +16,11 @@ const APP_SHELL = [
   "./css/v0.3.3-quickdeck.css",
   "./css/v0.3.4-stability.css",
   "./css/tool-identity.css",
-  "./css/toolbar-stability-v044.css",
+  "./css/toolbox-rebuild-v045.css",
 
   "./js/project-store.js",
   "./js/app.js",
-  "./js/toolbar-isolation-v044.js",
+  "./js/toolbox-rebuild-v045.js",
   "./js/figure-copy-paste-v044.js",
   "./js/home-projects.js",
   "./js/open-projects.js",
