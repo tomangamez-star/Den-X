@@ -39,30 +39,11 @@ console.log("DenX Animator has started.");
 
 
 
-(function loadDenx049SectionScroll(){
-    if (!document.getElementById('workspace')) return;
-
-    if (!document.querySelector('link[data-denx-toolbox-v049]')) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'css/toolbox-rebuild-v049.css';
-        link.dataset.denxToolboxV049 = 'true';
-        document.head.appendChild(link);
-    }
-
-    if (!document.querySelector('script[data-denx-toolbox-v049]')) {
-        const script = document.createElement('script');
-        script.src = 'js/toolbox-rebuild-v049.js';
-        script.dataset.denxToolboxV049 = 'true';
-        document.body.appendChild(script);
-    }
-
-    if (!document.querySelector('script[data-denx-segment-tools-v049]')) {
-        const script = document.createElement('script');
-        script.src = 'js/segment-tools-v049.js';
-        script.dataset.denxSegmentToolsV049 = 'true';
-        document.body.appendChild(script);
-    }
+(function loadDenx050(){
+ if(!document.getElementById('workspace'))return;
+ if(!document.querySelector('link[data-v050]')){const l=document.createElement('link');l.rel='stylesheet';l.href='css/toolbox-rebuild-v050.css';l.dataset.v050='1';document.head.appendChild(l);}
+ if(!document.querySelector('script[data-v050]')){const s=document.createElement('script');s.src='js/toolbox-rebuild-v050.js';s.dataset.v050='1';document.body.appendChild(s);}
+ if(!document.querySelector('script[data-denx-segment-tools-v049]')){const s=document.createElement('script');s.src='js/segment-tools-v049.js';s.dataset.denxSegmentToolsV049='1';document.body.appendChild(s);}
 })();
 
 // v0.3.3+ Quick Deck visual patch loader.
@@ -92,7 +73,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.4.9';
+    if (footer) footer.textContent = 'Version 0.5.0';
 })();
 
 // HOME SCREEN

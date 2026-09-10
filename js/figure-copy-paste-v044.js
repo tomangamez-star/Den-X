@@ -29,12 +29,14 @@
 
   row.append(copyBtn, pasteBtn);
   const figureName = document.getElementById("figureActionsName");
-  const nameBlock = figureName?.closest(".figure-context-header, .figure-context-title, .selected-figure-header") || figureName?.parentElement;
-  if (nameBlock && section.contains(nameBlock)) {
-    nameBlock.insertAdjacentElement("afterend", row);
-  } else {
-    section.prepend(row);
+  function placeClipboardRow(){
+    if(!figureName || figureName.parentElement!==section) return;
+    if(figureName.nextElementSibling!==row){
+      section.insertBefore(row, figureName.nextSibling);
+    }
   }
+  placeClipboardRow();
+  requestAnimationFrame(placeClipboardRow);
 
   let clipboard = null;
 
@@ -175,6 +177,7 @@
   pasteBtn.addEventListener("click", pasteFigure);
 
   window.addEventListener("denx:figureselectionchange", event => {
+    placeClipboardRow();
     copyBtn.disabled = !event.detail;
     pasteBtn.disabled = !clipboard;
   });
