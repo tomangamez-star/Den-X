@@ -1,0 +1,30 @@
+DenX Animator v0.4.9 — Section Scroll + Segment Grid
+
+Footer
+- Updated to Version 0.4.9.
+
+Left toolbar
+- Each section is independently scrollable.
+- Reaching the bottom/top does NOT immediately change section.
+- Only a fresh extra swipe from the edge changes to next/previous section.
+- ↑ / ↓ section buttons remain.
+- Original Quick Find remains.
+
+Selected Figure
+- Figure name gets its own full row.
+- Copy/Paste are icon-only on a separate row BELOW the name.
+- Copy uses icons/ui/copy.svg; Paste uses icons/ui/clipboard.svg.
+
+Segment section
+- Renamed exactly to SEGMENT.
+- Normal section inside the existing right figure toolbar; no extra rail.
+- Layout:
+    Parent | Branch
+    Split  | Join
+    Delete Node
+- Join is cross-figure: choose source node, select a node on another figure, tap Join again.
+- Delete Node reverses a split-style intermediate joint when it has exactly one parent and one child, reconnecting the segment straight through.
+
+Preserved
+- MP4 Export Studio, quality choices, watermark and exact-FPS export.
+- Corruption-safe stage separation.
