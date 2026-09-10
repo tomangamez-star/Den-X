@@ -1,0 +1,39 @@
+DenX Animator v0.5.1 — WebGL Renderer V1 + Layout Fix
+
+Renderer V1
+- Figure ARTWORK is rendered through one WebGL2 canvas.
+- Existing figure data / bones / frame poses remain unchanged.
+- Existing SVG figure layer stays alive only for editor node handles,
+  touch targets and selection guides.
+- Non-selected/static figures and selected figure artwork are no longer
+  painted by live SVG while WebGL is active.
+- Drawing canvas, text, onion skin and export pipeline are intentionally
+  unchanged in this first GPU migration.
+- WebGL failure/context loss safely falls back to the existing SVG renderer.
+- Exposes window.denxRendererBackend and window.denxWebGLRenderer.
+
+Toolbar permanent-fix pass
+- Each left section scrolls independently.
+- Ghost control gets enough fixed vertical space so Loop cannot overlap it.
+- Up/down section buttons have a permanently reserved footer.
+- The edge detector uses touchstart/touchend DIRECTLY on each native-scroll
+  section, avoiding Chromium pointer-cancel behavior.
+- Swipe that reaches the edge stops.
+- A fresh swipe beginning at the edge changes section.
+- Section scroll positions are remembered.
+- Original Quick Find remains.
+
+Selected Figure
+- Name is explicitly restored/read from the selected figure state.
+- Name has a guaranteed visible 20px row.
+- Copy/Paste is physically inserted immediately after the actual name node.
+- Copy/Paste stays icon-only.
+- Figure rail resets to the top on new selection.
+
+Preserved
+- Segment layout: Parent | Branch / Split | Join / Delete Node.
+- MP4 quality Export Studio.
+- Mandatory DenX watermark.
+- Exact-FPS MP4 export.
+- Corruption-safe left/stage separation.
+- Visible footer: Version 0.5.1.
