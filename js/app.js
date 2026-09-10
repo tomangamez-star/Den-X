@@ -39,11 +39,45 @@ console.log("DenX Animator has started.");
 
 
 
-(function loadDenx050(){
+(function loadDenx051(){
  if(!document.getElementById('workspace'))return;
- if(!document.querySelector('link[data-v050]')){const l=document.createElement('link');l.rel='stylesheet';l.href='css/toolbox-rebuild-v050.css';l.dataset.v050='1';document.head.appendChild(l);}
- if(!document.querySelector('script[data-v050]')){const s=document.createElement('script');s.src='js/toolbox-rebuild-v050.js';s.dataset.v050='1';document.body.appendChild(s);}
- if(!document.querySelector('script[data-denx-segment-tools-v049]')){const s=document.createElement('script');s.src='js/segment-tools-v049.js';s.dataset.denxSegmentToolsV049='1';document.body.appendChild(s);}
+
+ if(!document.querySelector('link[data-v051-layout]')){
+   const l=document.createElement('link');
+   l.rel='stylesheet';
+   l.href='css/toolbox-rebuild-v051.css';
+   l.dataset.v051Layout='1';
+   document.head.appendChild(l);
+ }
+
+ if(!document.querySelector('link[data-v051-webgl]')){
+   const l=document.createElement('link');
+   l.rel='stylesheet';
+   l.href='css/webgl-renderer-v1.css';
+   l.dataset.v051Webgl='1';
+   document.head.appendChild(l);
+ }
+
+ if(!document.querySelector('script[data-v051-layout]')){
+   const s=document.createElement('script');
+   s.src='js/toolbox-rebuild-v051.js';
+   s.dataset.v051Layout='1';
+   document.body.appendChild(s);
+ }
+
+ if(!document.querySelector('script[data-denx-segment-tools-v049]')){
+   const s=document.createElement('script');
+   s.src='js/segment-tools-v049.js';
+   s.dataset.denxSegmentToolsV049='1';
+   document.body.appendChild(s);
+ }
+
+ if(!document.querySelector('script[data-v051-webgl]')){
+   const s=document.createElement('script');
+   s.src='js/webgl-renderer-v1.js';
+   s.dataset.v051Webgl='1';
+   document.body.appendChild(s);
+ }
 })();
 
 // v0.3.3+ Quick Deck visual patch loader.
@@ -73,7 +107,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.5.0';
+    if (footer) footer.textContent = 'Version 0.5.1';
 })();
 
 // HOME SCREEN

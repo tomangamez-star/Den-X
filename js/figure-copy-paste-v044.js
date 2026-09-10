@@ -29,14 +29,31 @@
 
   row.append(copyBtn, pasteBtn);
   const figureName = document.getElementById("figureActionsName");
-  function placeClipboardRow(){
-    if(!figureName || figureName.parentElement!==section) return;
-    if(figureName.nextElementSibling!==row){
+
+  function selectedFigureName(detail = null) {
+    if (detail?.name) return detail.name;
+    const state = window.denxBonesCaptureProjectState?.();
+    const selected = state?.figures?.find(
+      figure => String(figure.id) === String(state.selectedFigureId)
+    );
+    return selected?.name || "Figure";
+  }
+
+  function placeClipboardRow(detail = null) {
+    if (!figureName || !section) return;
+
+    // Keep the figure name as a real, independent row.
+    const name = selectedFigureName(detail);
+    if (name) figureName.textContent = name;
+
+    // Physically place clipboard immediately after the name node.
+    if (figureName.parentElement === section && figureName.nextElementSibling !== row) {
       section.insertBefore(row, figureName.nextSibling);
     }
   }
+
   placeClipboardRow();
-  requestAnimationFrame(placeClipboardRow);
+  requestAnimationFrame(() => placeClipboardRow());
 
   let clipboard = null;
 
@@ -177,7 +194,7 @@
   pasteBtn.addEventListener("click", pasteFigure);
 
   window.addEventListener("denx:figureselectionchange", event => {
-    placeClipboardRow();
+    placeClipboardRow(event.detail);
     copyBtn.disabled = !event.detail;
     pasteBtn.disabled = !clipboard;
   });
