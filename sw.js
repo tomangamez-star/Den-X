@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v052-webgl-v2";
+const CACHE_NAME = "denx-animator-v053-frame-local";
 
 const APP_SHELL = [
   "./",
@@ -16,11 +16,14 @@ const APP_SHELL = [
   "./css/v0.3.3-quickdeck.css",
   "./css/v0.3.4-stability.css",
   "./css/tool-identity.css",
+  "./css/frame-local-v053.css",
   "./css/toolbox-rebuild-v052.css",
   "./css/webgl-renderer-v2.css",
 
   "./js/project-store.js",
   "./js/app.js",
+  "./js/workspace-boot-v053.js",
+  "./js/frame-local-v053.js",
   "./js/toolbox-rebuild-v052.js",
   "./js/viewport-guard-v052.js",
   "./js/webgl-renderer-v2.js",

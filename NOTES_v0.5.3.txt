@@ -1,0 +1,33 @@
+DenX Animator v0.5.3 — Frame-Local Animation + Workspace Boot
+
+Core animation fix
+- Scale Figure affects CURRENT FRAME only.
+- Rotate Figure affects CURRENT FRAME only.
+- Flip X/Y/Z affects CURRENT FRAME only.
+- Previous/next frame poses are no longer transformed with the active frame.
+- Onion skin therefore stays a true historical/next-frame reference.
+- Segment working lengths are synchronized when the active frame changes so
+  rigid node posing remains coherent after a frame-local scale.
+
+Text keyframe model
+- Text created on Frame N begins existing on Frame N, not Frames 1..N-1.
+- Text position/style/scale/content changes are stored by frame.
+- Frames without an explicit text edit inherit the nearest previous text state.
+- Delete Text hides it from the current frame onward while preserving earlier frames.
+- Existing/legacy project text defaults to Frame 1 so old projects do not lose text.
+- Frame-aware text metadata is carried inside the existing text object capture,
+  so project persistence naturally retains it.
+
+Workspace startup
+- Added a subtle DenX loading screen.
+- Progress reflects actual startup milestones: project -> frames -> renderer -> ready.
+- It disappears as soon as initialization is ready; no fake multi-second delay.
+
+Preserved
+- WebGL Renderer V2 and visible WebGL/SVG status.
+- Viewport clipping guard.
+- Section-local toolbar scrolling.
+- Figure Copy/Paste.
+- Segment tools.
+- MP4 quality/export/watermark.
+- Visible footer: Version 0.5.3.
