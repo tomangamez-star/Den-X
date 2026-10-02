@@ -1,0 +1,10 @@
+{
+  "appId": "com.denx.animator",
+  "appName": "DenX Animator",
+  "webDir": "www",
+  "backgroundColor": "#111111",
+  "android": {
+    "backgroundColor": "#111111",
+    "allowMixedContent": false
+  }
+}

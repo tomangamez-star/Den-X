@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DenX Animator</string>
+    <string name="title_activity_main">DenX Animator</string>
+    <string name="package_name">com.denx.animator</string>
+    <string name="custom_url_scheme">com.denx.animator</string>
+</resources>
