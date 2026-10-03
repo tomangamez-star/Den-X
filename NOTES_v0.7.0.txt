@@ -1,0 +1,10 @@
+DenX Animator v0.7.0 — Coordinate In-betweening
+
+- Deterministic 25%, 50%, 75%, and custom coordinate tween generation.
+- Interpolates matching figure nodes, style scale, segment lengths, camera transforms, text transforms, colors, and drawing layers.
+- Inserts the generated pose after the current frame and shifts the former next frame forward.
+- Tween insertion participates in timeline undo/redo, including text state.
+- Removes the duplicate v0.6 frame-change restoration that could hide figures while navigating backward.
+- Moves DenX Assistant away from the bottom-right zoom controls.
+- Adds permanent release signing support for Palm Store and future in-place Android updates.
+- Android versionCode 70000 / versionName 0.7.0-alpha.
