@@ -112,6 +112,11 @@
         };
       });
 
+      pose.denxStyleScale = Math.max(
+        0.1,
+        Math.min(8, (Number(pose.denxStyleScale) || 1) * factor)
+      );
+
       ensurePoseLengths(figure, pose);
       return commit(snapshot, figure, pose, options.record !== false);
     }
@@ -227,6 +232,8 @@
       rotateCurrent(figureId, degrees, { record: false });
 
     window.denxFlipFigure = flipCurrent;
+    window.denxGetFigureFrameScale = figureId =>
+      Number(stateFor(figureId)?.pose?.denxStyleScale) || 1;
 
     window.denxBeginFigureTransform = figureId => {
       transaction = {
@@ -271,14 +278,14 @@
 
     window.denxFrameLocalCoreV054 = {
       status: "active",
-      version: "0.5.4",
+      version: "0.5.5",
       scaleCurrent,
       rotateCurrent,
       flipCurrent,
       syncActiveFrameConstraints
     };
 
-    console.info("[DenX] Frame-local figure transforms active v0.5.4");
+    console.info("[DenX] Frame-local figure transforms active v0.5.5");
     return true;
   }
 

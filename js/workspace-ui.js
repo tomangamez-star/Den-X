@@ -725,7 +725,9 @@
         }
         if (!visible) return;
         if (changedFigure) {
-            contextualFigureScalePercent = 100;
+            contextualFigureScalePercent = Math.round(
+                (Number(window.denxGetFigureFrameScale?.(contextualFigureId)) || 1) * 100
+            );
             contextualFigureRotation = 0;
         }
         if (figureScaleDisplay) figureScaleDisplay.textContent = `${contextualFigureScalePercent}%`;

@@ -161,14 +161,20 @@
     const safe = String(project?.name || "DenX-Frame")
       .replace(/[^a-z0-9_-]+/gi,"-").replace(/^-+|-+$/g,"") || "DenX-Frame";
     const current = Number(window.denxCurrentFrame?.() || 1);
-    const anchor = document.createElement("a");
-    anchor.href = URL.createObjectURL(blob);
-    anchor.download = `${safe}-frame-${current}.png`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    const href = anchor.href;
-    anchor.remove();
-    setTimeout(() => URL.revokeObjectURL(href),1600);
+    const fileName = `${safe}-frame-${current}.png`;
+    if (typeof window.denxSaveExportBlob === "function") {
+      await window.denxSaveExportBlob(blob, fileName, "image/png");
+    } else {
+      const anchor = document.createElement("a");
+      anchor.href = URL.createObjectURL(blob);
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      const href = anchor.href;
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(href),1600);
+    }
+    return fileName;
   }
 
   window.denxRenderCurrentCameraFrame = renderCameraFrame;
@@ -178,8 +184,8 @@
     pngBtn.disabled = true;
     try {
       toast("Rendering full-quality watermarked frame…");
-      await exportCurrentPng();
-      toast("PNG ready ✓");
+      const fileName = await exportCurrentPng();
+      toast(`Saved ${fileName} ✓`);
       dialog?.close?.();
     } catch (error) {
       console.error("DenX frame export failed:",error);

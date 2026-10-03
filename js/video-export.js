@@ -52,6 +52,7 @@
       <div class="denx-export-meta-row"><span>Branding</span><b class="denx-watermark-lock">DENX watermark · ON</b></div>
     </div>
     <button id="denxStartMp4Export" class="denx-export-start" type="button">EXPORT MP4</button>
+    <button id="denxShareMp4Export" class="denx-export-share" type="button" hidden>SHARE LAST EXPORT</button>
     <div id="denxVideoExportStatus" class="denx-video-export-status" hidden></div>
   `;
   choice.after(studio);
@@ -59,6 +60,7 @@
   const backBtn = studio.querySelector(".denx-export-back");
   const startBtn = studio.querySelector("#denxStartMp4Export");
   const status = studio.querySelector("#denxVideoExportStatus");
+  const shareBtn = studio.querySelector("#denxShareMp4Export");
   const fpsMeta = studio.querySelector("#denxExportFpsMeta");
   const sizeMeta = studio.querySelector("#denxExportSizeMeta");
   const qualityButtons = [...studio.querySelectorAll(".denx-quality-option")];
@@ -91,6 +93,7 @@
     fpsMeta.textContent = `${projectFps()} FPS`;
     sizeMeta.textContent = labels[selectedHeight];
     status.hidden = true;
+    shareBtn.hidden = true;
   }
 
   window.addEventListener("denx:exportdialogopen", showMain);
@@ -251,18 +254,25 @@
 
     if (!blob.size) throw new Error("MP4 encoding produced no data.");
 
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${safeProjectName()}-${outH}p.mp4`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    setTimeout(() => URL.revokeObjectURL(url),3000);
+    const fileName = `${safeProjectName()}-${outH}p.mp4`;
+    if (typeof window.denxSaveExportBlob === "function") {
+      status.textContent = `Choose where to save ${fileName}`;
+      await window.denxSaveExportBlob(blob, fileName, "video/mp4");
+    } else {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url),3000);
+    }
 
     const duration = frameCount/fps;
     status.textContent =
-      `MP4 ready · ${outW}×${outH} · ${fps} FPS · ${duration.toFixed(2)}s · ${(blob.size/1024/1024).toFixed(1)} MB`;
+      `Saved ${fileName} · ${outW}×${outH} · ${fps} FPS · ${duration.toFixed(2)}s · ${(blob.size/1024/1024).toFixed(1)} MB`;
+    shareBtn.hidden = typeof window.denxShareLastExport !== "function";
   }
 
   const mime = supportedMp4Mime();
@@ -270,6 +280,25 @@
     const small = mp4Button.querySelector("small");
     if (small) small.textContent = "MP4 needs browser H.264 MediaRecorder support.";
   }
+
+  window.addEventListener("denx:nativesaveprogress", event => {
+    if (studio.hidden || status.hidden) return;
+    const written = Number(event.detail?.written || 0);
+    const total = Number(event.detail?.total || 0);
+    if (total > 0) status.textContent = `Saving to phone · ${Math.round(written / total * 100)}%`;
+  });
+
+  shareBtn.addEventListener("click", async () => {
+    shareBtn.disabled = true;
+    try {
+      await window.denxShareLastExport?.();
+    } catch (error) {
+      status.hidden = false;
+      status.textContent = error?.message || "Could not share this export.";
+    } finally {
+      shareBtn.disabled = false;
+    }
+  });
 
   startBtn.addEventListener("click", async () => {
     startBtn.disabled = true;

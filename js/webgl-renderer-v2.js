@@ -94,16 +94,16 @@
  function build(state){
    const o=[];
    for(const f of state?.figures||[]){
-     const p=poseOf(state,f.id); if(!p||p.visible===false)continue; const nodes=p.nodes||{},fk=rgba(f.style?.color||f.color);
+     const p=poseOf(state,f.id); if(!p||p.visible===false)continue; const nodes=p.nodes||{},fk=rgba(f.style?.color||f.color),styleScale=Math.max(.1,Math.min(8,Number(p.denxStyleScale)||1));
      for(const fill of f.polyfills||[]){const ps=(fill.nodeIds||[]).map(id=>nodes[id]||nodes[String(id)]).filter(Boolean);polygon(o,ps,rgba(fill.color||f.style?.color||"#00c8ff"))}
      for(const s of f.segments||[]){
        const a=nodes[s.from]||nodes[String(s.from)],b=nodes[s.to]||nodes[String(s.to)];if(!a||!b)continue;
-       const k=rgba(s.style?.color||s.color||f.style?.color),w=Math.max(1,Number(s.style?.width)||Number(s.width)||Number(f.style?.thickness)||12),type=String(s.type||"rounded").toLowerCase();
+       const k=rgba(s.style?.color||s.color||f.style?.color),w=Math.max(1,(Number(s.style?.width)||Number(s.width)||Number(f.style?.thickness)||12)*styleScale),type=String(s.type||"rounded").toLowerCase();
        if(type==="circle")circle(o,(a.x+b.x)/2,(a.y+b.y)/2,Math.max(4,Math.hypot(b.x-a.x,b.y-a.y)/2),k,80);
        else if(["rectangle","triangle","diamond","hexagon"].includes(type))polygon(o,points(type,a,b,w),k);
        else line(o,a,b,w,k,type!=="square");
      }
-     if(f.headNodeId!=null){const h=nodes[f.headNodeId]||nodes[String(f.headNodeId)];if(h)circle(o,+h.x,+h.y,Math.max(2,+f.style?.headRadius||18),fk,96)}
+     if(f.headNodeId!=null){const h=nodes[f.headNodeId]||nodes[String(f.headNodeId)];if(h)circle(o,+h.x,+h.y,Math.max(2,(+f.style?.headRadius||18)*styleScale),fk,96)}
    }
    return o;
  }

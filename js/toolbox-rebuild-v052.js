@@ -172,10 +172,14 @@
     });
   };
 
-  window.addEventListener("denx:figureselectionchange",()=>{
+  let railFigureId=null;
+  window.addEventListener("denx:figureselectionchange",event=>{
     anchorRails();
     const rail=document.getElementById("figureActionsRail");
-    if(rail && !rail.classList.contains("hidden")){
+    const nextFigureId=event.detail?.figureId||null;
+    const changedFigure=String(nextFigureId||"")!==String(railFigureId||"");
+    railFigureId=nextFigureId;
+    if(changedFigure && rail && !rail.classList.contains("hidden")){
       requestAnimationFrame(()=>{rail.scrollTop=0;});
     }
   });

@@ -1,5 +1,22 @@
 console.log("DenX Animator has started.");
 
+(function loadDenx055AndroidPolish(){
+    if (!document.querySelector('link[data-denx-android-v055]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/android-polish-v055.css';
+        link.dataset.denxAndroidV055 = 'true';
+        document.head.appendChild(link);
+    }
+    if (!document.querySelector('script[data-denx-android-v055]')) {
+        const script = document.createElement('script');
+        script.src = 'js/android-polish-v055.js';
+        script.defer = true;
+        script.dataset.denxAndroidV055 = 'true';
+        document.body.appendChild(script);
+    }
+})();
+
 
 (function loadDenx0400VideoExport(){
     if (
@@ -88,7 +105,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.5.4';
+    if (footer) footer.textContent = 'Version 0.5.5';
 })();
 
 // HOME SCREEN

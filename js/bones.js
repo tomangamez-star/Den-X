@@ -542,9 +542,13 @@ function segmentPolygonPoints(type, from, to, width) {
     ];
 }
 
-function appendFigureSegment(group, figure, segment, from, to) {
+function poseStyleScale(pose) {
+    return Math.max(0.1, Math.min(8, Number(pose?.denxStyleScale) || 1));
+}
+
+function appendFigureSegment(group, figure, segment, from, to, styleScale = 1) {
     const type = segment.type || "rounded";
-    const width = Number(segment.style?.width) || figure.style?.thickness || 12;
+    const width = (Number(segment.style?.width) || figure.style?.thickness || 12) * styleScale;
     const color = segment.style?.color || figure.style?.color || "#111111";
 
     if (type === "circle") {
@@ -641,7 +645,8 @@ function appendOnionFigure(frameNumber, className, opacity) {
                 figure,
                 segment,
                 from,
-                to
+                to,
+                poseStyleScale(pose)
             );
         });
 
@@ -655,7 +660,7 @@ function appendOnionFigure(frameNumber, className, opacity) {
             group.appendChild(createSvg("circle", {
                 cx: head.x,
                 cy: head.y,
-                r: figure.style?.headRadius || 18,
+                r: (figure.style?.headRadius || 18) * poseStyleScale(pose),
                 class: "figure-head",
                 "data-denx-head": "1"
             }));
@@ -746,7 +751,8 @@ function frameFigureThumbnailDataUrl(frameNumber = currentFrame) {
                 figure,
                 segment,
                 from,
-                to
+                to,
+                poseStyleScale(pose)
             );
         });
 
@@ -759,7 +765,7 @@ function frameFigureThumbnailDataUrl(frameNumber = currentFrame) {
             group.appendChild(createSvg("circle", {
                 cx: head.x,
                 cy: head.y,
-                r: figure.style?.headRadius || 18,
+                r: (figure.style?.headRadius || 18) * poseStyleScale(pose),
                 fill: figure.style?.color || "#111111"
             }));
         }
@@ -800,11 +806,11 @@ function figureGroupFor(figureId) {
     ) || null;
 }
 
-function updateSegmentGeometry(element, figure, segment, from, to) {
+function updateSegmentGeometry(element, figure, segment, from, to, styleScale = 1) {
     if (!element || !from || !to) return;
 
     const type = segment.type || "rounded";
-    const width = Number(segment.style?.width) || figure.style?.thickness || 12;
+    const width = (Number(segment.style?.width) || figure.style?.thickness || 12) * styleScale;
 
     if (type === "circle") {
         const diameter = Math.max(8, Math.hypot(to.x - from.x, to.y - from.y));
@@ -831,6 +837,7 @@ function updateSegmentGeometry(element, figure, segment, from, to) {
     element.setAttribute("y1", from.y);
     element.setAttribute("x2", to.x);
     element.setAttribute("y2", to.y);
+    element.setAttribute("stroke-width", width);
 }
 
 function updateFigureGeometry(figureId) {
@@ -854,7 +861,7 @@ function updateFigureGeometry(figureId) {
         const from = pose.nodes[segment.from];
         const to = pose.nodes[segment.to];
         const element = segmentElements.get(String(segment.id));
-        updateSegmentGeometry(element, figure, segment, from, to);
+        updateSegmentGeometry(element, figure, segment, from, to, poseStyleScale(pose));
     });
 
     if (Array.isArray(figure.polyfills)) {
@@ -883,6 +890,7 @@ function updateFigureGeometry(figureId) {
         if (headElement) {
             headElement.setAttribute("cx", head.x);
             headElement.setAttribute("cy", head.y);
+            headElement.setAttribute("r", (figure.style?.headRadius || 18) * poseStyleScale(pose));
         }
     }
 
@@ -983,14 +991,15 @@ function figureArtworkBounds(figure, pose) {
     let minY = Math.min(...points.map(point => Number(point.y) || 0));
     let maxY = Math.max(...points.map(point => Number(point.y) || 0));
 
-    let margin = Math.max(6, Number(figure.style?.headRadius) || 0);
+    const styleScale = poseStyleScale(pose);
+    let margin = Math.max(6, (Number(figure.style?.headRadius) || 0) * styleScale);
 
     (figure.segments || []).forEach(segment => {
         const from = pose.nodes?.[segment.from];
         const to = pose.nodes?.[segment.to];
         if (!from || !to) return;
 
-        const width = Number(segment.style?.width) || Number(figure.style?.thickness) || 12;
+        const width = (Number(segment.style?.width) || Number(figure.style?.thickness) || 12) * styleScale;
         margin = Math.max(margin, width / 2 + 4);
 
         if ((segment.type || "rounded") === "circle") {
@@ -1047,7 +1056,7 @@ function staticFigureArtwork(figure, pose, frameNumber = currentFrame) {
         const from = pose.nodes[segment.from];
         const to = pose.nodes[segment.to];
         if (!from || !to) return;
-        appendFigureSegment(root, figure, segment, from, to);
+        appendFigureSegment(root, figure, segment, from, to, poseStyleScale(pose));
     });
 
     if (figure.headNodeId && pose.nodes[figure.headNodeId]) {
@@ -1055,7 +1064,7 @@ function staticFigureArtwork(figure, pose, frameNumber = currentFrame) {
         root.appendChild(createSvg("circle", {
             cx: head.x,
             cy: head.y,
-            r: figure.style?.headRadius || 18,
+            r: (figure.style?.headRadius || 18) * poseStyleScale(pose),
             fill: figure.style?.color || "#111111"
         }));
     }
@@ -1154,7 +1163,7 @@ function renderFigures() {
                 const from = pose.nodes[segment.from];
                 const to = pose.nodes[segment.to];
                 if (!from || !to) return;
-                appendFigureSegment(group, figure, segment, from, to);
+                appendFigureSegment(group, figure, segment, from, to, poseStyleScale(pose));
             });
 
             if (figure.headNodeId && pose.nodes[figure.headNodeId]) {
@@ -1162,7 +1171,7 @@ function renderFigures() {
                 group.appendChild(createSvg("circle", {
                     cx: head.x,
                     cy: head.y,
-                    r: figure.style?.headRadius || 18,
+                    r: (figure.style?.headRadius || 18) * poseStyleScale(pose),
                     class: "figure-head",
                     "data-denx-head": "1"
                 }));
