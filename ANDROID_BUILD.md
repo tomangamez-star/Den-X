@@ -9,7 +9,7 @@ Android application. The website source remains the source of truth.
 2. Select **Build DenX Android APK**.
 3. Choose **Run workflow** on the `main` branch.
 4. Open the completed workflow run.
-5. Download `DenX-Animator-v0.5.4-alpha-APK` from **Artifacts**.
+5. Download `DenX-Animator-v0.5.5-alpha-APK` from **Artifacts**.
 6. Extract the ZIP and install the APK on an Android device.
 
 The artifact is a debug-signed test build. It is suitable for device testing,

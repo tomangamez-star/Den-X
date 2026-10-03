@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v054-frame-local-core";
+const CACHE_NAME = "denx-animator-v055-android-interaction";
 
 const APP_SHELL = [
   "./",
@@ -17,11 +17,13 @@ const APP_SHELL = [
   "./css/v0.3.4-stability.css",
   "./css/tool-identity.css",
   "./css/frame-local-v054.css",
+  "./css/android-polish-v055.css",
   "./css/toolbox-rebuild-v052.css",
   "./css/webgl-renderer-v2.css",
 
   "./js/project-store.js",
   "./js/app.js",
+  "./js/android-polish-v055.js",
   "./js/frame-local-core-v054.js",
   "./js/operation-progress-v054.js",
   "./js/settings-diagnostics-v054.js",

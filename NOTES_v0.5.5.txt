@@ -1,0 +1,26 @@
+DenX Animator v0.5.5 — Android Interaction Fix
+
+Android shell
+- True immersive fullscreen with transient system bars on swipe.
+- Viewport height follows the actual visible Android WebView.
+- Project forms and dialogs remain scrollable instead of clipping controls.
+
+DenX selection sheets
+- Native Android select popups are replaced by consistent DenX sheets.
+- Applies to fonts, canvas presets, FPS, save intervals, and future selects.
+- Font choices preview their actual typeface.
+
+Figure transforms
+- Frame-local scale now scales limb thickness and head size proportionally.
+- Nodes remain editor-sized for touch accuracy.
+- Right figure-panel scroll is preserved during repeated Scale/Rotate/Flip actions.
+
+Export
+- MP4 Export Studio styles are restored in the current workspace build.
+- PNG and MP4 exports use Android's real Create Document save picker.
+- Large exports are transferred to native storage in chunks.
+- Completed native exports can be shared from the MP4 studio.
+
+Version
+- Android versionCode 50500.
+- Android versionName 0.5.5-alpha.
