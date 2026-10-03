@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build-debug-apk:
-    name: Build test APK
+  build-release-apk:
+    name: Build persistently signed APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -38,17 +38,35 @@ jobs:
       - name: Prepare and sync Android project
         run: npm run sync:android
 
-      - name: Build debug APK
+      - name: Validate persistent signing secrets
+        env:
+          DENX_KEYSTORE_BASE64: ${{ secrets.DENX_KEYSTORE_BASE64 }}
+          DENX_KEYSTORE_PASSWORD: ${{ secrets.DENX_KEYSTORE_PASSWORD }}
+          DENX_KEY_ALIAS: ${{ secrets.DENX_KEY_ALIAS }}
+          DENX_KEY_PASSWORD: ${{ secrets.DENX_KEY_PASSWORD }}
+        run: |
+          test -n "$DENX_KEYSTORE_BASE64" || { echo "Missing DENX_KEYSTORE_BASE64"; exit 1; }
+          test -n "$DENX_KEYSTORE_PASSWORD" || { echo "Missing DENX_KEYSTORE_PASSWORD"; exit 1; }
+          test -n "$DENX_KEY_ALIAS" || { echo "Missing DENX_KEY_ALIAS"; exit 1; }
+          test -n "$DENX_KEY_PASSWORD" || { echo "Missing DENX_KEY_PASSWORD"; exit 1; }
+          printf '%s' "$DENX_KEYSTORE_BASE64" | base64 --decode > android/app/denx-release.jks
+
+      - name: Build signed release APK
         working-directory: android
-        run: ./gradlew --no-daemon assembleDebug
+        env:
+          DENX_KEYSTORE_FILE: denx-release.jks
+          DENX_KEYSTORE_PASSWORD: ${{ secrets.DENX_KEYSTORE_PASSWORD }}
+          DENX_KEY_ALIAS: ${{ secrets.DENX_KEY_ALIAS }}
+          DENX_KEY_PASSWORD: ${{ secrets.DENX_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
 
       - name: Name APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk DenX-Animator-v0.6.0-alpha-debug.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk DenX-Animator-v0.7.0-alpha-signed.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DenX-Animator-v0.6.0-alpha-APK
-          path: DenX-Animator-v0.6.0-alpha-debug.apk
+          name: DenX-Animator-v0.7.0-alpha-SIGNED-APK
+          path: DenX-Animator-v0.7.0-alpha-signed.apk
           if-no-files-found: error
           retention-days: 30
