@@ -460,6 +460,10 @@ function captureTimelineSnapshot() {
             window.denxBonesCaptureProjectState
                 ? window.denxBonesCaptureProjectState()
                 : null,
+        textsState:
+            window.denxCaptureTextObjects
+                ? window.denxCaptureTextObjects()
+                : null,
         currentFrame,
         frameCount
     };
@@ -528,6 +532,15 @@ function restoreTimelineSnapshot(snapshot) {
     ) {
         window.denxBonesRestoreProjectState(
             snapshot.bonesState
+        );
+    }
+
+    if (
+        snapshot.textsState &&
+        window.denxRestoreTextObjects
+    ) {
+        window.denxRestoreTextObjects(
+            snapshot.textsState
         );
     }
 
@@ -1238,9 +1251,6 @@ function selectFrame(frameNumber, options = {}) {
         refreshOnionSkin();
     }
 
-    window.dispatchEvent(new CustomEvent("denx:framechange", {
-        detail: { frame: frameNumber, playback: fromPlayback }
-    }));
 }
 
 window.denxSelectFrame = selectFrame;
@@ -1248,6 +1258,8 @@ window.denxCurrentFrame =
     () => currentFrame;
 window.denxFrameCount =
     () => frames.length;
+window.denxTimelineFrameData = frameNumber =>
+    frames[Math.max(1, Number(frameNumber) || 1) - 1] || null;
 
 // ------------------------------------------------------------
 // Frame operations
@@ -1271,7 +1283,8 @@ function insertFrameAfterCurrent(
     frameData = null,
     historyData = null,
     cameraState = null,
-    boneFrameState = null
+    boneFrameState = null,
+    insertOptions = null
 ) {
     stopPlayback();
 
@@ -1356,6 +1369,15 @@ function insertFrameAfterCurrent(
 
     selectFrame(newFrame);
 
+    if (Number.isFinite(Number(insertOptions?.tweenRatio))) {
+        window.denxTextTweenInsertedFrame?.(
+            newFrame,
+            sourceFrame,
+            newFrame + 1,
+            Number(insertOptions.tweenRatio)
+        );
+    }
+
     const after =
         captureTimelineSnapshot();
 
@@ -1367,6 +1389,8 @@ function insertFrameAfterCurrent(
     updateTimelineButtons();
     refreshOnionSkin();
 }
+
+window.denxInsertFrameAfterCurrent = insertFrameAfterCurrent;
 
 function removeCurrentFrame() {
     if (frames.length <= 1) return;
