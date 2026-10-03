@@ -1,0 +1,6 @@
+/* v0.7: keep the assistant clear of the bottom-right zoom controls. */
+.denx-assistant {
+  left: clamp(258px, 20vw, 330px);
+  right: auto;
+  flex-direction: row-reverse;
+}
