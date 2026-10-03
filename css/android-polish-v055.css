@@ -1,0 +1,264 @@
+:root {
+  --denx-safe-height: 100dvh;
+}
+
+html,
+body {
+  width: 100%;
+  height: var(--denx-safe-height);
+  min-height: var(--denx-safe-height);
+  overscroll-behavior: none;
+}
+
+body.denx-native-app {
+  padding: 0;
+  margin: 0;
+  background: #080a0b;
+}
+
+body.denx-native-app #app,
+body.denx-native-app #workspace {
+  height: var(--denx-safe-height);
+  min-height: var(--denx-safe-height);
+  max-height: var(--denx-safe-height);
+}
+
+.denx-project-setup .denx-project-form {
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: max(44px, env(safe-area-inset-bottom, 0px));
+}
+
+.denx-project-dialog[open] {
+  max-height: calc(var(--denx-safe-height) - 24px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Custom DenX select trigger. The real select remains in the DOM for forms. */
+.denx-native-select-source {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.denx-select-trigger {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 13px;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 200, 255, .34);
+  border-radius: 12px;
+  background: #141719;
+  color: #eef5f7;
+  font: 700 12px/1.2 Arial, sans-serif;
+  text-align: left;
+}
+
+.denx-select-trigger::after {
+  content: "⌄";
+  color: #00c8ff;
+  font-size: 17px;
+}
+
+.denx-select-trigger:disabled {
+  opacity: .45;
+}
+
+.denx-select-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(7px);
+}
+
+.denx-select-sheet[hidden] {
+  display: none !important;
+}
+
+.denx-select-card {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(var(--denx-safe-height) - 32px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(0, 200, 255, .35);
+  border-radius: 18px;
+  background: #111416;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .65);
+}
+
+.denx-select-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #282d30;
+  color: #f4f8f9;
+  font: 900 13px/1.2 Arial, sans-serif;
+}
+
+.denx-select-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: #23282b;
+  color: #fff;
+  font-size: 21px;
+}
+
+.denx-select-options {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+}
+
+.denx-select-option {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 13px;
+  border: 0;
+  border-bottom: 1px solid #252a2d;
+  background: transparent;
+  color: #e8eef0;
+  font-size: 16px;
+  text-align: left;
+}
+
+.denx-select-option:last-child {
+  border-bottom: 0;
+}
+
+.denx-select-option.active {
+  border-radius: 10px;
+  background: rgba(0, 200, 255, .13);
+  color: #00c8ff;
+}
+
+.denx-select-option.active::after {
+  content: "✓";
+  font: 900 15px Arial, sans-serif;
+}
+
+/* MP4 Export Studio v0.5.5: these styles were stranded in an unloaded file. */
+.denx-export-screen[hidden] { display: none !important; }
+.denx-export-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.denx-export-screen-head {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+}
+
+.denx-export-back {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #30383c;
+  border-radius: 10px;
+  background: #171b1d;
+  color: #fff;
+  font-size: 22px;
+}
+
+.denx-export-screen-head strong,
+.denx-export-screen-head small,
+.denx-quality-option strong,
+.denx-quality-option small {
+  display: block;
+}
+
+.denx-export-screen-head strong { color: #fff; font-size: 14px; }
+.denx-export-screen-head small { margin-top: 2px; color: #8c989d; font-size: 10px; }
+
+.denx-quality-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.denx-quality-option {
+  min-width: 0;
+  min-height: 68px;
+  padding: 10px;
+  border: 1px solid #30383c;
+  border-radius: 12px;
+  background: #15191b;
+  color: #fff;
+  text-align: left;
+}
+
+.denx-quality-option strong { color: #f4f7f8; font-size: 12px; }
+.denx-quality-option small { margin-top: 4px; color: #889398; font-size: 10px; }
+.denx-quality-option.active {
+  border-color: rgba(0, 200, 255, .78);
+  background: rgba(0, 200, 255, .12);
+  box-shadow: inset 0 0 0 1px rgba(0, 200, 255, .12);
+}
+.denx-quality-option.active strong { color: #00c8ff; }
+
+.denx-export-meta-card {
+  display: grid;
+  gap: 6px;
+  padding: 10px 11px;
+  border: 1px solid #292f32;
+  border-radius: 11px;
+  background: #101315;
+  color: #a5afb3;
+  font-size: 10px;
+}
+
+.denx-export-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.denx-export-meta-row b { color: #edf3f5; }
+.denx-watermark-lock { color: #00c8ff !important; }
+.denx-export-start {
+  min-height: 45px;
+  border: 1px solid rgba(0, 200, 255, .5);
+  border-radius: 12px;
+  background: #00c8ff;
+  color: #041013;
+  font-size: 12px;
+  font-weight: 900;
+}
+.denx-video-export-status {
+  min-height: 20px;
+  color: #aab4b8;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.denx-export-share {
+  min-height: 40px;
+  border: 1px solid #344147;
+  border-radius: 11px;
+  background: #1a2023;
+  color: #eaf6fa;
+  font-weight: 800;
+}
