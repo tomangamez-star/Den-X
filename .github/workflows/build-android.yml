@@ -43,12 +43,12 @@ jobs:
         run: ./gradlew --no-daemon assembleDebug
 
       - name: Name APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk DenX-Animator-v0.5.4-alpha-debug.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk DenX-Animator-v0.5.5-alpha-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DenX-Animator-v0.5.4-alpha-APK
-          path: DenX-Animator-v0.5.4-alpha-debug.apk
+          name: DenX-Animator-v0.5.5-alpha-APK
+          path: DenX-Animator-v0.5.5-alpha-debug.apk
           if-no-files-found: error
           retention-days: 30
