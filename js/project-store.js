@@ -91,7 +91,7 @@
     const defaults = {
       autoSave: false,
       saveReminder: true,
-      intervalMinutes: 10
+      intervalMinutes: 5
     };
     try {
       return {

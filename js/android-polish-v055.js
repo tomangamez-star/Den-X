@@ -180,6 +180,28 @@
   }
 
   window.denxSaveExportBlob = nativeSave;
+  window.denxNativeVideoEncoder = isNative ? {
+    available: true,
+    async begin(options) {
+      const saver = nativeSaver();
+      if (!saver) throw new Error("Android video encoder is unavailable.");
+      return saver.beginVideo(options);
+    },
+    async append(sessionId, canvas) {
+      const saver = nativeSaver();
+      const blob = await new Promise((resolve, reject) =>
+        canvas.toBlob(value => value ? resolve(value) : reject(new Error("Could not prepare a video frame.")), "image/jpeg", 0.94)
+      );
+      const base64Frame = await sliceToBase64(blob);
+      return saver.appendVideoFrame({ sessionId, base64Frame });
+    },
+    async finish(sessionId) {
+      return nativeSaver().finishVideo({ sessionId });
+    },
+    async cancel(sessionId) {
+      return nativeSaver().cancelVideo({ sessionId: sessionId || "" });
+    }
+  } : null;
   window.denxShareLastExport = async () => {
     const saver = nativeSaver();
     if (!isNative || !saver) return false;

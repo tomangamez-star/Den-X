@@ -9,6 +9,7 @@
   let restoreComplete = false;
   let savedSnapshotSignature = "";
   let workspaceDirty = false;
+  let dirtySince = 0;
 
   const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -186,8 +187,13 @@
 
   function markWorkspaceDirty() {
     if (!restoreComplete) return;
+    if (!workspaceDirty) {
+      dirtySince = Date.now();
+      reminderShownAt = 0;
+    }
     workspaceDirty = true;
     syncProjectStateLabel("Unsaved");
+    window.dispatchEvent(new CustomEvent("denx:workspacedirty", { detail: { since: dirtySince } }));
   }
 
   function syncProjectStateLabel(forced = null) {
@@ -274,9 +280,11 @@
 
     savedSnapshotSignature = snapshotSignature(snapshot);
     workspaceDirty = false;
+    dirtySince = 0;
     lastSaveAt = Date.now();
     reminderShownAt = 0;
     syncProjectStateLabel("Saved");
+    window.dispatchEvent(new CustomEvent("denx:workspacesaved", { detail: { at: lastSaveAt } }));
 
     if (!silent) toast(`${activeProject.name} saved ✓`);
     return activeProject;
@@ -361,6 +369,7 @@
   function startSaveClock() {
     setInterval(() => {
       if (!restoreComplete) return;
+      if (!currentWorkspaceIsDirty()) return;
 
       const settings = PROJECT_STORE()?.getSettings?.();
       if (!settings) return;
@@ -371,7 +380,7 @@
           Number(settings.intervalMinutes) || 10
         ) * 60000;
 
-      const elapsed = Date.now() - lastSaveAt;
+      const elapsed = Date.now() - (dirtySince || lastSaveAt);
       if (elapsed < intervalMs) return;
 
       if (settings.autoSave) {
@@ -385,9 +394,11 @@
         Date.now() - reminderShownAt >= intervalMs
       ) {
         reminderShownAt = Date.now();
-        toast(
-          `Save reminder — ${settings.intervalMinutes} minutes since your last save.`
-        );
+        if (typeof window.denxAssistantSaveReminder === "function") {
+          window.denxAssistantSaveReminder(settings.intervalMinutes);
+        } else {
+          toast(`Save reminder — ${settings.intervalMinutes} minutes of unsaved work.`);
+        }
       }
     }, 30000);
   }

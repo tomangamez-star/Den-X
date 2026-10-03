@@ -1,0 +1,9 @@
+DenX Animator v0.6.0 — Foundation Release
+
+- Android-native H.264 MP4 encoder with progress, cancellation, and share.
+- PNG Export Studio: current, selected, ranged, or all frames; sequences save as ZIP.
+- Frame-local text with migration for v0.5.x projects and correct timeline insert/delete behavior.
+- Export screens reset cleanly after completion, errors, or cancellation.
+- DenX Assistant v1: save guardian, short first-run basics, and one-time contextual tool help.
+- Default save-reminder interval is five minutes for new installations.
+- Android versionCode 60000 / versionName 0.6.0-alpha.

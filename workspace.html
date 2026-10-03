@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/workspace-ui.css">
 <link rel="stylesheet" href="css/project-ui.css">
+<link rel="stylesheet" href="css/assistant-v060.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111111">
 <meta name="mobile-web-app-capable" content="yes">
@@ -456,8 +457,7 @@
 <dialog id="denxExportDialog" class="denx-project-dialog denx-export-dialog">
   <div class="denx-dialog-head"><strong>Export</strong><button id="closeExportDialogBtn" type="button">×</button></div>
   <div class="denx-export-choice">
-    <button id="exportCurrentPngBtn" type="button"><strong>Current Frame · PNG</strong><small>Save only the frame you are looking at.</small></button>
-    <button type="button" disabled><strong>PNG Sequence</strong><small>Coming in the full animation export pass.</small></button>
+    <button id="exportCurrentPngBtn" type="button"><strong>Frames · PNG</strong><small>Current, selected, range, or every frame.</small></button>
     <button type="button" disabled><strong>GIF / MP4</strong><small>Uses the clean frame renderer next.</small></button>
   </div>
   <div class="denx-export-note">Editor UI, nodes, handles and the graph are excluded from exported frames.</div>
@@ -478,6 +478,7 @@
 <script src="js/timeline.js"></script>
 <script src="js/workspace-persistence.js"></script>
 <script src="js/frame-export.js"></script>
+<script src="js/assistant-v060.js"></script>
 <script src="js/pwa.js"></script>
 </body>
 </html>

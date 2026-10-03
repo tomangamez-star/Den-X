@@ -1,264 +1,39 @@
-// ============================================================
-// DENX TEXT OBJECTS V1
-// First-class movable text objects with a contextual right toolbar.
-// ============================================================
-
+// DenX Text Objects v2 — frame-local text with legacy-project migration.
 (() => {
-    const SVG_NS = "http://www.w3.org/2000/svg";
-    const layer = document.getElementById("textLayer");
-    const textTool = document.getElementById("textTool");
-    if (!layer) return;
-
-    const objects = [];
-    let nextId = 1;
-    let selectedId = null;
-    let drag = null;
-    let activeTool = "select";
-
-    window.addEventListener("denx:toolchange", event => {
-        activeTool = event.detail?.tool || activeTool;
-        if (activeTool !== "select" && drag) {
-            drag = null;
-        }
-    });
-
-    function clone(value) {
-        return JSON.parse(JSON.stringify(value));
-    }
-
-    function getObject(id) {
-        return objects.find(item => item.id === id) || null;
-    }
-
-    function stagePoint(clientX, clientY) {
-        try {
-            const point = layer.createSVGPoint();
-            point.x = clientX;
-            point.y = clientY;
-            const matrix = layer.getScreenCTM();
-            if (matrix) {
-                const mapped = point.matrixTransform(matrix.inverse());
-                return { x: mapped.x, y: mapped.y };
-            }
-        } catch (_) {}
-
-        const rect = layer.getBoundingClientRect();
-        return {
-            x: ((clientX - rect.left) / Math.max(1, rect.width)) * 2048,
-            y: ((clientY - rect.top) / Math.max(1, rect.height)) * 1152
-        };
-    }
-
-    function dispatchSelection() {
-        const item = getObject(selectedId);
-        window.dispatchEvent(new CustomEvent("denx:textselectionchange", {
-            detail: item ? clone(item) : { id: null }
-        }));
-    }
-
-    function selectText(id) {
-        selectedId = getObject(id)?.id || null;
-        if (selectedId) {
-            window.denxClearFigureSelection?.();
-        }
-        render();
-        dispatchSelection();
-        return selectedId;
-    }
-
-    function renderTextLines(textEl, item) {
-        const lines = String(item.text || "Text").split("\n");
-        lines.forEach((line, index) => {
-            const tspan = document.createElementNS(SVG_NS, "tspan");
-            tspan.setAttribute("x", "0");
-            tspan.setAttribute("dy", index === 0 ? "0" : "1.18em");
-            tspan.textContent = line || " ";
-            textEl.appendChild(tspan);
-        });
-    }
-
-    function render() {
-        layer.replaceChildren();
-
-        objects.forEach(item => {
-            const group = document.createElementNS(SVG_NS, "g");
-            group.classList.add("denx-text-object");
-            if (item.id === selectedId) group.classList.add("selected");
-            group.dataset.textId = item.id;
-            group.style.touchAction = "none";
-            group.setAttribute(
-                "transform",
-                `translate(${item.x} ${item.y}) rotate(${item.rotation || 0}) scale(${item.scale || 1})`
-            );
-
-            const text = document.createElementNS(SVG_NS, "text");
-            text.classList.add("denx-text-value");
-            text.setAttribute("x", "0");
-            text.setAttribute("y", "0");
-            text.setAttribute("fill", item.color || "#111111");
-            text.setAttribute("font-family", item.font || "system-ui, sans-serif");
-            text.setAttribute("font-size", String(item.fontSize || 64));
-            text.setAttribute("font-weight", String(item.weight || 700));
-            text.setAttribute("xml:space", "preserve");
-            renderTextLines(text, item);
-            group.appendChild(text);
-
-            layer.appendChild(group);
-
-            let bbox;
-            try {
-                bbox = text.getBBox();
-            } catch (_) {
-                bbox = { x: 0, y: 0, width: 220, height: 70 };
-            }
-
-            const hit = document.createElementNS(SVG_NS, "rect");
-            hit.classList.add("denx-text-hitbox");
-            hit.style.touchAction = "none";
-            hit.setAttribute("x", String(bbox.x - 16));
-            hit.setAttribute("y", String(bbox.y - 14));
-            hit.setAttribute("width", String(Math.max(36, bbox.width + 32)));
-            hit.setAttribute("height", String(Math.max(44, bbox.height + 28)));
-            group.insertBefore(hit, text);
-        });
-
-        window.denxRefreshFrameThumbnail?.(window.currentFrame || 1);
-    }
-
-    function createText(options = {}) {
-        const item = {
-            id: `text-${nextId++}`,
-            text: options.text || "Text",
-            x: Number.isFinite(Number(options.x)) ? Number(options.x) : 1024,
-            y: Number.isFinite(Number(options.y)) ? Number(options.y) : 576,
-            scale: Number.isFinite(Number(options.scale)) ? Number(options.scale) : 1,
-            rotation: Number.isFinite(Number(options.rotation)) ? Number(options.rotation) : 0,
-            font: options.font || "system-ui, sans-serif",
-            fontSize: Number(options.fontSize) || 64,
-            weight: Number(options.weight) || 700,
-            color: /^#[0-9a-f]{6}$/i.test(options.color || "") ? options.color : "#111111"
-        };
-        objects.push(item);
-        selectText(item.id);
-        render();
-        return item.id;
-    }
-
-    function patchSelected(patch) {
-        const item = getObject(selectedId);
-        if (!item) return false;
-        Object.assign(item, patch || {});
-        render();
-        dispatchSelection();
-        return true;
-    }
-
-    function scaleSelected(factor) {
-        const item = getObject(selectedId);
-        factor = Number(factor);
-        if (!item || !Number.isFinite(factor) || factor <= 0) return false;
-        item.scale = Math.max(0.1, Math.min(8, (item.scale || 1) * factor));
-        render();
-        dispatchSelection();
-        return true;
-    }
-
-    function deleteSelected() {
-        const index = objects.findIndex(item => item.id === selectedId);
-        if (index < 0) return false;
-        objects.splice(index, 1);
-        selectedId = null;
-        render();
-        dispatchSelection();
-        return true;
-    }
-
-    layer.addEventListener("pointerdown", event => {
-        // Text is manipulated only through Select. This keeps one-finger object
-        // movement separate from the workspace camera gesture recognizer.
-        if (activeTool !== "select" || !event.isPrimary) return;
-
-        const group = event.target.closest?.(".denx-text-object");
-        if (!group) return;
-        const item = getObject(group.dataset.textId);
-        if (!item) return;
-
-        selectText(item.id);
-        const point = stagePoint(event.clientX, event.clientY);
-        drag = {
-            pointerId: event.pointerId,
-            id: item.id,
-            offsetX: point.x - item.x,
-            offsetY: point.y - item.y
-        };
-        // Capture on the persistent SVG layer, not the text <g>. The previous
-        // implementation re-rendered the layer during drag, destroying the
-        // captured <g> after the first move and making text feel immovable.
-        layer.setPointerCapture?.(event.pointerId);
-        event.preventDefault();
-        event.stopPropagation();
-    });
-
-    layer.addEventListener("pointermove", event => {
-        if (!drag || drag.pointerId !== event.pointerId) return;
-        const item = getObject(drag.id);
-        if (!item) return;
-        const point = stagePoint(event.clientX, event.clientY);
-        item.x = point.x - drag.offsetX;
-        item.y = point.y - drag.offsetY;
-
-        // Move only the live DOM object while the finger is down. Rebuilding
-        // the SVG here would break pointer capture and is more expensive.
-        const liveGroup = [...layer.querySelectorAll(".denx-text-object")].find(
-            node => node.dataset.textId === item.id
-        );
-        if (liveGroup) {
-            liveGroup.setAttribute(
-                "transform",
-                `translate(${item.x} ${item.y}) rotate(${item.rotation || 0}) scale(${item.scale || 1})`
-            );
-        }
-        event.preventDefault();
-        event.stopPropagation();
-    });
-
-    function finishDrag(event) {
-        if (!drag || drag.pointerId !== event.pointerId) return;
-        layer.releasePointerCapture?.(event.pointerId);
-        drag = null;
-        render();
-        dispatchSelection();
-        window.denxRefreshFrameThumbnail?.(window.currentFrame || 1);
-    }
-
-    layer.addEventListener("pointerup", finishDrag);
-    layer.addEventListener("pointercancel", finishDrag);
-
-    textTool?.addEventListener("click", event => {
-        event.preventDefault();
-        event.stopPropagation();
-        window.denxStopPlayback?.();
-        window.denxSetTool?.("select");
-        createText({ text: "Text" });
-        window.denxShowToast?.("Text added — use the right toolbar to style it.");
-    });
-
-    window.denxTextObjects = objects;
-    window.denxTextDragActive = () => Boolean(drag);
-    window.denxCreateTextObject = createText;
-    window.denxSelectTextObject = selectText;
-    window.denxGetSelectedTextObject = () => clone(getObject(selectedId));
-    window.denxPatchSelectedText = patchSelected;
-    window.denxScaleSelectedText = scaleSelected;
-    window.denxDeleteSelectedText = deleteSelected;
-    window.denxCaptureTextObjects = () => clone(objects);
-    window.denxRestoreTextObjects = value => {
-        objects.splice(0, objects.length, ...clone(Array.isArray(value) ? value : []));
-        nextId = Math.max(0, ...objects.map(item => Number(String(item.id).match(/(\d+)$/)?.[1] || 0))) + 1;
-        selectedId = null;
-        render();
-        dispatchSelection();
-    };
-
-    render();
+  "use strict";
+  const SVG_NS="http://www.w3.org/2000/svg", layer=document.getElementById("textLayer"), textTool=document.getElementById("textTool");
+  if(!layer)return;
+  const objects=[], fields=["text","x","y","scale","rotation","font","fontSize","weight","color"];
+  let nextId=1,selectedId=null,drag=null,activeTool="select";
+  const clone=v=>JSON.parse(JSON.stringify(v));
+  const currentFrame=()=>Math.max(1,Number(window.denxCurrentFrame?.()||document.querySelector(".frame.active")?.dataset.frame||1));
+  const frameCount=()=>Math.max(1,Number(window.denxFrameCount?.()||document.querySelectorAll(".frame[data-frame]").length||1));
+  const getObject=id=>objects.find(x=>String(x.id)===String(id))||null;
+  const stateOf=item=>Object.fromEntries(fields.filter(k=>item[k]!==undefined).map(k=>[k,clone(item[k])]));
+  function normalize(item,legacy=false){item.denxCreatedFrame=Math.max(1,Number(item.denxCreatedFrame)||(legacy?1:currentFrame()));item.denxFrameStates=item.denxFrameStates&&typeof item.denxFrameStates==="object"?item.denxFrameStates:{};if(!Object.keys(item.denxFrameStates).length){const base=stateOf(item),end=Math.max(item.denxCreatedFrame,frameCount());for(let n=item.denxCreatedFrame;n<=end;n++)item.denxFrameStates[n]=clone(base);}return item;}
+  function visible(item,frame=currentFrame()){return frame>=Number(item.denxCreatedFrame||1)&&(!Number.isFinite(Number(item.denxDeletedFrame))||frame<Number(item.denxDeletedFrame));}
+  function nearestState(item,frame=currentFrame()){if(!visible(item,frame))return null;if(item.denxFrameStates?.[frame])return item.denxFrameStates[frame];const keys=Object.keys(item.denxFrameStates||{}).map(Number).filter(n=>n<=frame).sort((a,b)=>b-a);return keys.length?item.denxFrameStates[keys[0]]:stateOf(item);}
+  function applyState(item,state){if(!state)return;fields.forEach(k=>{if(state[k]!==undefined)item[k]=clone(state[k]);});}
+  function ensureCurrentState(item){const frame=currentFrame();item.denxFrameStates||={};if(!item.denxFrameStates[frame])item.denxFrameStates[frame]=clone(nearestState(item,frame)||stateOf(item));applyState(item,item.denxFrameStates[frame]);return item.denxFrameStates[frame];}
+  function dispatchSelection(){const item=getObject(selectedId);window.dispatchEvent(new CustomEvent("denx:textselectionchange",{detail:item&&visible(item)?clone(item):{id:null}}));}
+  function selectText(id){const item=getObject(id);selectedId=item&&visible(item)?item.id:null;if(selectedId)window.denxClearFigureSelection?.();render();dispatchSelection();return selectedId;}
+  function renderLines(el,item){String(item.text||"Text").split("\n").forEach((line,i)=>{const span=document.createElementNS(SVG_NS,"tspan");span.setAttribute("x","0");span.setAttribute("dy",i?"1.18em":"0");span.textContent=line||" ";el.appendChild(span);});}
+  function render(){layer.replaceChildren();const frame=currentFrame();objects.forEach(item=>{normalize(item,true);if(!visible(item,frame))return;applyState(item,nearestState(item,frame));const group=document.createElementNS(SVG_NS,"g");group.classList.add("denx-text-object");if(String(item.id)===String(selectedId))group.classList.add("selected");group.dataset.textId=item.id;group.style.touchAction="none";group.setAttribute("transform",`translate(${item.x} ${item.y}) rotate(${item.rotation||0}) scale(${item.scale||1})`);const text=document.createElementNS(SVG_NS,"text");text.classList.add("denx-text-value");text.setAttribute("fill",item.color||"#111111");text.setAttribute("font-family",item.font||"system-ui, sans-serif");text.setAttribute("font-size",String(item.fontSize||64));text.setAttribute("font-weight",String(item.weight||700));text.setAttribute("xml:space","preserve");renderLines(text,item);group.appendChild(text);layer.appendChild(group);let box;try{box=text.getBBox();}catch(_){box={x:0,y:0,width:220,height:70};}const hit=document.createElementNS(SVG_NS,"rect");hit.classList.add("denx-text-hitbox");hit.style.touchAction="none";hit.setAttribute("x",String(box.x-16));hit.setAttribute("y",String(box.y-14));hit.setAttribute("width",String(Math.max(36,box.width+32)));hit.setAttribute("height",String(Math.max(44,box.height+28)));group.insertBefore(hit,text);});window.denxRefreshFrameThumbnail?.(frame);}
+  function createText(options={}){const frame=currentFrame();const item={id:`text-${nextId++}`,text:options.text||"Text",x:Number.isFinite(Number(options.x))?Number(options.x):1024,y:Number.isFinite(Number(options.y))?Number(options.y):576,scale:Number.isFinite(Number(options.scale))?Number(options.scale):1,rotation:Number(options.rotation)||0,font:options.font||"system-ui, sans-serif",fontSize:Number(options.fontSize)||64,weight:Number(options.weight)||700,color:/^#[0-9a-f]{6}$/i.test(options.color||"")?options.color:"#111111",denxCreatedFrame:frame,denxFrameStates:{}};const base=stateOf(item);for(let n=frame;n<=frameCount();n++)item.denxFrameStates[n]=clone(base);objects.push(item);selectText(item.id);render();window.denxMarkWorkspaceDirty?.();return item.id;}
+  function patchSelected(patch){const item=getObject(selectedId);if(!item||!visible(item))return false;Object.assign(ensureCurrentState(item),patch||{});applyState(item,item.denxFrameStates[currentFrame()]);render();dispatchSelection();window.denxMarkWorkspaceDirty?.();return true;}
+  function scaleSelected(factor){const item=getObject(selectedId);factor=Number(factor);if(!item||!visible(item)||!Number.isFinite(factor)||factor<=0)return false;const state=ensureCurrentState(item);state.scale=Math.max(.1,Math.min(8,(Number(state.scale)||1)*factor));applyState(item,state);render();dispatchSelection();window.denxMarkWorkspaceDirty?.();return true;}
+  function deleteSelected(){const item=getObject(selectedId);if(!item||!visible(item))return false;item.denxDeletedFrame=currentFrame();selectedId=null;render();dispatchSelection();window.denxMarkWorkspaceDirty?.();return true;}
+  function stagePoint(x,y){try{const p=layer.createSVGPoint();p.x=x;p.y=y;const m=layer.getScreenCTM();if(m){const q=p.matrixTransform(m.inverse());return{x:q.x,y:q.y};}}catch(_){}const r=layer.getBoundingClientRect();return{x:(x-r.left)/Math.max(1,r.width)*2048,y:(y-r.top)/Math.max(1,r.height)*1152};}
+  layer.addEventListener("pointerdown",event=>{if(activeTool!=="select"||!event.isPrimary)return;const group=event.target.closest?.(".denx-text-object"),item=getObject(group?.dataset.textId);if(!item)return;selectText(item.id);ensureCurrentState(item);const p=stagePoint(event.clientX,event.clientY);drag={pointerId:event.pointerId,id:item.id,offsetX:p.x-item.x,offsetY:p.y-item.y};layer.setPointerCapture?.(event.pointerId);event.preventDefault();event.stopPropagation();});
+  layer.addEventListener("pointermove",event=>{if(!drag||drag.pointerId!==event.pointerId)return;const item=getObject(drag.id);if(!item)return;const p=stagePoint(event.clientX,event.clientY),state=ensureCurrentState(item);state.x=p.x-drag.offsetX;state.y=p.y-drag.offsetY;applyState(item,state);layer.querySelector(`[data-text-id="${CSS.escape(String(item.id))}"]`)?.setAttribute("transform",`translate(${item.x} ${item.y}) rotate(${item.rotation||0}) scale(${item.scale||1})`);event.preventDefault();event.stopPropagation();});
+  function finishDrag(event){if(!drag||drag.pointerId!==event.pointerId)return;layer.releasePointerCapture?.(event.pointerId);drag=null;render();dispatchSelection();window.denxMarkWorkspaceDirty?.();}
+  layer.addEventListener("pointerup",finishDrag);layer.addEventListener("pointercancel",finishDrag);
+  window.addEventListener("denx:toolchange",event=>{activeTool=event.detail?.tool||activeTool;if(activeTool!=="select")drag=null;});
+  window.addEventListener("denx:framechange",()=>{selectedId=null;render();dispatchSelection();});
+  window.denxTextInsertFrame=(at,source)=>{objects.forEach(item=>{normalize(item,true);const next={};Object.entries(item.denxFrameStates).forEach(([key,value])=>{const n=Number(key);next[n>=at?n+1:n]=value;});item.denxFrameStates=next;if(Number(item.denxCreatedFrame)>=at)item.denxCreatedFrame++;if(Number.isFinite(Number(item.denxDeletedFrame))&&Number(item.denxDeletedFrame)>=at)item.denxDeletedFrame++;const src=item.denxFrameStates[source]||nearestState(item,source);if(src&&visible(item,at))item.denxFrameStates[at]=clone(src);});};
+  window.denxTextRemoveFrame=at=>{objects.forEach(item=>{normalize(item,true);const next={};Object.entries(item.denxFrameStates).forEach(([key,value])=>{const n=Number(key);if(n!==at)next[n>at?n-1:n]=value;});item.denxFrameStates=next;if(Number(item.denxCreatedFrame)>at)item.denxCreatedFrame--;if(Number.isFinite(Number(item.denxDeletedFrame))&&Number(item.denxDeletedFrame)>at)item.denxDeletedFrame--;});};
+  textTool?.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();window.denxStopPlayback?.();window.denxSetTool?.("select");createText();window.denxShowToast?.("Text added to this frame — later frames received independent copies.");});
+  window.denxTextObjects=objects;window.denxTextDragActive=()=>Boolean(drag);window.denxCreateTextObject=createText;window.denxSelectTextObject=selectText;window.denxGetSelectedTextObject=()=>clone(getObject(selectedId));window.denxPatchSelectedText=patchSelected;window.denxScaleSelectedText=scaleSelected;window.denxDeleteSelectedText=deleteSelected;window.denxCaptureTextObjects=()=>clone(objects);
+  window.denxRestoreTextObjects=value=>{objects.splice(0,objects.length,...clone(Array.isArray(value)?value:[]).map(item=>normalize(item,true)));nextId=Math.max(0,...objects.map(item=>Number(String(item.id).match(/(\d+)$/)?.[1]||0)))+1;selectedId=null;render();dispatchSelection();};
+  render();
 })();

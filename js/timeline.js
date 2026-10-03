@@ -1237,6 +1237,10 @@ function selectFrame(frameNumber, options = {}) {
     if (!skipOnion && !playbackActive) {
         refreshOnionSkin();
     }
+
+    window.dispatchEvent(new CustomEvent("denx:framechange", {
+        detail: { frame: frameNumber, playback: fromPlayback }
+    }));
 }
 
 window.denxSelectFrame = selectFrame;
@@ -1279,6 +1283,8 @@ function insertFrameAfterCurrent(
 
     const newFrame =
         currentFrame + 1;
+
+    window.denxTextInsertFrame?.(newFrame, sourceFrame);
 
     shiftStateMapUp(
         frameHistory,
@@ -1372,6 +1378,8 @@ function removeCurrentFrame() {
 
     const removedFrame =
         currentFrame;
+
+    window.denxTextRemoveFrame?.(removedFrame);
 
     frames.splice(
         removedFrame - 1,
