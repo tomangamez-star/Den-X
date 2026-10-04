@@ -1,0 +1,6 @@
+/* v0.7.1: the assistant is a normal General tool, never a canvas orb. */
+.denx-assistant{position:fixed;left:clamp(258px,20vw,330px);bottom:14px;right:auto;z-index:10040;font-family:system-ui,sans-serif;pointer-events:none}
+.denx-assistant-card{pointer-events:auto}
+.denx-assistant-orb{display:none!important}
+#denxAssistantBtn .tool-icon{color:#16cdf4;font-weight:900}
+@media (max-width:720px){.denx-assistant{left:258px;bottom:10px}.denx-assistant-card{width:min(285px,48vw)}}
