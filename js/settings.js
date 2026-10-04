@@ -3,6 +3,7 @@
   const auto = document.getElementById("nativeAutoSaveToggle");
   const reminder = document.getElementById("nativeSaveReminderToggle");
   const interval = document.getElementById("nativeSaveIntervalSelect");
+  const feedback = document.getElementById("denxSendFeedbackBtn");
 
   function hydrate() {
     const settings = DenXProjectStore.getSettings();
@@ -28,6 +29,21 @@
     const target = sessionStorage.getItem("denx.settingsReturn") || "index.html";
     sessionStorage.removeItem("denx.settingsReturn");
     window.location.href = target;
+  });
+
+  feedback?.addEventListener("click", () => {
+    const subject = "DenX Animator Feedback";
+    const body = [
+      "Hi TomanGamez,",
+      "",
+      "My feedback:",
+      "",
+      "",
+      "--------------------",
+      "DenX version: 0.7.1",
+      `Device: ${navigator.userAgent || "Unknown"}`
+    ].join("\n");
+    window.location.href = `mailto:tomangamez@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   });
 
   hydrate();

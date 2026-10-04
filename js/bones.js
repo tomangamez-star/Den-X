@@ -1435,6 +1435,41 @@ window.denxBonesLoadFrame = frameNumber => {
     }
 };
 
+// Frame-local synchronizers may update constraint lengths, but must not
+// restore an older full project snapshot during a frame transition.
+window.denxBonesApplyWorkingLengths = figureSnapshots => {
+    const byId = new Map(
+        (figureSnapshots || []).map(figure => [String(figure.id), figure])
+    );
+
+    figures.forEach(figure => {
+        const source = byId.get(String(figure.id));
+        if (!source) return;
+
+        const sourceSegments = new Map(
+            (source.segments || []).map(segment => [String(segment.id), segment])
+        );
+
+        (figure.segments || []).forEach(segment => {
+            const length = Number(
+                sourceSegments.get(String(segment.id))?.length
+            );
+            if (Number.isFinite(length) && length > 0) {
+                segment.length = length;
+            }
+        });
+    });
+};
+
+window.denxBonesFrameHasArtwork = frameNumber => {
+    const framePose = boneFramePoses[Number(frameNumber)];
+    return !!framePose && Object.values(framePose).some(pose =>
+        pose?.visible !== false &&
+        pose?.nodes &&
+        Object.keys(pose.nodes).length > 0
+    );
+};
+
 function nodeDefinition(figure, nodeId) {
     return figure?.nodes.find(node => node.id === nodeId) || null;
 }

@@ -105,7 +105,7 @@ console.log("DenX Animator has started.");
     }
 
     const footer = document.querySelector('#appFooter p');
-    if (footer) footer.textContent = 'Version 0.7.0';
+    if (footer) footer.textContent = 'Version 0.7.1';
 })();
 
 // HOME SCREEN

@@ -1199,6 +1199,22 @@ function selectFrame(frameNumber, options = {}) {
             )
         );
 
+    // Guard populated pose data before the active-frame class changes. A
+    // delayed observer is never allowed to turn a real frame into a blank one.
+    const boneGuard = !fromPlayback && window.denxBonesCaptureProjectState
+        ? window.denxBonesCaptureProjectState()
+        : null;
+    const guardedTarget =
+        boneGuard?.framePoses?.[frameNumber] ||
+        boneGuard?.framePoses?.[String(frameNumber)] ||
+        null;
+    const guardedTargetHadArtwork = !!guardedTarget &&
+        Object.values(guardedTarget).some(pose =>
+            pose?.visible !== false &&
+            pose?.nodes &&
+            Object.keys(pose.nodes).length > 0
+        );
+
     if (!skipSave) {
         saveCurrentFrame();
 
@@ -1236,6 +1252,17 @@ function selectFrame(frameNumber, options = {}) {
         window.denxBonesLoadFrame(
             frameNumber
         );
+    }
+
+    if (
+        guardedTargetHadArtwork &&
+        window.denxBonesFrameHasArtwork &&
+        !window.denxBonesFrameHasArtwork(frameNumber) &&
+        boneGuard &&
+        window.denxBonesRestoreProjectState
+    ) {
+        window.denxBonesRestoreProjectState(boneGuard);
+        window.denxBonesLoadFrame?.(frameNumber);
     }
 
     if (playbackActive) {

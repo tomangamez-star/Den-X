@@ -100,23 +100,19 @@
     if (!otherId) otherId = figure.nodes?.find(n => String(n.parentId || "") === String(node.id))?.id || null;
     if (!otherId) return null;
 
-    const group = [...layer.querySelectorAll(".denx-figure")].find(
-      el => el.getAttribute("data-figure-id") === String(figure.id)
-    );
-    if (!group) return null;
-    const selectedEl = [...group.querySelectorAll(".figure-node-visual")].find(
-      el => el.getAttribute("data-node-id") === String(node.id)
-    );
-    const otherEl = [...group.querySelectorAll(".figure-node-visual")].find(
-      el => el.getAttribute("data-node-id") === String(otherId)
-    );
-    if (!selectedEl || !otherEl) return null;
+    const frame = Number(window.denxCurrentFrame?.() || 1);
+    const framePose = snapshot.framePoses?.[frame] || snapshot.framePoses?.[String(frame)];
+    const pose = framePose?.[figure.id] || framePose?.[String(figure.id)];
+    const selectedPoint = pose?.nodes?.[node.id] || pose?.nodes?.[String(node.id)];
+    const otherPoint = pose?.nodes?.[otherId] || pose?.nodes?.[String(otherId)];
+    if (!selectedPoint || !otherPoint) return null;
 
-    const pointFor = el => el.tagName.toLowerCase() === "rect"
-      ? { x: Number(el.getAttribute("x")) + Number(el.getAttribute("width")) / 2,
-          y: Number(el.getAttribute("y")) + Number(el.getAttribute("height")) / 2 }
-      : { x: Number(el.getAttribute("cx")), y: Number(el.getAttribute("cy")) };
-    return { a: pointFor(selectedEl), b: pointFor(otherEl) };
+    // Pose coordinates are the renderer's true centreline. Reading DOM circle
+    // bounds caused small scale-dependent offsets after handles were resized.
+    return {
+      a: { x: Number(selectedPoint.x), y: Number(selectedPoint.y) },
+      b: { x: Number(otherPoint.x), y: Number(otherPoint.y) }
+    };
   }
 
   function drawGuide() {
@@ -129,6 +125,7 @@
       activeGuide = document.createElementNS("http://www.w3.org/2000/svg", "line");
       activeGuide.setAttribute("class", "denx-active-chain-guide");
       activeGuide.setAttribute("pointer-events", "none");
+      activeGuide.setAttribute("vector-effect", "non-scaling-stroke");
       layer.appendChild(activeGuide);
     }
     activeGuide.setAttribute("x1", points.a.x);

@@ -211,7 +211,10 @@
       }
 
       if (touched) {
-        window.denxBonesRestoreProjectState(snapshot);
+        // A delayed frame observer must never restore a whole stale project.
+        // Only copy the working constraint lengths into the live structures.
+        window.denxBonesApplyWorkingLengths?.(snapshot.figures || []);
+        window.denxBonesRefresh?.();
         window.denxWebGLRenderer?.requestRender?.();
       }
     }
@@ -271,8 +274,6 @@
         attributeFilter: ["class"]
       });
     }
-
-    window.addEventListener("denx:framechange", syncActiveFrameConstraints);
 
     syncActiveFrameConstraints();
 
