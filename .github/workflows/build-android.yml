@@ -61,12 +61,12 @@ jobs:
         run: ./gradlew --no-daemon assembleRelease
 
       - name: Name APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk DenX-Animator-v0.7.0-alpha-signed.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk DenX-Animator-v0.7.1-alpha-signed.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DenX-Animator-v0.7.0-alpha-SIGNED-APK
-          path: DenX-Animator-v0.7.0-alpha-signed.apk
+          name: DenX-Animator-v0.7.1-alpha-SIGNED-APK
+          path: DenX-Animator-v0.7.1-alpha-signed.apk
           if-no-files-found: error
           retention-days: 30
