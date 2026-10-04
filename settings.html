@@ -19,6 +19,9 @@
 .denx-diagnostic-row span small{margin-top:3px;font-size:8px;color:#7f8a90}
 .denx-renderer-pill{white-space:nowrap;padding:5px 8px;border:1px solid rgba(0,200,255,.28);border-radius:999px;background:rgba(0,200,255,.08);color:#00c8ff;font-size:9px;font-weight:900}
 .denx-renderer-pill.fallback{border-color:rgba(240,173,78,.32);background:rgba(240,173,78,.08);color:#f0ad4e}
+.denx-feedback-card{margin-top:12px;padding:12px;border:1px solid rgba(0,200,255,.24);border-radius:12px;background:#101417}
+.denx-feedback-card p{margin:5px 0 10px;color:#87949a;font-size:9px;line-height:1.45}
+.denx-feedback-button{width:100%;min-height:42px;border:1px solid #0fc8ef;border-radius:10px;background:#11c9f2;color:#061014;font-size:10px;font-weight:900;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -93,7 +96,18 @@
         </div>
       </div>
 
-      <div class="denx-settings-foot">DENX · Version 0.7.0</div>
+      <div class="denx-feedback-card">
+        <div class="denx-native-panel-head">
+          <div>
+            <span class="denx-native-kicker">SUPPORT</span>
+            <strong>Help improve DenX</strong>
+          </div>
+        </div>
+        <p>Send a bug report or suggestion. DenX adds the app and device details; you review the email before sending.</p>
+        <button id="denxSendFeedbackBtn" class="denx-feedback-button" type="button">SEND FEEDBACK</button>
+      </div>
+
+      <div class="denx-settings-foot">DENX · Version 0.7.1</div>
     </section>
   </section>
 </div>

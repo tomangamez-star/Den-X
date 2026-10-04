@@ -1,0 +1,11 @@
+DenX Animator v0.7.1 — In-between Stability
+
+- Guards populated figure frames against destructive blanking during navigation.
+- Removes stale whole-project restoration from delayed frame observers.
+- Moves DenX Assistant into the General toolbar and removes the canvas orb.
+- Centres node chain guides on the renderer's real pose coordinates at every scale.
+- Uses forward-kinematic in-betweening: rigid segments keep their length while angles move.
+- Elastic segments and intentional figure scale changes still interpolate length.
+- Adds Send Feedback in Settings for tomangamez@gmail.com with version/device details.
+- Keeps persistent release signing for Palm Store and future in-place updates.
+- Android versionCode 70100 / versionName 0.7.1-alpha.

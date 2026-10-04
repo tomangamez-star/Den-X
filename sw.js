@@ -1,4 +1,4 @@
-const CACHE_NAME = "denx-animator-v070-coordinate-tween";
+const CACHE_NAME = "denx-animator-v071-stability-feedback";
 
 const APP_SHELL = [
   "./",
@@ -19,7 +19,7 @@ const APP_SHELL = [
   "./css/frame-local-v054.css",
   "./css/android-polish-v055.css",
   "./css/assistant-v060.css",
-  "./css/assistant-v070.css",
+  "./css/assistant-v071.css",
   "./css/tween-v070.css",
   "./css/toolbox-rebuild-v052.css",
   "./css/webgl-renderer-v2.css",
